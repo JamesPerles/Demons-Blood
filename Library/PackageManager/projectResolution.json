@@ -1,18 +1,18 @@
 {
   "context": {
-    "projectPath": "C:/Users/james/Demons Blood/Packages",
+    "projectPath": "C:/Users/james/OneDrive/Documents/GitHub/Demons Blood/Packages",
     "unityVersion": "6000.3.3f1"
   },
   "inputs": [
-    "C:\\Users\\james\\Demons Blood\\Packages\\manifest.json",
-    "C:\\Users\\james\\Demons Blood\\Packages\\packages-lock.json",
+    "C:\\Users\\james\\OneDrive\\Documents\\GitHub\\Demons Blood\\Packages\\manifest.json",
+    "C:\\Users\\james\\OneDrive\\Documents\\GitHub\\Demons Blood\\Packages\\packages-lock.json",
     "C:\\Program Files\\Unity\\Hub\\Editor\\6000.3.3f1\\Editor\\Data\\Resources\\PackageManager\\BuiltInPackages\\BuiltInPackagesCombined.sha1"
   ],
   "outputs": {
     "com.unity.2d.sprite@1.0.0": {
       "name": "com.unity.2d.sprite",
       "displayName": "2D Sprite",
-      "resolvedPath": "C:\\Users\\james\\Demons Blood\\Library\\PackageCache\\com.unity.2d.sprite@82f01c8c75ca",
+      "resolvedPath": "C:\\Users\\james\\OneDrive\\Documents\\GitHub\\Demons Blood\\Library\\PackageCache\\com.unity.2d.sprite@82f01c8c75ca",
       "fingerprint": "82f01c8c75ca2d707990e8dc249b71ab7d1aa33e",
       "editorCompatibility": "2019.2.0a1",
       "version": "1.0.0",
@@ -22,7 +22,7 @@
     "com.unity.2d.tilemap@1.0.0": {
       "name": "com.unity.2d.tilemap",
       "displayName": "2D Tilemap Editor",
-      "resolvedPath": "C:\\Users\\james\\Demons Blood\\Library\\PackageCache\\com.unity.2d.tilemap@d1f73c185ae9",
+      "resolvedPath": "C:\\Users\\james\\OneDrive\\Documents\\GitHub\\Demons Blood\\Library\\PackageCache\\com.unity.2d.tilemap@d1f73c185ae9",
       "fingerprint": "d1f73c185ae909693707c01ed72dbf111201ee39",
       "editorCompatibility": "2019.2.0a1",
       "version": "1.0.0",
@@ -32,7 +32,7 @@
     "com.unity.ide.rider@3.0.38": {
       "name": "com.unity.ide.rider",
       "displayName": "JetBrains Rider Editor",
-      "resolvedPath": "C:\\Users\\james\\Demons Blood\\Library\\PackageCache\\com.unity.ide.rider@1f60b3138684",
+      "resolvedPath": "C:\\Users\\james\\OneDrive\\Documents\\GitHub\\Demons Blood\\Library\\PackageCache\\com.unity.ide.rider@1f60b3138684",
       "fingerprint": "1f60b3138684c97af67aa8d911b1632ba916d29d",
       "editorCompatibility": "2021.3.0a1",
       "version": "3.0.38",
@@ -42,7 +42,7 @@
     "com.unity.ide.visualstudio@2.0.27": {
       "name": "com.unity.ide.visualstudio",
       "displayName": "Visual Studio Editor",
-      "resolvedPath": "C:\\Users\\james\\Demons Blood\\Library\\PackageCache\\com.unity.ide.visualstudio@dc1ddd4f09b6",
+      "resolvedPath": "C:\\Users\\james\\OneDrive\\Documents\\GitHub\\Demons Blood\\Library\\PackageCache\\com.unity.ide.visualstudio@dc1ddd4f09b6",
       "fingerprint": "dc1ddd4f09b68a99b5dc00185f3b7551294e28a7",
       "editorCompatibility": "2021.3.0a1",
       "version": "2.0.27",
@@ -52,7 +52,7 @@
     "com.unity.multiplayer.center@1.0.1": {
       "name": "com.unity.multiplayer.center",
       "displayName": "Multiplayer Center",
-      "resolvedPath": "C:\\Users\\james\\Demons Blood\\Library\\PackageCache\\com.unity.multiplayer.center@f01f4ba8d00a",
+      "resolvedPath": "C:\\Users\\james\\OneDrive\\Documents\\GitHub\\Demons Blood\\Library\\PackageCache\\com.unity.multiplayer.center@f01f4ba8d00a",
       "fingerprint": "f01f4ba8d00afa4e957bddf0fcd1612a564401ff",
       "editorCompatibility": "6000.0.0a1",
       "version": "1.0.1",
@@ -62,7 +62,7 @@
     "com.unity.ugui@2.0.0": {
       "name": "com.unity.ugui",
       "displayName": "Unity UI",
-      "resolvedPath": "C:\\Users\\james\\Demons Blood\\Library\\PackageCache\\com.unity.ugui@8873725e650d",
+      "resolvedPath": "C:\\Users\\james\\OneDrive\\Documents\\GitHub\\Demons Blood\\Library\\PackageCache\\com.unity.ugui@8873725e650d",
       "fingerprint": "8873725e650d08e38ff0036c986491dc2aff70dc",
       "editorCompatibility": "2019.2.0a1",
       "version": "2.0.0",
@@ -360,7 +360,7 @@
     "com.unity.test-framework@1.6.0": {
       "name": "com.unity.test-framework",
       "displayName": "Test Framework",
-      "resolvedPath": "C:\\Users\\james\\Demons Blood\\Library\\PackageCache\\com.unity.test-framework@0b7a23ab2e1d",
+      "resolvedPath": "C:\\Users\\james\\OneDrive\\Documents\\GitHub\\Demons Blood\\Library\\PackageCache\\com.unity.test-framework@0b7a23ab2e1d",
       "fingerprint": "0b7a23ab2e1d74441a5afdffa63f417929756957",
       "editorCompatibility": "6000.0.44f1",
       "version": "1.6.0",
@@ -370,7 +370,7 @@
     "com.unity.ext.nunit@2.0.5": {
       "name": "com.unity.ext.nunit",
       "displayName": "Custom NUnit",
-      "resolvedPath": "C:\\Users\\james\\Demons Blood\\Library\\PackageCache\\com.unity.ext.nunit@d8c07649098d",
+      "resolvedPath": "C:\\Users\\james\\OneDrive\\Documents\\GitHub\\Demons Blood\\Library\\PackageCache\\com.unity.ext.nunit@d8c07649098d",
       "fingerprint": "d8c07649098d3936da4c8ab500960c1776b44592",
       "editorCompatibility": "2019.4.0a1",
       "version": "2.0.5",
