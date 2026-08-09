@@ -50,13 +50,6 @@ public class EnemyAI : MonoBehaviour , ICombatant
     public Equipment bodySlot;
     public Equipment shieldSlot;
     public Equipment accessorySlot;
-    public int baseTargetWeight = 25;
-    public int lowHPWeightBonus = 30;
-    public int killWeightBonus = 50;
-    public int defendingWeightBonus = 20;
-    public int targetHPThreshold = 30;
-    public int minGoldReward = 10;
-    public int maxGoldReward = 35;
     public List<Spell> learnedSpells = new List<Spell>();
     public List<Art> learnedArts = new List<Art>();
     public List<Fusion> learnedFusions = new List<Fusion>();
@@ -65,8 +58,6 @@ public class EnemyAI : MonoBehaviour , ICombatant
    public List<ActiveStatusEffect> activeStatuses {get; set;} = new List<ActiveStatusEffect>();
     public float transformMultiplier = 1f;
     public bool isTransformed {get; protected set;} = false;
-    public float transformHPThreshold = 0f;
-    public float bossTransformMultiplier = 1.3f;
     Dictionary<Stat, int> statStages = new Dictionary<Stat, int>();
     public int GetStatStage(Stat stat) => statStages.TryGetValue(stat, out int value) ? value : 0;
     public void ChangeStatStage(Stat stat, int amount)
@@ -181,35 +172,15 @@ public class EnemyAI : MonoBehaviour , ICombatant
         if(currentMP > finalMP) currentMP = finalMP;
     }
     public enum EnemyActionType {Attack, Defend, Item, Run}
-    public enum EnemySpecialAttackCategory { Art, Spell, Fusion}
-    [System.Serializable]
-    public class EnemySpecialAttack
+    public virtual EnemyStats.EnemySpecialAttack ChooseAttackMove()
     {
-        public string attackName;
-        public EnemySpecialAttackCategory category;
-        public Learnable learnable;
-        public int weight = 10;
-    }
-    public List<EnemySpecialAttack> specialAttacks = new List<EnemySpecialAttack>();
-    public int basicAttackWeight = 50;
-    public int expReward = 10;
-    [System.Serializable]
-    public class LootDrop
-    {
-        public Item item;
-        public int quantity = 1;
-        [Range(0, 100)] public int dropChance = 100;
-    }
-    public List<LootDrop> lootTable = new List<LootDrop>();
-    public virtual EnemySpecialAttack ChooseAttackMove()
-    {
-        List<EnemySpecialAttack> usable = specialAttacks.FindAll(learnable => CanAfford(learnable.learnable));
-        int totalWeight = basicAttackWeight;
+        List<EnemyStats.EnemySpecialAttack> usable = enemyStats.specialAttacks.FindAll(learnable => CanAfford(learnable.learnable));
+        int totalWeight = enemyStats.basicAttackWeight;
         foreach (var move in usable) totalWeight += move.weight;
         if (totalWeight <= 0) return null;
         int roll = Random.Range(0, totalWeight);
-        if (roll < basicAttackWeight) return null;
-        roll -= basicAttackWeight;
+        if (roll < enemyStats.basicAttackWeight) return null;
+        roll -= enemyStats.basicAttackWeight;
         foreach (var move in usable)
         {
             if (roll < move.weight) return move;
@@ -277,10 +248,10 @@ public class EnemyAI : MonoBehaviour , ICombatant
     }
     public virtual void CheckTransform()
     {
-        if(!isTransformed && transformHPThreshold > 0 && currentHP <= transformHPThreshold && currentHP > 0)
+        if(!isTransformed && enemyStats.transformHPThreshold > 0 && currentHP <= enemyStats.transformHPThreshold && currentHP > 0)
         {
             isTransformed = true;
-            transformMultiplier = bossTransformMultiplier;
+            transformMultiplier = enemyStats.bossTransformMultiplier;
             RecalculateStats();
         }
     }
@@ -289,13 +260,13 @@ public class EnemyAI : MonoBehaviour , ICombatant
         Dictionary<ActiveStats, int> weights = new Dictionary<ActiveStats, int>();
         foreach (ActiveStats player in players)
         {
-            int weight = baseTargetWeight;
-            bool isLowHP = player.currentHP <= (player.finalHP * targetHPThreshold / 100);
-            if(isLowHP) weight += lowHPWeightBonus; //what determines islowHP?
+            int weight = enemyStats.baseTargetWeight;
+            bool isLowHP = player.currentHP <= (player.finalHP * enemyStats.targetHPThreshold / 100);
+            if(isLowHP) weight += enemyStats.lowHPWeightBonus; //what determines islowHP?
             int potentialDamage = Mathf.Max(1, finalStrength - player.finalDefense);
             bool wouldKill = player.currentHP <= potentialDamage;
-            if(wouldKill) weight += killWeightBonus;
-            if(player.isDefending) weight -= defendingWeightBonus;
+            if(wouldKill) weight += enemyStats.killWeightBonus;
+            if(player.isDefending) weight -= enemyStats.defendingWeightBonus;
             weights[player] = Mathf.Max(0, weight);
         }
         int totalWeight = 0;

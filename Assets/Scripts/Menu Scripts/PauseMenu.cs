@@ -123,11 +123,18 @@ void SelectCommand(MenuOption option)
         new MenuOption("Quests", QuestCategoryMenu),
         new MenuOption("Forge", OpenForgeMenu),
         new MenuOption("Bond", OpenBondMenu),
+        new MenuOption("Map", OpenMap),
         new MenuOption("Bestiary", OpenBestiaryMenu),
-        new MenuOption("Save", SaveGame),
         new MenuOption("Settings", OpenSettingsMenu),
+        new MenuOption("Save", SaveGame),
         new MenuOption("Quit Game", QuitGame)
         };
+    }
+    void OpenMap()
+    {
+        Close();
+        if(MapManager.instance != null) MapManager.instance.Open();
+        else Debug.LogWarning("No MapManager");
     }
     void SaveGame()
     {
@@ -147,7 +154,7 @@ void SelectCommand(MenuOption option)
      List<MenuOption> ItemListMenu()
     {
         List<MenuOption> options = new List<MenuOption>();
-        foreach (var item in InventoryManager.Instance.items)
+        foreach (var item in InventoryManager.Instance.items.OfType<Item>().Where(i => i.itemType == Item.ItemType.Consumable))
         {
             Item captured = item;
             options.Add(new MenuOption(captured.itemName, () => ChooseItemTarget(captured)));
@@ -174,6 +181,7 @@ void SelectCommand(MenuOption option)
     void UseItem(ActiveStats target)
     {
         Item item = selectedItem;
+        if(item.itemType == Item.ItemType.KeyItem) return;
         if(item.effects != null) foreach (Effect effect in item.effects) if(effect != null) StartCoroutine(effect.Apply(target,target));
         InventoryManager.Instance.LoseItem(item);
         if(itemFeedbackText != null) itemFeedbackText.text = $"Used {item.itemName} on {target.currentName}!";
@@ -213,10 +221,23 @@ void SelectCommand(MenuOption option)
         List<MenuOption> options = new List<MenuOption>();
         Quest quest = selectedQuest.quest;
         options.Add(new MenuOption(quest.description, () => {}) {enabled = false});
-        for(int i = 0; i < quest.objectives.Count; i++)
+        for(int i = 0; i < quest.stages.Count; i++)
         {
-            string prefix = i < selectedQuest.currentObjective ? "[x]" : (i == selectedQuest.currentObjective ? "[>]" : "[]");
-            options.Add(new MenuOption(prefix + quest.objectives[i].description, () => { }) {enabled = false});
+            string prefix = i < selectedQuest.currentStage ? "[x]" : (i == selectedQuest.currentStage ? "[>]" : "[]");
+            QuestStage stage = quest.stages[i];
+            string stageText;
+            if(stage.isChoiceStage && i < selectedQuest.currentStage)
+            {
+                int chosen = selectedQuest.GetChosenObjective(i);
+                stageText = (chosen >= 0 && chosen < stage.objectives.Count)
+                ? stage.objectives[chosen].description
+                : string.Join(" OR ", stage.objectives.ConvertAll(obj => obj.description));
+            }
+            else
+            {
+                stageText = string.Join(stage.isChoiceStage ? " OR " : " AND ", stage.objectives.ConvertAll(obj => obj.description));
+            }
+            options.Add(new MenuOption(prefix + stageText, () => { }) {enabled = false});
         }
         return options;
     }
@@ -285,7 +306,7 @@ List<MenuOption> OpenPartyMenu()
         List<MenuOption> options = new List<MenuOption>();
         Equipment currentlyEquipped = selectedCharacter.GetEquipped(selectedSlotType);
         if(currentlyEquipped != null) options.Add(new MenuOption($"Unequip{currentlyEquipped.equipmentName}", UnequipEquipment));
-        List<Equipment> matching = EquipmentManager.instance.equipment.FindAll(equipment => equipment.equipmentType == selectedSlotType);
+        List<Equipment> matching = InventoryManager.Instance.items.OfType<Equipment>().Where(equipment => equipment.equipmentType == selectedSlotType).ToList();
         if(selectedSlotType == Equipment.EquipmentType.Weapon) matching = matching.FindAll
         (equipment => selectedCharacter.playerStats.allowedWeaponTypes.Contains(equipment.weaponType));
         foreach(Equipment item in matching)
@@ -299,9 +320,9 @@ List<MenuOption> OpenPartyMenu()
 void EquipEquipment(Equipment newEquipment)
     {
         Equipment previous = selectedCharacter.Equip(newEquipment);
-        EquipmentManager.instance.LoseEquipment(newEquipment);
+        InventoryManager.Instance.LoseItem(newEquipment);
         if(previous != null)
-        EquipmentManager.instance.PickupEquipment(previous);
+        InventoryManager.Instance.PickupEquipment(previous);
         screenHistory.Pop();
         OpenScreen(CharacterMenu());
     }
@@ -309,7 +330,7 @@ void EquipEquipment(Equipment newEquipment)
     {
         Equipment removed = selectedCharacter.GetEquipped(selectedSlotType);
         selectedCharacter.Unequip(selectedSlotType);
-        if(removed != null) EquipmentManager.instance.PickupEquipment(removed);
+        if(removed != null) InventoryManager.Instance.PickupEquipment(removed);
         screenHistory.Pop();
         OpenScreen(CharacterMenu());
     }
@@ -342,10 +363,10 @@ void EquipEquipment(Equipment newEquipment)
     List<MenuOption> SkillTreeMenu()
     {
         List<MenuOption> options = new List<MenuOption>();
-        if(selectedCharacter.skillTrees == null) return options;
-        for(int i = 0; i < selectedCharacter.skillTrees.trees.Count; i++)
+        if(selectedCharacter.playerStats.skillTrees == null) return options;
+        for(int i = 0; i < selectedCharacter.playerStats.skillTrees.trees.Count; i++)
         {
-            SkillTree tree = selectedCharacter.skillTrees.trees[i];
+            SkillTree tree = selectedCharacter.playerStats.skillTrees.trees[i];
             int capturedIndex = i;
             int points = selectedCharacter.GetTreePoints(i);
             options.Add(new MenuOption($"{tree.treeName} ({points} pts)", () => OpenTreeNodes(capturedIndex)));
@@ -360,7 +381,7 @@ void EquipEquipment(Equipment newEquipment)
     List<MenuOption> TreeNodeMenu()
     {
         List<MenuOption> options = new List<MenuOption>();
-        SkillTree tree = selectedCharacter.skillTrees.trees[selectedTreeIndex];
+        SkillTree tree = selectedCharacter.playerStats.skillTrees.trees[selectedTreeIndex];
         int points = selectedCharacter.GetTreePoints(selectedTreeIndex);
         MenuOption spendOption = new MenuOption($"Spend Point ({selectedCharacter.skillPoints} available)", SpendPoint);
         spendOption.enabled = selectedCharacter.skillPoints > 0;
@@ -490,7 +511,7 @@ public int addElementCost = 200;
 Equipment selectedWeaponForElement;
 public List<CraftRecipe> craftRecipes = new List<CraftRecipe>();
 public List<AlchemyRecipe> alchemyRecipes = new List<AlchemyRecipe>();
-Item selectedFirstItem;
+Baggable selectedFirstItem;
 List<MenuOption> OpenForgeMenu()
     {
         if(forgeFeedbackText != null) forgeFeedbackText.text = "";
@@ -522,7 +543,7 @@ List<MenuOption> OpenForgeMenu()
     List<MenuOption> EnhanceListMenu()
     {
         List<MenuOption> options = new List<MenuOption>();
-        foreach(Equipment equipment in EquipmentManager.instance.equipment)
+        foreach(Equipment equipment in InventoryManager.Instance.items.OfType<Equipment>())
         {
             if(equipment.equipmentType != Equipment.EquipmentType.Weapon) continue;
             Equipment captured = equipment;
@@ -566,8 +587,8 @@ List<MenuOption> OpenForgeMenu()
         }
         else
          {
-        EquipmentManager.instance.LoseEquipment(original);
-        EquipmentManager.instance.PickupEquipment(enhanced); 
+        InventoryManager.Instance.LoseItem(original);
+        InventoryManager.Instance.PickupEquipment(enhanced); 
         }
         if(forgeFeedbackText != null) forgeFeedbackText.text = $"Enhanced to {enhanced.equipmentName}.";
    screenHistory.Pop();
@@ -581,7 +602,7 @@ List<MenuOption> OpenForgeMenu()
     List<MenuOption> ElementListMenu()
     {
         List<MenuOption> options = new List<MenuOption>();
-        foreach(Equipment equipment in EquipmentManager.instance.equipment)
+        foreach(Equipment equipment in InventoryManager.Instance.items.OfType<Equipment>())
         {
             if(equipment.equipmentType != Equipment.EquipmentType.Weapon) continue;
             if(equipment.element != Element.None) continue;
@@ -615,8 +636,8 @@ List<MenuOption> OpenForgeMenu()
         enhanced.baseAssetName = string.IsNullOrEmpty(original.baseAssetName) ? original.name : original.baseAssetName;
         enhanced.element = element;
         enhanced.equipmentName = $"{original.equipmentName} ({element})";
-        EquipmentManager.instance.LoseEquipment(original);
-        EquipmentManager.instance.PickupEquipment(enhanced);
+        InventoryManager.Instance.LoseItem(original);
+        InventoryManager.Instance.PickupEquipment(enhanced);
         if(forgeFeedbackText != null) forgeFeedbackText.text = $"{enhanced.equipmentName} imbued with {element}";
         screenHistory.Pop();
         screenHistory.Pop();
@@ -633,7 +654,7 @@ List<MenuOption> OpenForgeMenu()
     List<MenuOption> SmeltListMenu()
     {
         List<MenuOption> options = new List<MenuOption>();
-        foreach(Equipment equipment in EquipmentManager.instance.equipment)
+        foreach(Equipment equipment in InventoryManager.Instance.items.OfType<Equipment>())
         {
             if(equipment.smeltYield == null || equipment.smeltYield.Count == 0) continue;
             Equipment captured = equipment;
@@ -644,7 +665,7 @@ List<MenuOption> OpenForgeMenu()
     }
     void SmeltWeapons(Equipment equipment)
     {
-        EquipmentManager.instance.LoseEquipment(equipment);
+        InventoryManager.Instance.LoseItem(equipment);
         foreach (MaterialAmount material in equipment.smeltYield)
         {
             for(int i = 0; i < material.amount; i++) InventoryManager.Instance.PickupItem(material.material);
@@ -689,7 +710,7 @@ List<MenuOption> OpenForgeMenu()
         if(recipe.result != null)
         {
         Equipment crafted = Instantiate(recipe.result);
-        EquipmentManager.instance.PickupEquipment(crafted);
+        InventoryManager.Instance.PickupEquipment(crafted);
         craftedName = crafted.equipmentName;
         }
         else
@@ -704,14 +725,14 @@ List<MenuOption> OpenForgeMenu()
     List<MenuOption> AlchemyFirstItemMenu()
     {
         List<MenuOption> options = new List<MenuOption>();
-        foreach (Item item in InventoryManager.Instance.items)
+        foreach (Baggable item in InventoryManager.Instance.items)
         {
-            Item captured = item;
-            options.Add(new MenuOption(captured.itemName, () => OpenAlchemySecondItem(captured)));
+            Baggable captured = item;
+            options.Add(new MenuOption(captured.DisplayName, () => OpenAlchemySecondItem(captured)));
         }
         return options;
     }
-    void OpenAlchemySecondItem(Item first)
+    void OpenAlchemySecondItem(Baggable first)
     {
         selectedFirstItem = first;
         OpenScreen(AlchemySecondItemMenu());
@@ -719,32 +740,33 @@ List<MenuOption> OpenForgeMenu()
     List<MenuOption> AlchemySecondItemMenu()
     {
         List<MenuOption> options = new List<MenuOption>();
-        List<Item> remaining = new List<Item>(InventoryManager.Instance.items);
+        List<Baggable> remaining = new List<Baggable>(InventoryManager.Instance.items);
         remaining.Remove(selectedFirstItem);
-        foreach (Item item in remaining)
+        foreach (Baggable item in remaining)
         {
-            Item captured = item;
-            options.Add(new MenuOption(captured.itemName, () => CombineItems(captured)));
+            Baggable captured = item;
+            options.Add(new MenuOption(captured.DisplayName, () => CombineItems(captured)));
         }
         return options;
     }
-     void CombineItems(Item second)
+     void CombineItems(Baggable second)
     {
-        Item first = selectedFirstItem;
+        Baggable first = selectedFirstItem;
         AlchemyRecipe matched = alchemyRecipes.Find(recipe => recipe != null &&
         ((recipe.ingredientA == first && recipe.ingredientB == second) ||
         (recipe.ingredientA == second && recipe.ingredientB == first)));
         if(matched == null || matched.result == null)
         {
-             if(forgeFeedbackText != null) forgeFeedbackText.text = $"{first.itemName} + {second.itemName} does nothing.";
+             if(forgeFeedbackText != null) forgeFeedbackText.text = $"{first.DisplayName} + {second.DisplayName} does nothing.";
             screenHistory.Clear();
             OpenScreen(ForgeMainMenu());
             return;
         }
         InventoryManager.Instance.LoseItem(first);
         InventoryManager.Instance.LoseItem(second);
-        InventoryManager.Instance.PickupItem(matched.result);
-        if(forgeFeedbackText != null) forgeFeedbackText.text = $"{first.itemName} + {second.itemName} became {matched.result.itemName}.";
+        if(matched.result is Item resultItem) InventoryManager.Instance.PickupItem(resultItem);
+        else if(matched.result is Equipment resultEquipment) InventoryManager.Instance.PickupEquipment(Instantiate(resultEquipment));
+        if(forgeFeedbackText != null) forgeFeedbackText.text = $"{first.DisplayName} + {second.DisplayName} became {matched.result.DisplayName}.";
     screenHistory.Clear();
     OpenScreen(ForgeMainMenu());
     }

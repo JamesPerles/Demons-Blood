@@ -211,7 +211,6 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
-  skillTrees: {fileID: 0}
   skillPoints: 0
   statusImmunities: []
   bondProgress: []
@@ -285,7 +284,6 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
-  skillTrees: {fileID: 0}
   skillPoints: 0
   statusImmunities: []
   bondProgress: []
@@ -359,7 +357,6 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
-  skillTrees: {fileID: 0}
   skillPoints: 0
   statusImmunities: []
   bondProgress: []
@@ -436,7 +433,6 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
-  skillTrees: {fileID: 11400000, guid: 2cacbd9a304b8f144a800992f9f94297, type: 2}
   skillPoints: 0
   statusImmunities: []
   bondProgress: []
@@ -511,7 +507,6 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
-  skillTrees: {fileID: 0}
   skillPoints: 0
   statusImmunities: []
   bondProgress: []
@@ -585,7 +580,6 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
-  skillTrees: {fileID: 0}
   skillPoints: 0
   statusImmunities: []
   bondProgress: []
@@ -626,7 +620,6 @@ GameObject:
   - component: {fileID: 1534240672}
   - component: {fileID: 1534240671}
   - component: {fileID: 1534240670}
-  - component: {fileID: 1534240669}
   - component: {fileID: 1534240668}
   m_Layer: 0
   m_Name: Party
@@ -654,19 +647,6 @@ MonoBehaviour:
   battleSpeedMultiplier: 1
   uiTextColor: {r: 1, g: 1, b: 1, a: 1}
   pauseMenuPanelColor: {r: 0.05, g: 0.08, b: 0.2, a: 0.9}
---- !u!114 &1534240669
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1534240666}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a65c5d4170b8a084aab58957172bc00a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::EquipmentManager
-  equipment: []
 --- !u!114 &1534240670
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -681,9 +661,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::QuestManager
   activeQuests:
   - quest: {fileID: 11400000, guid: 1541f4a666b35a641a5aefbfe41a7afb, type: 2}
-    currentObjective: 0
-    isComplete: 0
+    currentStage: 0
+    objectiveCounts: 
+    optionalCounts: 
+    optionalClaimed: 
+    chosenObjectiveIndex: 0
+    state: 0
   completedQuests: []
+  failedQuests: []
 --- !u!114 &1534240671
 MonoBehaviour:
   m_ObjectHideFlags: 0

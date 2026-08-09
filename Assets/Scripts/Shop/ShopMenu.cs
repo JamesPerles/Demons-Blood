@@ -1,7 +1,7 @@
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
-
 public class ShopMenu : SubMenu
 {
 public static ShopMenu instance;
@@ -12,6 +12,10 @@ ShopStats currentShop;
 void Awake()
     {
         if(instance == null) instance = this; else Destroy(gameObject);
+    }
+    void Start()
+    {
+        SetDisplayActive(false);
     }
     public void Open(ShopStats shop)
     {
@@ -42,7 +46,6 @@ void Awake()
             new MenuOption("Sell", SellMenu),
             new MenuOption("Leave", (System.Action)Close)
         };
-
     }
     List<MenuOption> BuyMenu()
     {
@@ -62,12 +65,12 @@ void Awake()
      List<MenuOption> SellMenu()
     {
         List<MenuOption> options = new List<MenuOption>();
-        foreach (Item item in InventoryManager.Instance.items)
+        foreach (Item item in InventoryManager.Instance.items.OfType<Item>().Where(i => i.itemType == Item.ItemType.Consumable))
         {
             Item captured = item;
             options.Add(new MenuOption($"{captured.itemName} - {captured.sellPrice}g",() => SellItem(captured)));
         }
-        foreach (Equipment equipment in EquipmentManager.instance.equipment)
+        foreach (Equipment equipment in InventoryManager.Instance.items.OfType<Equipment>())
         {
             Equipment captured = equipment;
             options.Add(new MenuOption($"{captured.equipmentName} - {captured.sellPrice}g",() => SellEquipment(captured)));
@@ -84,12 +87,13 @@ void Awake()
     void BuyEquipment(Equipment equipment)
     {
          if(!Unaffordable(equipment.buyPrice)) return;
-        EquipmentManager.instance.PickupEquipment(equipment);
+        InventoryManager.Instance.PickupEquipment(Instantiate(equipment));
         if(feedbackText != null) feedbackText.text = $"Bought {equipment.equipmentName}!";
         RefreshCurrentScreen();
     }
     void SellItem(Item item)
     {
+        if(item.itemType == Item.ItemType.KeyItem) return;
         InventoryManager.Instance.LoseItem(item);
         Wallet.instance.AddGold(item.sellPrice);
         if(feedbackText != null) feedbackText.text = $"Sold {item.itemName}!";
@@ -99,7 +103,7 @@ void Awake()
     }
     void SellEquipment(Equipment equipment)
     {
-        EquipmentManager.instance.LoseEquipment(equipment);
+        InventoryManager.Instance.LoseItem(equipment);
         Wallet.instance.AddGold(equipment.sellPrice);
         if(feedbackText != null) feedbackText.text = $"Sold {equipment.equipmentName}!";
         UpdateGoldText();

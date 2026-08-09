@@ -17,5 +17,8 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Main Menu.unity
     guid: d5abdc9ee35cf5342a6a2ee403c44416
+  - enabled: 1
+    path: Assets/Scenes/TownTest.unity
+    guid: 9e9790575d1f48343af0ba7bbda9eaac
   m_configObjects: {}
   m_UseUCBPForAssetBundles: 0

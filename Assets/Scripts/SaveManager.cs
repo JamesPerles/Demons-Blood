@@ -14,7 +14,7 @@ public class SaveManager : MonoBehaviour
     const string ArtsFolder = "Arts";
     const string FusionsFolder = "Fusions";
     const string QuestsFolder = "Quests";
-    const string PlayerStatsFolder = "PlayerStats";
+    const string PlayerStatsFolder = "PartyMembers";
     string SavePath => Path.Combine(Application.persistentDataPath, "save.json");
     void Awake()
     {
@@ -27,10 +27,10 @@ public class SaveManager : MonoBehaviour
         SaveData data = new SaveData();
         data.gold = Wallet.instance.currentGold;
         data.inventoryItemNames = new List<string>();
-        foreach(Item item in InventoryManager.Instance.items)
+        foreach(Item item in InventoryManager.Instance.items.OfType<Item>())
         if(item != null) data.inventoryItemNames.Add(item.name);
         data.invetoryEquipment = new List<EquipmentSaveData>();
-        foreach(Equipment equipment in EquipmentManager.instance.equipment)
+        foreach(Equipment equipment in InventoryManager.Instance.items.OfType<Equipment>())
         data.invetoryEquipment.Add(SaveEquipment(equipment));
         data.playablePartyOrder = new List<string>();
         data.characters = new List<CharacterSaveData>();
@@ -47,10 +47,14 @@ public class SaveManager : MonoBehaviour
         data.activeQuests = new List<QuestProgressSaveData>();
         foreach (var progress in QuestManager.instance.activeQuests)
         data.activeQuests.Add(new QuestProgressSaveData
-        {questName = progress.quest.name, currentObjective = progress.currentObjective, isComplete = progress.isComplete});
+        {questName = progress.quest.name, currentStage = progress.currentStage, objectiveCounts = 
+        new List<int> (progress.objectiveCounts), chosenObjectivePerStage = new List<int> (progress.chosenObjectivePerStage), state = progress.state});
 data.completedQuests = new List<string>();
 foreach (var quest in QuestManager.instance.completedQuests)
 data.completedQuests.Add(quest.name);
+data.failedQuests = new List<string>();
+foreach(var quest in QuestManager.instance.failedQuests)
+data.failedQuests.Add(quest.name);
 data.discoveredEnemies = BestiaryManager.instance.GetDiscoveredIDs();
 if(SettingsManager.instance != null)
         {
@@ -128,6 +132,7 @@ if(SettingsManager.instance != null)
         string json = File.ReadAllText(SavePath);
         SaveData data = JsonUtility.FromJson<SaveData>(json);
         StartCoroutine(LoadingGame(data));
+    }
         IEnumerator LoadingGame(SaveData data)
         {
              Wallet.instance.SetGold(data.gold);
@@ -138,11 +143,10 @@ if(SettingsManager.instance != null)
             if(item != null) InventoryManager.Instance.PickupItem(item);
             else Debug.LogWarning($"Could not find Item '{itemName}' in Resources/{ItemsFolder}");
         }
-        EquipmentManager.instance.equipment.Clear();
         foreach(EquipmentSaveData equip in data.invetoryEquipment)
         {
             Equipment loaded = LoadEquipment(equip);
-            if(loaded != null) EquipmentManager.instance.PickupEquipment(loaded);
+            if(loaded != null) InventoryManager.Instance.PickupEquipment(loaded);
         }
         List<GameObject> reordered = new List<GameObject>();
         foreach(string id in data.playablePartyOrder)
@@ -165,8 +169,10 @@ if(SettingsManager.instance != null)
             Quest quest = Resources.Load<Quest>($"{QuestsFolder}/{questprog.questName}");
             if(quest == null) {Debug.LogWarning($"Could not find Quest '{questprog.questName}'"); continue;}
             QuestProgress progress = new QuestProgress(quest);
-            progress.currentObjective = questprog.currentObjective;
-            progress.isComplete = questprog.isComplete;
+            progress.currentStage = questprog.currentStage;
+            progress.objectiveCounts = new List<int>(questprog.objectiveCounts);
+            progress.chosenObjectivePerStage = new List<int>(questprog.chosenObjectivePerStage);
+            progress.state = questprog.state;
             QuestManager.instance.activeQuests.Add(progress);
         }
         QuestManager.instance.completedQuests.Clear();
@@ -174,6 +180,12 @@ if(SettingsManager.instance != null)
         {
             Quest quest = Resources.Load<Quest>($"{QuestsFolder}/{questName}");
             if(quest != null) QuestManager.instance.completedQuests.Add(quest);
+        }
+        QuestManager.instance.failedQuests.Clear();
+        foreach(string questName in data.failedQuests)
+        {
+            Quest quest = Resources.Load<Quest>($"{QuestsFolder}/{questName}");
+            if(quest != null) QuestManager.instance.failedQuests.Add(quest);
         }
         BestiaryManager.instance.LoadDiscovered(data.discoveredEnemies);
         if(SettingsManager.instance != null) SettingsManager.instance.SettingsSave(data.settings);
@@ -190,8 +202,6 @@ if(SettingsManager.instance != null)
             }
         Debug.Log("Game Loaded");
     }
-  }
-       
     GameObject FindCharacter(string playerStatsName)
     {
         foreach(GameObject obj in PlayerParty.instance.playableCharacters)

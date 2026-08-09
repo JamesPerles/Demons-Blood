@@ -9,7 +9,7 @@ public class Steal : Effect
         ActiveStats casterStats = caster as ActiveStats;
         EnemyAI enemyTarget = target as EnemyAI;
         if(casterStats == null || enemyTarget == null)  yield break;
-        List<EnemyAI.LootDrop> stealable = enemyTarget.lootTable.FindAll(drop => drop.item != null);
+        List<EnemyStats.LootDrop> stealable = enemyTarget.enemyStats.lootTable.FindAll(drop => drop.item != null);
         if(stealable.Count == 0)
     {
         yield return BattleTextBox.instance.ShowMessage($"{casterStats.currentName} found nothing to steal on the enemy");
@@ -18,9 +18,9 @@ public class Steal : Effect
     int roll = Random.Range(0,100);
     if (roll < stealChance)
     {
-EnemyAI.LootDrop stolen = stealable[Random.Range(0, stealable.Count)];
+EnemyStats.LootDrop stolen = stealable[Random.Range(0, stealable.Count)];
 InventoryManager.Instance.PickupItem(stolen.item);
-enemyTarget.lootTable.Remove(stolen);
+enemyTarget.enemyStats.lootTable.Remove(stolen);
 yield return BattleTextBox.instance.ShowMessage($"{casterStats.currentName} stole {stolen.item.itemName} from {enemyTarget.currentName}!");
     }
     else

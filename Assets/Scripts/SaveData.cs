@@ -47,8 +47,10 @@ public class CharacterSaveData
 public class QuestProgressSaveData
 {
     public string questName;
-    public int currentObjective;
-    public bool isComplete;
+    public int currentStage;
+    public List<int> objectiveCounts = new List<int>();
+    public List<int> chosenObjectivePerStage = new List<int>();
+    public QuestState state;
 }
 [System.Serializable]
 public class SettingsSaveData
@@ -72,6 +74,7 @@ public class SaveData
  public List<FlagEntry> flags = new List<FlagEntry>();
  public List<QuestProgressSaveData> activeQuests = new List<QuestProgressSaveData>();
  public List<string> completedQuests = new List<string>();
+ public List<string> failedQuests = new List<string>();
  public List<int> discoveredEnemies = new List<int>();
  public SettingsSaveData settings;
  public string sceneName;

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -175,7 +176,7 @@ public class CommandMenu : MonoBehaviour
     List<MenuOption> ItemMenu()
     {
         List<MenuOption> options = new List<MenuOption>();
-        foreach (var item in InventoryManager.Instance.items)
+        foreach (Item item in InventoryManager.Instance.items.OfType<Item>().Where(i => i.itemType == Item.ItemType.Consumable))
         {
             Item captured = item; //still wondering if the term captured is neccesary
             options.Add(new MenuOption(item.itemName, () =>

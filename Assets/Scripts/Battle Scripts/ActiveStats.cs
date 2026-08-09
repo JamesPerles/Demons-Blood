@@ -48,7 +48,6 @@ public class ActiveStats : MonoBehaviour, ICombatant
     public List<Skill> learnedSkills {get; set;} = new List<Skill>();
     public List<ActiveStatusEffect> activeStatuses {get; set;} = new List<ActiveStatusEffect>();
     public Skill[] skillSlots = new Skill[6];
-    public SkillTreeSet skillTrees;
     public int skillPoints = 0;
     List<int> treePoints = new List<int>();
     List<SkillTreePath> unlockedPaths = new List<SkillTreePath>();
@@ -316,8 +315,8 @@ public class ActiveStats : MonoBehaviour, ICombatant
     }
         void TreePointsInitialized()
         {
-            if(skillTrees == null) return;
-            while(treePoints.Count < skillTrees.trees.Count) treePoints.Add(0);
+            if(playerStats.skillTrees == null) return;
+            while(treePoints.Count < playerStats.skillTrees.trees.Count) treePoints.Add(0);
         }
         public int GetTreePoints(int treeIndex)
     {
@@ -326,7 +325,7 @@ public class ActiveStats : MonoBehaviour, ICombatant
     }
     public bool SpendSkillPoint(int treeIndex)
     {
-        if(skillTrees == null || treeIndex < 0 || treeIndex >= skillTrees.trees.Count) return false;
+        if(playerStats.skillTrees == null || treeIndex < 0 || treeIndex >= playerStats.skillTrees.trees.Count) return false;
         if(skillPoints <= 0) return false;
         TreePointsInitialized();
         if(treePoints[treeIndex] >= 100) return false;
@@ -337,7 +336,7 @@ public class ActiveStats : MonoBehaviour, ICombatant
     }
     void CheckTreeLearnables(int treeIndex)
     {
-        SkillTree tree = skillTrees.trees[treeIndex];
+        SkillTree tree = playerStats.skillTrees.trees[treeIndex];
         int currentPoints = treePoints[treeIndex];
         foreach(SkillTreePath path in tree.paths)
         {
@@ -501,19 +500,19 @@ public void Unequip(Equipment.EquipmentType slotType)
     public List<Vector2Int> SavePaths()
     {
             List<Vector2Int> result = new List<Vector2Int>();
-            if(skillTrees == null) return result;
-            for(int t = 0; t < skillTrees.trees.Count; t++)
+            if(playerStats.skillTrees == null) return result;
+            for(int tree = 0; tree < playerStats.skillTrees.trees.Count; tree++)
             {
-                SkillTree tree = skillTrees.trees[t];
-                for(int n = 0; n < tree.paths.Count; n++)
-                if(unlockedPaths.Contains(tree.paths[n])) result.Add(new Vector2Int(t, n));
+                SkillTree skillTrees = playerStats.skillTrees.trees[tree];
+                for(int path = 0; path < skillTrees.paths.Count; path++)
+                if(unlockedPaths.Contains(skillTrees.paths[path])) result.Add(new Vector2Int(tree, path));
             }
             return result;
         }
         public void LoadPaths(int treeIndex, int pathIndex)
     {
-        if(skillTrees == null || treeIndex < 0 || treeIndex >= skillTrees.trees.Count) return;
-        SkillTree tree = skillTrees.trees[treeIndex];
+        if(playerStats.skillTrees == null || treeIndex < 0 || treeIndex >= playerStats.skillTrees.trees.Count) return;
+        SkillTree tree = playerStats.skillTrees.trees[treeIndex];
         if(pathIndex < 0 || pathIndex >= tree.paths.Count) return;
         SkillTreePath path = tree.paths[pathIndex];
         if(!unlockedPaths.Contains(path)) unlockedPaths.Add(path);

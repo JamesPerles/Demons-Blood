@@ -18,7 +18,7 @@ void Awake()
         flags[key] = value;
         onFlagChanged?.Invoke(key);
     }
-    public bool GetFlags(string key)
+    public bool GetFlag(string key)
     {
         return !string.IsNullOrEmpty(key) && flags.TryGetValue(key, out bool value) && value;
     }

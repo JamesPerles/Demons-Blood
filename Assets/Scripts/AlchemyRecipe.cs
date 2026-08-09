@@ -2,7 +2,7 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "New Alchemy Recipe", menuName = "Recipe/Alchemy")]
 public class AlchemyRecipe : ScriptableObject
 {
-public Item ingredientA;
-public Item ingredientB;
-public Item result;
+public Baggable ingredientA;
+public Baggable ingredientB;
+public Baggable result;
 }

@@ -8,6 +8,7 @@ public class BattleManager : MonoBehaviour
 {
     public static BattleManager instance;
     public static EncounterGroup SelectedEncounter;
+    public static string lastTown;
     public enum EncounterType{Normal, Ambush, Advantage}
     public static EncounterType encounterType = EncounterType.Normal;
     List<ActiveStats> players = new List<ActiveStats>();
@@ -16,6 +17,7 @@ public class BattleManager : MonoBehaviour
     public TextMeshProUGUI[] playerStatusMenu;
     bool battleStarted = false;
     bool battleInProgress = false;
+    HashSet<ICombatant> reportedDead = new HashSet<ICombatant>();
     bool battleEscaped = false;
     public ActiveStats currentPlayer;
     public float enemySpace = 1.5f;
@@ -39,7 +41,7 @@ public class BattleManager : MonoBehaviour
         if(instance == null) instance = this; 
         else Destroy(gameObject);
     }
-    void Destroy()
+    void OnDestroy()
     {
         if(instance == this) instance = null;
     }
@@ -128,6 +130,7 @@ IEnumerator StartBattle()
         {
             if(battleInProgress) yield break;
             battleInProgress = true;
+            reportedDead.Clear();
             Debug.Log("Starting Combat");
             if(encounterType == EncounterType.Ambush)
         {
@@ -289,9 +292,14 @@ IEnumerator StartBattle()
         IEnumerator CheckDeath(ICombatant combatant) 
     {
         if (combatant.currentHP > 0) yield break;
+        if(reportedDead.Contains(combatant)) yield break;
+        reportedDead.Add(combatant);
         string message = combatant is ActiveStats ? $"{combatant.currentName} has fallen!" : $"{combatant.currentName} was defeated!";
-       if(combatant is EnemyAI defeatedEnemy && BestiaryManager.instance != null)
-       BestiaryManager.instance.Discover(defeatedEnemy.enemyStats);
+       if(combatant is EnemyAI defeatedEnemy)
+        {
+           if(BestiaryManager.instance != null) BestiaryManager.instance.Discover(defeatedEnemy.enemyStats);
+           if(QuestManager.instance != null) QuestManager.instance.ReportKill(defeatedEnemy.enemyStats);
+        }
         yield return StartCoroutine(BattleTextBox.instance.ShowMessage(message)); 
     }
     IEnumerator SkillEffects(ICombatant combatant)
@@ -563,7 +571,7 @@ IEnumerator StartBattle()
             ActiveStats target = enemy.ChooseTarget(livingPlayers);
             if(target != null)
                 {
-                    EnemyAI.EnemySpecialAttack move = enemy.ChooseAttackMove();
+                    EnemyStats.EnemySpecialAttack move = enemy.ChooseAttackMove();
                     if (move == null) yield return
                     StartCoroutine(ResolveAttack(enemy, target, DamageType.Physical, 0, "attacks", BuildPhysicalEffects(enemy.weaponSlot, null), Element.None));
                     else yield return StartCoroutine(EnemySpecial(enemy, target, move));
@@ -583,7 +591,7 @@ IEnumerator StartBattle()
         }
         yield return StartCoroutine(ScaledWait(1f));
         } 
-    IEnumerator EnemySpecial(EnemyAI enemy, ActiveStats target, EnemyAI.EnemySpecialAttack special)
+    IEnumerator EnemySpecial(EnemyAI enemy, ActiveStats target, EnemyStats.EnemySpecialAttack special)
     {
         Learnable learnable = special.learnable;
         enemy.PaySpecialCost(learnable);
@@ -644,7 +652,7 @@ IEnumerator StartBattle()
                 StartCoroutine(BattleTextBox.instance.ShowMessage("Party Defeated"));
                 yield return StartCoroutine(ScaledWait(1.5f));
                 StopAllCoroutines();
-                HandlePartyDefeat();
+                PartyDefeat();
             }
             else if(AllEnemiesDead())
             {
@@ -656,19 +664,20 @@ IEnumerator StartBattle()
                 SceneManager.LoadScene(RandomEncounter.previousSceneName);
             }
         }
-        void HandlePartyDefeat()
+        void PartyDefeat()
     {
+        if(FlagManager.instance != null) FlagManager.instance.SetFlag("PartyDefeated", true);
         switch(deathHandling)
         {
             case DeathHandling.ReviveInTown:
-            GoToTitleScreen();
+            ReviveInTown();
             break;
             default:
-            GoToTitleScreen();
+            DeathScreen();
             break;
         }
     }
-    void GoToTitleScreen()
+    void DeathScreen()
     {
         SceneManager.LoadScene(deathSceneName);
     }
@@ -685,19 +694,24 @@ IEnumerator StartBattle()
             player.RestoreMP(player.finalMP);
             //also should cure all statuses imo
         }
-      //  SceneManager.LoadScene(townSceneName);
+      if(string.IsNullOrEmpty(lastTown))
+        {
+            Debug.LogWarning("No town visited.");
+            DeathScreen();
+        }
+        else SceneManager.LoadScene(lastTown);
     }
     IEnumerator BattleRewards()
     {
         int totalExp = 0;
         int totalGold = 0;
-        List<EnemyAI.LootDrop> earnedDrops = new List<EnemyAI.LootDrop>();
+        List<EnemyStats.LootDrop> earnedDrops = new List<EnemyStats.LootDrop>();
         foreach (EnemyAI enemy in enemies)
         {
             if(enemy == null) continue;
-            totalExp += enemy.expReward;
-            totalGold += Random.Range(enemy.minGoldReward, enemy.maxGoldReward + 1);
-            foreach (EnemyAI.LootDrop drop in enemy.lootTable)
+            totalExp += Random.Range(enemy.enemyStats.minExpReward, enemy.enemyStats.maxExpReward + 1);    
+            totalGold += Random.Range(enemy.enemyStats.minGoldReward, enemy.enemyStats.maxGoldReward + 1);
+            foreach (EnemyStats.LootDrop drop in enemy.enemyStats.lootTable)
             {
                 if (drop.item == null) continue;
                 int roll = Random.Range(0, 100);
@@ -716,8 +730,8 @@ IEnumerator StartBattle()
                 }
             }
         if(totalGold > 0) Wallet.instance.AddGold(totalGold);
-        if(totalExp > 0) yield return StartCoroutine(BattleTextBox.instance.ShowMessage($"The party earns{totalGold} gold!"));
-        foreach (EnemyAI.LootDrop drop in earnedDrops)
+        if(totalGold > 0) yield return StartCoroutine(BattleTextBox.instance.ShowMessage($"The party earns {totalGold} gold!"));
+        foreach (EnemyStats.LootDrop drop in earnedDrops)
         {
             for (int q = 0; q < drop.quantity; q++)
             InventoryManager.Instance.PickupItem(drop.item);

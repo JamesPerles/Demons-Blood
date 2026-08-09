@@ -33,4 +33,5 @@ public class PlayerStats : ScriptableObject
     public List<StatusEffect> immunities = new List<StatusEffect>();
     public List<Equipment.WeaponType> allowedWeaponTypes = new List<Equipment.WeaponType>();
     public Skill personalSkill;
+    public SkillTreeSet skillTrees;
 }

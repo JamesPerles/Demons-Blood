@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 [CreateAssetMenu(fileName = "New Equipment", menuName = "Create New Equipment")]
-public class Equipment : ScriptableObject
+public class Equipment : Baggable
 {
     public string equipmentName;
     public int hp = 0;
@@ -31,4 +31,5 @@ public class Equipment : ScriptableObject
     public Element element = Element.None;
     public List<MaterialAmount> smeltYield = new List<MaterialAmount>();
     public List<Effect> effects = new List<Effect>();
+    public override string DisplayName => equipmentName;
 }
