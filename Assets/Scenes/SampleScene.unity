@@ -284,6 +284,12 @@ MonoBehaviour:
   fontSize: 32
   cellSize: {x: 280, y: 60}
   spacing: {x: 0, y: 8}
+  minAutoFontSize: 14
+  entriesPerPage: 20
+  cursor: {fileID: 0}
+  cursorOffset: 16
+  pathText: {fileID: 0}
+  detailText: {fileID: 0}
   shopNameText: {fileID: 1790357772969355348, guid: da8031f6a688c8846be7a9a9a4560f44, type: 3}
   goldText: {fileID: 921695106}
   feedbackText: {fileID: 1790357772969355348, guid: da8031f6a688c8846be7a9a9a4560f44, type: 3}
@@ -579,7 +585,7 @@ MonoBehaviour:
   npcName: Bitchboy
   dialogueLines:
   - Hello
-  offeredQuest: {fileID: 11400000, guid: c344cee5c09663e4fa08a944631a06f5, type: 2}
+  offeredQuest: {fileID: 11400000, guid: 1541f4a666b35a641a5aefbfe41a7afb, type: 2}
   questOfferDialogueLines:
   - Hey I need you to kill some bitches for me
 --- !u!61 &416038520
@@ -1029,6 +1035,9 @@ MonoBehaviour:
   battleSpeedMultiplier: 1
   uiTextColor: {r: 1, g: 1, b: 1, a: 1}
   pauseMenuPanelColor: {r: 0.05, g: 0.08, b: 0.2, a: 0.9}
+  menuPanelColor: {r: 0.04, g: 0.04, b: 0.04, a: 0.72}
+  menuBorderColor: {r: 0.42, g: 0.08, b: 0.08, a: 1}
+  menuBorderThickness: 5
 --- !u!114 &640909341
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1060,6 +1069,12 @@ MonoBehaviour:
   fontSize: 32
   cellSize: {x: 280, y: 60}
   spacing: {x: 0, y: 8}
+  minAutoFontSize: 14
+  entriesPerPage: 20
+  cursor: {fileID: 0}
+  cursorOffset: 16
+  pathText: {fileID: 0}
+  detailText: {fileID: 0}
   allTowns:
   - {fileID: 11400000, guid: 543e46901b16fe441b47d1340ac5a81e, type: 2}
 --- !u!1 &704390210
@@ -1620,10 +1635,16 @@ MonoBehaviour:
   fontSize: 20
   cellSize: {x: 280, y: 40}
   spacing: {x: 0, y: 2}
+  minAutoFontSize: 14
+  entriesPerPage: 20
+  cursor: {fileID: 0}
+  cursorOffset: 16
+  pathText: {fileID: 1790357772969355348, guid: da8031f6a688c8846be7a9a9a4560f44, type: 3}
+  detailText: {fileID: 1790357772969355348, guid: da8031f6a688c8846be7a9a9a4560f44, type: 3}
   walletText: {fileID: 412609955}
   pauseKey: 27
   pauseTimeScale: 1
-  panelBackground: {fileID: 969700061}
+  partyStatusUI: {fileID: 0}
   itemFeedbackText: {fileID: 1790357772969355348, guid: da8031f6a688c8846be7a9a9a4560f44, type: 3}
   statsText: {fileID: 1790357772969355348, guid: da8031f6a688c8846be7a9a9a4560f44, type: 3}
   bestiaryDetailText: {fileID: 1790357772969355348, guid: da8031f6a688c8846be7a9a9a4560f44, type: 3}

@@ -17,19 +17,41 @@ MonoBehaviour:
   isMainQuest: 0
   stages:
   - objectives:
+    - description: You gotta touch stuff
+      type: 0
+      flagKey: Touch1
+      targetEnemy: {fileID: 0}
+      targetItem: {fileID: 0}
+      requiredCount: 1
+      choiceGoldReward: 1000
+      choiceExpReward: 1000
+      choiceItemRewards: []
+      choiceEquipmentRewards: []
+      hasOptionalObjectives: 1
+      optionalObjectives:
+      - description: touch another thing
+        type: 0
+        flagKey: Touch2
+        targetEnemy: {fileID: 0}
+        targetItem: {fileID: 0}
+        requiredCount: 0
+        bonusGoldReward: 100
+        bonusExpReward: 100
+        bonusItemRewards: []
+        bonusEquipmentRewards: []
     - description: You gotta kill some enemies or you die
       type: 1
       flagKey: 
       targetEnemy: {fileID: 11400000, guid: 5e5c3b30acc01be478df3028fce9bd35, type: 2}
       targetItem: {fileID: 0}
       requiredCount: 1
-      bonusGoldReward: 500
-      bonusExpReward: 500
-      bonusItemRewards: []
-      bonusEquipmentRewards: []
+      choiceGoldReward: 50
+      choiceExpReward: 50
+      choiceItemRewards: []
+      choiceEquipmentRewards: []
       hasOptionalObjectives: 0
       optionalObjectives: []
-    isChoiceStage: 0
+    isChoiceStage: 1
   prerequesite: []
   unlockFlagKey: 
   failFlagKey: 
