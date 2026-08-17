@@ -272,8 +272,8 @@ MonoBehaviour:
     y: 0
     width: 292
     height: 764.8
-  m_MinSize: {x: 275, y: 50}
-  m_MaxSize: {x: 4000, y: 4000}
+  m_MinSize: {x: 276, y: 76}
+  m_MaxSize: {x: 4001, y: 4026}
   m_ActualView: {fileID: 18}
   m_Panes:
   - {fileID: 18}
@@ -301,7 +301,7 @@ MonoBehaviour:
   m_Pos:
     serializedVersion: 2
     x: 0
-    y: 43.2
+    y: 0
     width: 1536
     height: 36
   m_SerializedDataModeController:
@@ -567,7 +567,7 @@ MonoBehaviour:
   m_Pos:
     serializedVersion: 2
     x: 0
-    y: 544.8
+    y: 489.6
     width: 1243
     height: 273.19998
   m_SerializedDataModeController:
@@ -621,7 +621,6 @@ MonoBehaviour:
     - m_Data: 24896
     - m_Data: 24898
     - m_Data: 24900
-    - m_Data: 1000000000
     m_RenameOverlay:
       m_UserAcceptedRename: 0
       m_Name: 
@@ -739,7 +738,7 @@ MonoBehaviour:
   m_Pos:
     serializedVersion: 2
     x: 0
-    y: 79.200005
+    y: 24
     width: 273.4
     height: 439.6
   m_SerializedDataModeController:
@@ -758,10 +757,9 @@ MonoBehaviour:
   m_SceneHierarchy:
     m_TreeViewState:
       scrollPos: {x: 0, y: 0}
-      m_SelectedIDs:
-      - m_Data: -1294
+      m_SelectedIDs: []
       m_LastClickedID:
-        m_Data: -1294
+        m_Data: 0
       m_ExpandedIDs:
       - m_Data: -1288
       - m_Data: 24506
@@ -815,8 +813,8 @@ MonoBehaviour:
     m_TextWithWhitespace: "Scene\u200B"
   m_Pos:
     serializedVersion: 2
-    x: 274.4
-    y: 79.200005
+    x: 275.4
+    y: 24
     width: 967.6
     height: 439.6
   m_SerializedDataModeController:
@@ -1625,8 +1623,8 @@ MonoBehaviour:
     m_TextWithWhitespace: "Inspector\u200B"
   m_Pos:
     serializedVersion: 2
-    x: 1244
-    y: 79.200005
+    x: 1245
+    y: 24
     width: 291
     height: 738.8
   m_SerializedDataModeController:
