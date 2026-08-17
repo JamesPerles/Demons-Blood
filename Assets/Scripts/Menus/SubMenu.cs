@@ -14,9 +14,9 @@ protected virtual void Update()
         }
     }
     public abstract void Close();
-    protected void OpenScreen(List<MenuOption> options, string title = "", bool usePaging = true)
+    protected void OpenScreen(List<MenuOption> options, string title = "", bool usePaging = true, int columns = 1)
     {
-        MenuScreen screen = new MenuScreen(options, fontSize, 1, cellSize, spacing, title);
+        MenuScreen screen = new MenuScreen(options, fontSize, columns, cellSize, spacing, title);
         screen.usePaging = usePaging;
         screenHistory.Push(screen);
         FillMenu(screen);
@@ -50,35 +50,49 @@ protected virtual void Update()
         if(screenHistory.Count == 0) return;
         MenuScreen screen = screenHistory.Peek();
         if(!screen.usePaging) return;
-        int maxPage = Mathf.Max(0, (screen.allOptions.Count - 1) / entriesPerPage);
+        int perPage = GetPerPage(screen);
+        int maxPage = Mathf.Max(0, (screen.allOptions.Count - 1) / perPage);
         screen.currentPage = screen.currentPage >= maxPage ? 0 : screen.currentPage + 1;
         FillMenu(screen);
+    }
+    protected void PreviousPage()
+    {
+      if(screenHistory.Count == 0) return;
+      MenuScreen screen = screenHistory.Peek();
+      if(!screen.usePaging) return;
+      int perPage = GetPerPage(screen);
+      int maxPage = Mathf.Max(0, (screen.allOptions.Count - 1) / perPage);
+      screen.currentPage = screen.currentPage <= 0 ? maxPage : screen.currentPage - 1;
+      FillMenu(screen);  
     }
 protected void FillMenu(MenuScreen screen)
 {
     ClearEntries();
     ApplyGridSizing(screen.columns);
     UpdatePathText(BreadcrumbPrefix(), BreadcrumbSuffix());
+    UpdatePageText(screen);
     if(screen.allOptions.Count == 0)
     {
         EmptyMenu(screen.fontSize);
         return;
     }
-    int start = screen.usePaging ? screen.currentPage * entriesPerPage : 0;
-    int count = screen.usePaging ? Mathf.Min(entriesPerPage, screen.allOptions.Count - start) : screen.allOptions.Count;
+    int perPage = GetPerPage(screen);
+    int start = screen.usePaging ? screen.currentPage * perPage : 0;
+    int count = screen.usePaging ? Mathf.Min(perPage, screen.allOptions.Count - start) : screen.allOptions.Count;
     for (int i = start; i < start + count; i++)
     SpawnEntry(screen.allOptions[i], optionsGrid, screen.fontSize, SelectCommand);
     GameObject firstEnabled = spawnedEntries.Find(e => {var b = e.GetComponent<UnityEngine.UI.Button>(); 
     return b != null && b.interactable;});
     if(firstEnabled != null)
     {
+        EventSystem.current?.SetSelectedGameObject(null);
         EventSystem.current?.SetSelectedGameObject(firstEnabled);
         EntryHighlight(firstEnabled);
     }
 }
 protected virtual void SelectCommand(MenuOption option)
     {
-        if(option.getChildren != null) OpenScreen(option.getChildren(), option.label, option.childUsePaging);
+        if(option.getChildren != null) OpenScreen(option.getChildren(), option.label, option.childUsePaging, option.childColumns);
         else option.onSelect();
     }
 protected void UpdatePathText(string prefix = "", string suffix = "")

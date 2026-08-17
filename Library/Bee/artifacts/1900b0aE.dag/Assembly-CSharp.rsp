@@ -433,7 +433,7 @@
 "Assets/Scripts/Menus/MenuBase.cs"
 "Assets/Scripts/Menus/MenuEntrySelect.cs"
 "Assets/Scripts/Menus/MenuPanelTheme.cs"
-"Assets/Scripts/Menus/PartyStatusUi.cs"
+"Assets/Scripts/Menus/PartyStatusUI.cs"
 "Assets/Scripts/Menus/PauseMenu.cs"
 "Assets/Scripts/Menus/ShopMenu.cs"
 "Assets/Scripts/Menus/SubMenu.cs"

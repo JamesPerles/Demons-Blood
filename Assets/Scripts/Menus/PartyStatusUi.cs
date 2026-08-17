@@ -16,23 +16,37 @@ public TextMeshProUGUI mpText;
 public Image transformFill;
 public TextMeshProUGUI transformText;
 public GameObject activeHighlight;
+public GameObject divider;
 }
+public class PartyMemberSlotView : MonoBehaviour
+    {
+        public PartyMemberSlot slot;
+    }
 public class PartyStatusUI : MonoBehaviour
     {
-        public PartyMemberSlot[] slots = new PartyMemberSlot[4];
+        public GameObject slotPrefab;
+        public Transform slotParent;
         public Color aliveNameColor = Color.white;
         public Color deadNameColor = new Color(0.6f, 0.15f, 0.15f);
+        public RectTransform borderRect;
+        List<GameObject> spawnedSlots = new List<GameObject>();
         public void Refresh(List<ActiveStats> party, ActiveStats activeMember)
         {
-            for(int i = 0; i < slots.Length; i++)
+            foreach(GameObject spawned in spawnedSlots) Destroy(spawned);
+            spawnedSlots.Clear();
+            if(party == null || slotPrefab == null || slotParent == null) return;
+            List<ActiveStats> livingRoster = new List<ActiveStats>();
+            foreach(var member in party) if(member != null) livingRoster.Add(member);
+            for(int i = 0; i < livingRoster.Count; i++)
             {
-                PartyMemberSlot slot = slots[i];
-                if(slot == null) continue;
-                bool hasMember = party != null && i < party.Count && party[i] != null;
-                if(slot.root != null) slot.root.SetActive(hasMember);
-                if(!hasMember) continue;
-                ActiveStats member = party[i];
+                ActiveStats member = livingRoster[i];
+                GameObject spawned = Instantiate(slotPrefab, slotParent);
+                spawnedSlots.Add(spawned);
+                PartyMemberSlotView view = spawned.GetComponent<PartyMemberSlotView>();
+                if(view == null || view.slot == null) continue;
+                PartyMemberSlot slot = view.slot;
                 bool isDead = member.currentHP <= 0;
+                if(slot.root != null) slot.root.SetActive(true);
                 if(slot.nameText != null)
                 {
                     slot.nameText.text = member.currentName;
@@ -43,7 +57,14 @@ public class PartyStatusUI : MonoBehaviour
                 SetBar(slot.mpFill, slot.mpText, member.currentMP, member.finalMP);
                 SetTransformBar(slot.transformFill, slot.transformText, member.transformGauge, member.transformGaugeMax);
                 if(slot.activeHighlight != null) slot.activeHighlight.SetActive(!isDead && member == activeMember);
+                bool isLast = i == livingRoster.Count - 1;
+                if(slot.divider != null) slot.divider.SetActive(!isLast);
             }
+        if(borderRect != null)
+        {
+            Canvas.ForceUpdateCanvases();
+            LayoutRebuilder.ForceRebuildLayoutImmediate(borderRect);
+        }
         }
 void SetBar(Image fill, TextMeshProUGUI label, int current, int max)
     {

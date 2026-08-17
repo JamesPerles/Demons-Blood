@@ -14,6 +14,7 @@ public class MenuOption
     public TargetScope targetScope = TargetScope.None;
     public System.Action<ICombatant> onTargetSelect;
     public bool childUsePaging = true;
+    public int childColumns = 1;
     public MenuOption(string label, System.Action onSelect)
     {this.label = label; this.onSelect = onSelect;}
     public MenuOption(string label, System.Func<List<MenuOption>> getChildren)
@@ -55,6 +56,7 @@ public RectTransform cursor;
 public float cursorOffset = 16f;
 public TextMeshProUGUI pathText;
 public TextMeshProUGUI detailText;
+public TextMeshProUGUI pageText;
 protected List<GameObject> spawnedEntries = new List<GameObject>();
 protected Dictionary<GameObject, MenuOption> entryOptionMap = new Dictionary<GameObject, MenuOption>();
 protected void SetDisplayActive(bool active)
@@ -75,6 +77,18 @@ protected void SetDisplayActive(bool active)
         grid.constraintCount = columns;
         grid.cellSize = cellSize;
         grid.spacing = spacing;
+    }
+    protected int GetPerPage(MenuScreen screen)
+    {
+        return screen.columns > 1 ? screen.columns * 3 : entriesPerPage;
+    }
+    protected void UpdatePageText(MenuScreen screen)
+    {
+        if(pageText == null) return;
+        if(!screen.usePaging) {pageText.text = ""; return;}
+        int perPage = GetPerPage(screen);
+        int maxPage = Mathf.Max(1, Mathf.CeilToInt((float)screen.allOptions.Count / perPage));
+        pageText.text = maxPage > 1 ? $"{screen.currentPage + 1}/{maxPage}" : "";
     }
     protected GameObject BuildEntry(MenuOption option, Transform parent, float entryFontSize, System.Action<MenuOption> onClick)
     {

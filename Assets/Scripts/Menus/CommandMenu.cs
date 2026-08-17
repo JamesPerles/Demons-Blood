@@ -40,6 +40,21 @@ public class CommandMenu : SubMenu
             else if (!actionSelected) undoRequested = true;
         }
         if (Input.GetKeyDown(KeyCode.Space) && screenHistory.Count > 0) NextPage();
+        if(Input.GetKeyDown(KeyCode.RightArrow)) TryEdgePage(1);
+        if(Input.GetKeyDown(KeyCode.LeftArrow)) TryEdgePage(-1);   
+    }
+    void TryEdgePage(int direction)
+    {
+        if(isTargeting) return;
+        if(screenHistory.Count == 0) return;
+        MenuScreen screen = screenHistory.Peek();
+        if(screen.columns <= 1) return;
+        GameObject selected = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
+        int index = spawnedEntries.IndexOf(selected);
+        if(index < 0) return;
+        int col = index % screen.columns;
+        if(direction > 0 && col == screen.columns - 1) NextPage();
+        else if(direction < 0 && col == 0) PreviousPage();
     }
     public override void Close()
     {
@@ -81,7 +96,7 @@ public class CommandMenu : SubMenu
         {
         new MenuOption("Fight", FightMenu) {description = "Attack an enemy"},
         new MenuOption("Defend", DefendSelected) {description = "Reduce damage by defending against an enemy attack"}, 
-        new MenuOption("Item", ItemMenu) {description = "Change equipment and use itmes in your inventory"}, 
+        new MenuOption("Item", ItemMenu) {description = "Change equipment and use itmes in your inventory", childColumns = 3}, 
         new MenuOption("Run", RunSelected) {description = "Attempt to flee the battle"} 
         };
         MenuOption swapOption = new MenuOption("Swap", PartySwapMenu) {description = "Swap with a non active member of the party"};
@@ -135,9 +150,9 @@ public class CommandMenu : SubMenu
     {
         new MenuOption("Attack",null) {description = "A basic attack", targetScope = MenuOption.TargetScope.Enemies, 
         onTargetSelect = (target) => {selectedAction = PlayerActionType.Attack; FinalizeTurn();}}, 
-        new MenuOption("Arts", ArtMenu) {description = "Physical attacks that cost HP to use."},
-         new MenuOption("Spells", SpellMenu) {description = "Magic attacks that cost MP to use"}, 
-         new MenuOption("Fusions", FusionMenu) {description = "A combination of Physical and Magical, costs both HP and MP to use"}
+        new MenuOption("Arts", ArtMenu) {description = "Physical attacks that cost HP to use.", childColumns = 3},
+         new MenuOption("Spells", SpellMenu) {description = "Magic attacks that cost MP to use", childColumns = 3}, 
+         new MenuOption("Fusions", FusionMenu) {description = "A combination of Physical and Magical, costs both HP and MP to use", childColumns = 3}
     };
     List<MenuOption> ItemMenu()
     {
@@ -254,16 +269,35 @@ public class CommandMenu : SubMenu
             sourceOption.onTargetSelect(currentActiveStats);
             return;
         }
-        List<ICombatant> pool = new List<ICombatant>();
+        List<ICombatant> allies = new List<ICombatant>();
+        List<ICombatant> enemies = new List<ICombatant>();
         if(BattleManager.instance != null)
         {
             if(sourceOption.targetScope == MenuOption.TargetScope.Allies || sourceOption.targetScope == MenuOption.TargetScope.Any)
-            pool.AddRange(BattleManager.instance.GetActivePlayers().Where(player => player.currentHP > 0).Cast<ICombatant>());
+            allies.AddRange(BattleManager.instance.GetActivePlayers().Where(player => player.currentHP > 0).Cast<ICombatant>());
             if(sourceOption.targetScope == MenuOption.TargetScope.Enemies || sourceOption.targetScope == MenuOption.TargetScope.Any)
-            pool.AddRange(BattleManager.instance.GetLivingEnemies().Cast<ICombatant>());
+            enemies.AddRange(BattleManager.instance.GetLivingEnemies().Cast<ICombatant>());
         }
         List<MenuOption> targets = new List<MenuOption>();
-        foreach(ICombatant combatant in pool)
+        if(enemies.Count > 0)
+        {
+            targets.Add(new MenuOption ("-- Enemies --", () => { }) {enabled = false});
+        }
+        foreach(ICombatant combatant in enemies)
+        {
+            ICombatant captured = combatant;
+            targets.Add(new MenuOption(captured.currentName, () =>
+            {
+                selectedTarget = captured;
+                EndTargeting();
+                sourceOption.onTargetSelect(captured);
+            }));
+        }
+         if(allies.Count > 0)
+        {
+            targets.Add(new MenuOption ("-- Allies --", () => { }) {enabled = false});
+        }
+        foreach(ICombatant combatant in allies)
         {
             ICombatant captured = combatant;
             targets.Add(new MenuOption(captured.currentName, () =>
@@ -284,6 +318,14 @@ public class CommandMenu : SubMenu
         if(leftPanelGroup != null) {leftPanelGroup.alpha = dimmedAlpha; leftPanelGroup.interactable = false;}
         if(targetGrid != null) targetGrid.gameObject.SetActive(true);
         if(detailText != null) detailText.gameObject.SetActive(false);
+        GridLayoutGroup targetGridLayout = targetGrid != null ? targetGrid.GetComponent <GridLayoutGroup>() : null;
+        if(targetGridLayout != null)
+        {
+            targetGridLayout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+            targetGridLayout.constraintCount = 1;
+            targetGridLayout.cellSize = cellSize;
+            targetGridLayout.spacing = spacing;
+        }
         foreach(MenuOption target in targets)
         {
             GameObject entry = BuildEntry(target, targetGrid, fontSize, (opt) => opt.onSelect());
@@ -291,6 +333,7 @@ public class CommandMenu : SubMenu
             spawnedTargets.Add(entry);
         }
         UpdatePathText(BreadcrumbPrefix(), BreadcrumbSuffix());
+        EventSystem.current?.SetSelectedGameObject(null);
         EventSystem.current?.SetSelectedGameObject(spawnedTargets[0]);
         MoveCursor(spawnedTargets[0]);
     }
