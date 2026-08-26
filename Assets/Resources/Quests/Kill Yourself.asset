@@ -15,6 +15,7 @@ MonoBehaviour:
   questName: Kill yourself
   description: You must kill yourself
   isMainQuest: 0
+  questGiver: The Fucker
   stages:
   - objectives:
     - description: You gotta touch stuff

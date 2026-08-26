@@ -58,4 +58,12 @@ public class EnemyStats : ScriptableObject
         [Range(0, 100)] public int dropChance = 100;
     }
     public List<LootDrop> lootTable = new List<LootDrop>();
+    [System.Serializable]
+    public class StealDrop
+    {
+        public Item item;
+        public int quantity = 1;
+        [Range (0, 100)] public int stealChance; 
+    }
+    public List<StealDrop> stealTable = new List<StealDrop>();
 }

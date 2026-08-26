@@ -106,7 +106,7 @@ void Start()
     public int GetTurnCount() => turnCount;
     public void UpdateUI()
     {
-       if(partyStatusUI != null) partyStatusUI.Refresh(players, currentPlayer);
+      if(partyStatusUI != null) partyStatusUI.Refresh(players);
     }
 IEnumerator StartBattle()
         {
@@ -204,7 +204,7 @@ IEnumerator StartBattle()
         } 
         void ActivePlayer(ActiveStats activePlayer)
         {
-            if(partyStatusUI != null) partyStatusUI.Refresh(players, activePlayer);
+          if(partyStatusUI != null) partyStatusUI.Refresh(players);
         }
         IEnumerator CheckDeath(ICombatant combatant) 
     {

@@ -180,7 +180,7 @@ void Awake()
             AdvanceStage(progress);
         }
     }
-    bool IsObjectiveSatisfied(QuestProgress progress, int index)
+    public bool IsObjectiveSatisfied(QuestProgress progress, int index)
     {
         QuestObjective objective = progress.CurrentStage.objectives[index];
         switch(objective.type)

@@ -14,21 +14,21 @@ protected virtual void Update()
         }
     }
     public abstract void Close();
-    protected void OpenScreen(List<MenuOption> options, string title = "", bool usePaging = true, int columns = 1)
+    public void OpenScreen(List<MenuOption> options, string title = "", bool usePaging = true, int columns = 1)
     {
         MenuScreen screen = new MenuScreen(options, fontSize, columns, cellSize, spacing, title);
         screen.usePaging = usePaging;
         screenHistory.Push(screen);
         FillMenu(screen);
     }
-    protected void RefreshScreen(List<MenuOption> newOptions)
+    public void RefreshScreen(List<MenuOption> newOptions)
     {
         if(screenHistory.Count == 0) return;
         MenuScreen current = screenHistory.Peek();
         current.allOptions = newOptions;
         FillMenu(current);
     }
-    protected void PopAndRefresh(List<MenuOption> newOptions, int levels = 1)
+    public void PopAndRefresh(List<MenuOption> newOptions, int levels = 1)
     {
         for(int i = 0; i < levels; i++)
         {
@@ -39,12 +39,20 @@ protected virtual void Update()
         screenHistory.Peek().allOptions = newOptions;
         FillMenu(screenHistory.Peek());
     }
-    protected void PreviousScreen()
+    public void PreviousScreen()
     {
         screenHistory.Pop();
         if(screenHistory.Count == 0) {Close(); return;}
         FillMenu(screenHistory.Peek());
     }
+    public int ScreenDepth => screenHistory.Count;
+    public void PopScreenHistoryTo(int depth)
+    {
+        while(screenHistory.Count > depth) screenHistory.Pop();
+    }
+    public void ClearMenuEntries() => ClearEntries();
+    public void SetBreadcrumbSuffix(string suffix) => UpdatePathText(BreadcrumbPrefix(), suffix);
+    public void ClearScreenHistory() => screenHistory.Clear();
     protected void NextPage()
     {
         if(screenHistory.Count == 0) return;
@@ -64,6 +72,11 @@ protected virtual void Update()
       int maxPage = Mathf.Max(0, (screen.allOptions.Count - 1) / perPage);
       screen.currentPage = screen.currentPage <= 0 ? maxPage : screen.currentPage - 1;
       FillMenu(screen);  
+    }
+    public void SwitchTab(List<MenuOption> rootOptions, string title, int anchorDepth = 0, bool usePaging = true, int columns = 1)
+    {
+        while(screenHistory.Count > anchorDepth) screenHistory.Pop();
+        OpenScreen(rootOptions, title, usePaging, columns);
     }
 protected void FillMenu(MenuScreen screen)
 {

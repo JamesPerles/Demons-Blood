@@ -6,4 +6,5 @@ public class CraftRecipe : ScriptableObject
 public Equipment result;
 public Item itemResult;
 public List<MaterialAmount> requiredMaterials = new List<MaterialAmount>();
+public int goldCost = 0;
 }

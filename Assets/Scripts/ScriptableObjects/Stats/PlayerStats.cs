@@ -34,4 +34,11 @@ public class PlayerStats : ScriptableObject
     public List<Equipment.WeaponType> allowedWeaponTypes = new List<Equipment.WeaponType>();
     public Skill personalSkill;
     public SkillTreeSet skillTrees;
+    [TextArea(3, 10)] public string bio;
+    public string sex;
+    public string sexuality;
+    public string race;
+    public string from;
+    public List<string> likes = new List<string>();
+    public List<string> dislikes = new List<string>();
 }

@@ -32,16 +32,20 @@ public class ActiveStats : MonoBehaviour, ICombatant
     public int Dodge {get; set;}
     public int currentExperience;
     public int currentExpToNextLevel;
+    public int totalExperience;
     public int currentLevel;
     public string currentName {get; set;}
     public PlayerStats playerStats;
     public bool isDefending {get; set;}
     public Element currentMagicAffinity {get; set;}
+    public string currentSex {get; set;}
+    public string currentSexuality{get; set;}
     public Equipment weaponSlot;
     public Equipment headSlot;
     public Equipment bodySlot;
     public Equipment shieldSlot;
     public Equipment accessorySlot;
+    public PersonalInventory personalInventory = new PersonalInventory();
     public List<Spell> learnedSpells = new List<Spell>();
     public List<Art> learnedArts = new List<Art>();
     public List<Fusion> learnedFusions = new List<Fusion>();
@@ -116,9 +120,12 @@ public class ActiveStats : MonoBehaviour, ICombatant
         currentSpeed = playerStats.speed;
         currentLuck = playerStats.luck;
         currentExperience = playerStats.experience;
+        totalExperience = playerStats.experience;
         currentExpToNextLevel = playerStats.expToNextLevel;
         currentLevel = playerStats.level;
         currentMagicAffinity = playerStats.magicAffinity;
+        currentSex = playerStats.sex;
+        currentSexuality = playerStats.sexuality;
         statusImmunities = new List<StatusEffect>(playerStats.immunities);
         if(playerStats.personalSkill != null) skillSlots[0] = playerStats.personalSkill;
         PlayerBondProgress();
@@ -351,6 +358,7 @@ public class ActiveStats : MonoBehaviour, ICombatant
     public void GainExperience(int amount)
     {
         currentExperience += amount;
+        totalExperience += amount;
         CheckLevelUp();
         UpdateUI();
     }
@@ -396,6 +404,7 @@ public class ActiveStats : MonoBehaviour, ICombatant
     public Equipment Equip(Equipment newEquipment)
 {
    if(newEquipment == null) return null;
+   if(!personalInventory.Contains(newEquipment)) return null;
    if(newEquipment.equipmentType == Equipment.EquipmentType.Weapon && 
    !playerStats.allowedWeaponTypes.Contains(newEquipment.weaponType)) return null;
    Equipment previous = null;
@@ -432,6 +441,17 @@ public void Unequip(Equipment.EquipmentType slotType)
             case Equipment.EquipmentType.Accessory: return accessorySlot;
             default: return null;
         }
+    }
+    public void UnequipRemovedEquipment(Equipment equipment)
+    {
+        if(equipment == null) return;
+        if(weaponSlot == equipment) weaponSlot = null;
+        else if(headSlot == equipment) headSlot = null;
+        else if(bodySlot == equipment) bodySlot = null;
+        else if(shieldSlot == equipment) shieldSlot = null;
+        else if(accessorySlot == equipment) accessorySlot = null;
+        else return;
+        RecalculateStats();
     }
     public void ApplyStatus(StatusEffect status)
     {
@@ -495,6 +515,10 @@ public void Unequip(Equipment.EquipmentType slotType)
         transformMultiplier = 1f;
         RecalculateStats();
     }
+    public void SetCurrentSex(string sex) => currentSex = sex;
+    public void SetCurrentSexuality(string sexuality) => currentSexuality = sexuality;
+    public void RevertSex() => currentSex = playerStats.sex; 
+    public void RevertSexuality() => currentSexuality = playerStats.sexuality;
     public List<int> SaveTreePoints() {TreePointsInitialized(); return new List<int> (treePoints);}
     public void LoadTreePoints(List<int> points) {treePoints = new List<int>(points);}
     public List<Vector2Int> SavePaths()

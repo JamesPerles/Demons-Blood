@@ -43,6 +43,7 @@ public class Quest : ScriptableObject
     public string questName;
     [TextArea(2,5)] public string description;
     public bool isMainQuest;
+    public string questGiver;
     public List<QuestStage> stages = new List<QuestStage>();
     public List<Quest> prerequesite = new List<Quest>();
     public string unlockFlagKey;

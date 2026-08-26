@@ -17,8 +17,12 @@ public class CommandMenu : SubMenu
     public ActiveStats selectedSwapTarget;
     public ICombatant selectedTarget;
     public Transform targetGrid;
+    public Transform allyTargetGrid;
+    public Transform enemyTargetGrid;
     public CanvasGroup leftPanelGroup;
     public float dimmedAlpha = 0.55f;
+    public Vector2 targetCellSize = new Vector2(280f, 26f);
+    public float targetFontSize = 14f;
     List<GameObject> spawnedTargets = new List<GameObject>();
     Dictionary<GameObject, MenuOption> targetOptionMap = new Dictionary<GameObject, MenuOption>();
     bool isTargeting = false;
@@ -148,7 +152,7 @@ public class CommandMenu : SubMenu
     }
     List<MenuOption> FightMenu() => new List <MenuOption>
     {
-        new MenuOption("Attack",null) {description = "A basic attack", targetScope = MenuOption.TargetScope.Enemies, 
+        new MenuOption("Attack",null) {description = "A basic attack", targetScope = MenuOption.TargetScope.Any, 
         onTargetSelect = (target) => {selectedAction = PlayerActionType.Attack; FinalizeTurn();}}, 
         new MenuOption("Arts", ArtMenu) {description = "Physical attacks that cost HP to use.", childColumns = 3},
          new MenuOption("Spells", SpellMenu) {description = "Magic attacks that cost MP to use", childColumns = 3}, 
@@ -278,64 +282,72 @@ public class CommandMenu : SubMenu
             if(sourceOption.targetScope == MenuOption.TargetScope.Enemies || sourceOption.targetScope == MenuOption.TargetScope.Any)
             enemies.AddRange(BattleManager.instance.GetLivingEnemies().Cast<ICombatant>());
         }
-        List<MenuOption> targets = new List<MenuOption>();
-        if(enemies.Count > 0)
-        {
-            targets.Add(new MenuOption ("-- Enemies --", () => { }) {enabled = false});
-        }
-        foreach(ICombatant combatant in enemies)
-        {
-            ICombatant captured = combatant;
-            targets.Add(new MenuOption(captured.currentName, () =>
-            {
-                selectedTarget = captured;
-                EndTargeting();
-                sourceOption.onTargetSelect(captured);
-            }));
-        }
-         if(allies.Count > 0)
-        {
-            targets.Add(new MenuOption ("-- Allies --", () => { }) {enabled = false});
-        }
+        List<MenuOption> allyOptions = new List<MenuOption>();
         foreach(ICombatant combatant in allies)
         {
             ICombatant captured = combatant;
-            targets.Add(new MenuOption(captured.currentName, () =>
+            allyOptions.Add(new MenuOption(captured.currentName, () =>
             {
                 selectedTarget = captured;
                 EndTargeting();
                 sourceOption.onTargetSelect(captured);
             }));
         }
-        StartTargeting(targets, "Target");
+        List<MenuOption> enemyOptions = new List<MenuOption>();
+        foreach(ICombatant combatant in enemies)
+        {
+            ICombatant captured = combatant;
+            enemyOptions.Add(new MenuOption(captured.currentName, () =>
+            {
+                selectedTarget = captured;
+                EndTargeting();
+                sourceOption.onTargetSelect(captured);
+            }));
+        }
+        StartTargeting(allyOptions, enemyOptions, "Target");
     }
-    void StartTargeting(List<MenuOption> targets, string breadcrumbSuffix)
+    void ApplyTargetGridSizing(Transform grid)
+    {
+        GridLayoutGroup layout = grid != null ? grid.GetComponent<GridLayoutGroup>() : null;
+        if(layout == null) return;
+        layout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
+        layout.constraintCount = 1;
+        layout.cellSize = targetCellSize;
+        layout.spacing =spacing;
+    }
+    void StartTargeting(List<MenuOption> allyOptions, List<MenuOption> enemyOptions, string breadcrumbSuffix)
     {
         ClearSpawnedTargets();
-        if(targets.Count == 0) return;
+        if(allyOptions.Count == 0 && enemyOptions.Count == 0) return;
         isTargeting = true;
         targetingBreadcrumbSuffix = breadcrumbSuffix;
         if(leftPanelGroup != null) {leftPanelGroup.alpha = dimmedAlpha; leftPanelGroup.interactable = false;}
         if(targetGrid != null) targetGrid.gameObject.SetActive(true);
         if(detailText != null) detailText.gameObject.SetActive(false);
-        GridLayoutGroup targetGridLayout = targetGrid != null ? targetGrid.GetComponent <GridLayoutGroup>() : null;
-        if(targetGridLayout != null)
+        ApplyTargetGridSizing(allyTargetGrid);
+        ApplyTargetGridSizing(enemyTargetGrid);
+        GameObject firstSpawned = null;
+        foreach(MenuOption target in allyOptions)
         {
-            targetGridLayout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            targetGridLayout.constraintCount = 1;
-            targetGridLayout.cellSize = cellSize;
-            targetGridLayout.spacing = spacing;
-        }
-        foreach(MenuOption target in targets)
-        {
-            GameObject entry = BuildEntry(target, targetGrid, fontSize, (opt) => opt.onSelect());
+            GameObject entry = BuildEntry(target, allyTargetGrid, targetFontSize, (opt) => opt.onSelect());
             targetOptionMap[entry] = target;
             spawnedTargets.Add(entry);
+            if(firstSpawned == null) firstSpawned = entry;
+        }
+        foreach(MenuOption target in enemyOptions)
+        {
+            GameObject entry = BuildEntry(target, enemyTargetGrid, targetFontSize, (opt) => opt.onSelect());
+            targetOptionMap[entry] = target;
+            spawnedTargets.Add(entry);
+            if(firstSpawned == null) firstSpawned = entry;
         }
         UpdatePathText(BreadcrumbPrefix(), BreadcrumbSuffix());
+        if(firstSpawned != null)
+        {
         EventSystem.current?.SetSelectedGameObject(null);
         EventSystem.current?.SetSelectedGameObject(spawnedTargets[0]);
         MoveCursor(spawnedTargets[0]);
+        }
     }
     void EndTargeting()
     {

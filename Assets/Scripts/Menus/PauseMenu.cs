@@ -1,8 +1,6 @@
-using System.Collections.Generic;
-using System.Linq;
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
+using UnityEngine.EventSystems;
 public class PauseMenu : SubMenu
 {
 public static PauseMenu instance;
@@ -10,7 +8,25 @@ public TextMeshProUGUI walletText;
 public KeyCode pauseKey = KeyCode.Escape;
 public bool pauseTimeScale = true;
 public bool isOpen {get; private set;} = false;
-public PartyStatusUI partyStatusUI;
+public TabGroup topTabGroup;
+public TabGroup miniTabGroup;
+public TabGroup microTabGroup;
+public KeyCode nextTopTabKey = KeyCode.E;
+public KeyCode previousTopTabKey = KeyCode.LeftAlt;
+public GameObject rosterPanel;
+public GameObject listPanel;
+public GameObject infoPanel;
+public GameObject statsExtraPanel;
+public PartyMenu partyController;
+public InventoryMenu inventoryController;
+public QuestMenu questController;
+public ForgeMenu forgeController;
+public MiscellaneousMenu miscController;
+public MapMenu mapController;
+public KeyCode rosterSwapKey = KeyCode.Tab;
+bool partyTabActive = false;
+ICardHighlightHandler activeCardHandler;
+IPageableTab activePageableTab;
 void Awake()
     {
         if(instance == null) instance = this; else Destroy(gameObject);
@@ -29,12 +45,9 @@ void Awake()
             return;
         }
         if(!isOpen) return;
-        if(Input.GetKeyDown(KeyCode.Backspace))
-        {
-            if(screenHistory.Count > 1) PreviousScreen();
-            else Close();
-        }
+        if(Input.GetKeyDown(KeyCode.Backspace)) HandleBack();
         if(Input.GetKeyDown(KeyCode.Space)) NextPage();
+        HandleTabInput();
     }
     public void Open()
     {
@@ -42,9 +55,8 @@ void Awake()
        SetDisplayActive(true);
         if(pauseTimeScale) Time.timeScale = 0f;
         UpdateWallet();
-        RefreshPartyBar();
-        screenHistory.Clear();
-        OpenScreen(TopLevelMenu(), "");
+        ClearScreenHistory();
+        SetupTopTabs();
     } 
     public override void Close()
     {
@@ -52,788 +64,111 @@ void Awake()
         SetDisplayActive(false);
         if(pauseTimeScale) Time.timeScale = 1f;
         ClearEntries();
-        screenHistory.Clear();
+        ClearScreenHistory();
+        partyTabActive = false;
+        activeCardHandler = null;
+        if(partyController != null) partyController.ResetState();
     }
+    
     protected override string BreadcrumbPrefix() => "Pause";
     void UpdateWallet()
     {
         if (walletText != null && Wallet.instance != null)
         walletText.text = $"{Wallet.instance.currentGold} Gold";
     }
-   void RefreshPartyBar()
+public void ShowRosterPanel()
     {
-        if(partyStatusUI == null || PlayerParty.instance == null) return;
-        List<ActiveStats> allMembers = new List<ActiveStats>();
-        foreach(GameObject characterObject in PlayerParty.instance.playableCharacters)
-        {
-            ActiveStats stats = characterObject.GetComponent<ActiveStats>();
-            if(stats != null) allMembers.Add(stats);
-        }
-        partyStatusUI.Refresh(allMembers, selectedCharacter);
+        if(rosterPanel != null) rosterPanel.SetActive(true);
+        if(listPanel != null) listPanel.SetActive(false);
+        if(infoPanel != null) infoPanel.SetActive(false);
+        if(statsExtraPanel != null) statsExtraPanel.SetActive(false);
     }
-     List<MenuOption> TopLevelMenu()
+    public void ShowListPanel()
     {
-        return new List<MenuOption>
+        if(rosterPanel != null) rosterPanel.SetActive(false);
+        if(listPanel != null) listPanel.SetActive(true);
+        if(infoPanel != null) infoPanel.SetActive(false);
+        if(statsExtraPanel != null) statsExtraPanel.SetActive(false);
+    }
+    public void ShowInfoPanel()
+    {
+        if(rosterPanel != null) rosterPanel.SetActive(false);
+        if(listPanel != null) listPanel.SetActive(false);
+        if(infoPanel != null) infoPanel.SetActive(true);
+        if(statsExtraPanel != null) statsExtraPanel.SetActive(false);
+    }
+    public void ShowSplitPanel()
+    {
+        if(rosterPanel != null) rosterPanel.SetActive(false);
+        if(listPanel != null) listPanel.SetActive(true);
+        if(infoPanel != null) infoPanel.SetActive(true);
+        if(statsExtraPanel != null) statsExtraPanel.SetActive(false);
+    }
+    public void SetStatsExtraPanelActive(bool active)
+    {
+        if(statsExtraPanel != null) statsExtraPanel.SetActive(active);
+    }
+    public void SetCardHighlightHandler(ICardHighlightHandler handler) => activeCardHandler = handler;
+    public void ClearCardHighlightHandler() => activeCardHandler = null;
+    public void SetPageableTab(IPageableTab tab) => activePageableTab = tab;
+    public void ClearPageableTab() => activePageableTab = null;
+    public override void EntryHighlight(GameObject entry)
+    {
+        base.EntryHighlight(entry);
+        activeCardHandler?.OnCardHighlighted(entry);
+    }
+    public void PrepareTabSwitch()
+    {
+        ClearEntries();
+        ClearScreenHistory();
+        ClearCardHighlightHandler();
+        ClearPageableTab();
+        (questController as ITabVisualOwner)?.HideVisuals();
+        (mapController as ITabVisualOwner)?.HideVisuals();
+        (miscController as ITabVisualOwner)?.HideVisuals();
+        (inventoryController as ITabVisualOwner)?.HideVisuals();
+        (forgeController as ITabVisualOwner)?.HideVisuals();
+    }
+    void SetupTopTabs()
+    {
+        System.Collections.Generic.List<TabDefinition> tabs = new System.Collections.Generic.List<TabDefinition>
         {
-        new MenuOption("Party", OpenPartyMenu),
-        new MenuOption("Items", ItemListMenu), 
-        new MenuOption("Quests", QuestCategoryMenu),
-        new MenuOption("Forge", OpenForgeMenu),
-        new MenuOption("Bond", OpenBondMenu),
-        new MenuOption("Map", OpenMap),
-        new MenuOption("Bestiary", OpenBestiaryMenu),
-        new MenuOption("Settings", OpenSettingsMenu) {childUsePaging = false},
-        new MenuOption("Save", SaveGame),
-        new MenuOption("Quit Game", QuitGame)
+        new TabDefinition("Party", () => {partyTabActive = true; if(partyController != null) partyController.OpenTab();}),
+        new TabDefinition("Inventory", () => {partyTabActive = false; if(inventoryController != null) inventoryController.OpenTab();}),
+        new TabDefinition("Quests", () => {partyTabActive = false; if(questController != null) questController.OpenTab();}),
+        new TabDefinition("Forge", () => {partyTabActive = false; if(forgeController != null) forgeController.OpenTab();}),
+        new TabDefinition("Misc", () => {partyTabActive = false; if(miscController != null) miscController.OpenTab();}),
+        new TabDefinition("Map", () => {partyTabActive = false; if(mapController != null) mapController.OpenTab();}),
         };
+        if(topTabGroup != null) topTabGroup.SetTabs(tabs,0);
     }
-    void OpenMap()
+    void HandleBack()
     {
-        Close();
-        if(MapManager.instance != null) MapManager.instance.Open();
-        else Debug.LogWarning("No MapManager");
-    }
-    void SaveGame()
-    {
-        if(SaveManager.instance != null) SaveManager.instance.SaveGame();
-       else Debug.LogWarning("SaveManager missing Saving failed."); 
-    }
-     void QuitGame()
-    {
-        #if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;
-        #else 
-        Application.Quit();
-        #endif
-    }
-    public TextMeshProUGUI itemFeedbackText;
-    Item selectedItem;
-     List<MenuOption> ItemListMenu()
-    {
-        List<MenuOption> options = new List<MenuOption>();
-        foreach (var item in InventoryManager.Instance.items.OfType<Item>().Where(i => i.itemType == Item.ItemType.Consumable))
+        if(partyTabActive && partyController != null)
         {
-            Item captured = item;
-            MenuOption option = new MenuOption(captured.itemName, () => ChooseItemTarget(captured));
-            option.description = captured.description;
-            options.Add(option);
-        }
-        return options;
-    }
-    void ChooseItemTarget(Item item)
-    {
-        selectedItem = item;
-        OpenScreen(ItemTargets(), item.itemName);
-    }
-    List<MenuOption> ItemTargets()
-    {
-        List<MenuOption> options = new List<MenuOption>();
-        foreach (GameObject characterObject in PlayerParty.instance.playableCharacters)
-        {
-            ActiveStats character = characterObject.GetComponent<ActiveStats>();
-            if(character == null) continue;
-            ActiveStats captured = character;
-            options.Add(new MenuOption($"{captured.currentName}HP:{captured.currentHP}/{captured.finalHP}", () => UseItem(captured)));
-        }
-        return options;
-    }
-    void UseItem(ActiveStats target)
-    {
-        Item item = selectedItem;
-        if(item.itemType == Item.ItemType.KeyItem) return;
-        if(item.effects != null) foreach (Effect effect in item.effects) if(effect != null) StartCoroutine(effect.Apply(target,target));
-        InventoryManager.Instance.LoseItem(item);
-        if(itemFeedbackText != null) itemFeedbackText.text = $"Used {item.itemName} on {target.currentName}!";
-        RefreshPartyBar();
-        PopAndRefresh(ItemListMenu());
-    }
-    QuestProgress selectedQuest;
-    List<MenuOption> QuestCategoryMenu()
-    {
-        return new List<MenuOption>
-        {
-            new MenuOption("Main Quests", MainQuestList),
-            new MenuOption("Side Quests", SideQuestList)
-        };
-    }
-    List<MenuOption> MainQuestList() => QuestListMenu(true);
-    List<MenuOption> SideQuestList() => QuestListMenu(false);
-    List<MenuOption> QuestListMenu(bool mainQuests)
-    {
-        List<MenuOption> options = new List<MenuOption>();
-        if(QuestManager.instance == null) return options;
-        foreach(QuestProgress progress in QuestManager.instance.activeQuests)
-        {
-            if(progress.quest.isMainQuest != mainQuests) continue;
-            QuestProgress captured = progress;
-            options.Add(new MenuOption(captured.quest.questName, () => OpenQuestDetail(captured)));
-        }
-        return options;
-    }
-    void OpenQuestDetail(QuestProgress progress)
-    {
-        selectedQuest = progress;
-        OpenScreen(QuestDetailMenu(), progress.quest.questName);
-    }
-    List<MenuOption> QuestDetailMenu()
-    {
-        List<MenuOption> options = new List<MenuOption>();
-        Quest quest = selectedQuest.quest;
-        options.Add(new MenuOption(quest.description, () => {}) {enabled = false});
-        for(int i = 0; i < quest.stages.Count; i++)
-        {
-            string prefix = i < selectedQuest.currentStage ? "[x]" : (i == selectedQuest.currentStage ? "[>]" : "[]");
-            QuestStage stage = quest.stages[i];
-            string stageText;
-            if(stage.isChoiceStage && i < selectedQuest.currentStage)
-            {
-                int chosen = selectedQuest.GetChosenObjective(i);
-                stageText = (chosen >= 0 && chosen < stage.objectives.Count)
-                ? stage.objectives[chosen].description
-                : string.Join(" OR ", stage.objectives.ConvertAll(obj => obj.description));
-            }
-            else
-            {
-                stageText = string.Join(stage.isChoiceStage ? " OR " : " AND ", stage.objectives.ConvertAll(obj => obj.description));
-            }
-            options.Add(new MenuOption(prefix + stageText, () => { }) {enabled = false});
-        }
-        return options;
-    }
-   public TextMeshProUGUI statsText;
-ActiveStats selectedCharacter;
-Equipment.EquipmentType selectedSlotType;
-int selectedTreeIndex; 
-List<MenuOption> OpenPartyMenu()
-    {
-        if(statsText != null) statsText.text = "";
-        return PlayerPartyMenu();
-    }
-      List<MenuOption> PlayerPartyMenu()
-    {
-        List<MenuOption> options = new List<MenuOption>();
-        foreach(GameObject characterObject in PlayerParty.instance.playableCharacters)
-        {
-            ActiveStats character = characterObject.GetComponent<ActiveStats>();
-            if(character == null) continue;
-            ActiveStats captured = character;
-            options.Add(new MenuOption($"{captured.currentName} Lv.{captured.currentLevel}", () => OpenCharacter(captured)));
-        }
-        return options;
-    }
-    void OpenCharacter(ActiveStats character)
-    {
-        selectedCharacter = character;
-        RefreshPartyBar();
-        OpenScreen(CharacterMenu(), character.currentName);
-    }
-    List<MenuOption> CharacterMenu()
-    {
-        UpdateStats();
-        List<MenuOption> options = new List<MenuOption>();
-        options.Add(SlotOption(Equipment.EquipmentType.Weapon, "Weapon"));
-        options.Add(SlotOption(Equipment.EquipmentType.Head, "Head"));
-        options.Add(SlotOption(Equipment.EquipmentType.Body, "Body"));
-        options.Add(SlotOption(Equipment.EquipmentType.Shield, "Shield"));
-        options.Add(SlotOption(Equipment.EquipmentType.Accessory, "Accessory"));
-        options.Add(new MenuOption("Swap", SwapMenu));
-        options.Add(new MenuOption($"Skills ({selectedCharacter.skillPoints} pts)", SkillTreeMenu));
-        return options;
-    }
-    void UpdateStats()
-    {
-        if (statsText == null || selectedCharacter == null) return;
-        ActiveStats character = selectedCharacter;
-        string weaponTypes = string.Join(", ", character.playerStats.allowedWeaponTypes);
-        statsText.text = 
-        $"{character.currentName} Lv.{character.currentLevel} HP: {character.currentHP}/{character.finalHP} MP: {character.currentMP}/{character.finalMP}\n" +
-        $"STR: {character.finalStrength} MAG: {character.finalMagic} Def: {character.finalDefense} Wis: {character.finalWisdom} Tech: {character.finalTech}\n" +
-        $"AFF: {character.finalAffinity} SPD: {character.finalSpeed} LUCK: {character.finalLuck} Can Equip: {weaponTypes}";
-    }
-    MenuOption SlotOption(Equipment.EquipmentType slotType, string label)
-    {
-        Equipment equipped = selectedCharacter.GetEquipped(slotType);
-        string entryLabel = $"{label}: {(equipped != null ? equipped.equipmentName : "Empty")}";
-        return new MenuOption(entryLabel, () => OpenEquipmentPicker(slotType));
-    }
-    void OpenEquipmentPicker(Equipment.EquipmentType slotType)
-    {
-        selectedSlotType = slotType;
-        OpenScreen(EquipmentMenu(), slotType.ToString());
-    }
-    List<MenuOption> EquipmentMenu()
-    {
-        List<MenuOption> options = new List<MenuOption>();
-        Equipment currentlyEquipped = selectedCharacter.GetEquipped(selectedSlotType);
-        if(currentlyEquipped != null) options.Add(new MenuOption($"Unequip{currentlyEquipped.equipmentName}", UnequipEquipment));
-        List<Equipment> matching = InventoryManager.Instance.items.OfType<Equipment>().Where(equipment => equipment.equipmentType == selectedSlotType).ToList();
-        if(selectedSlotType == Equipment.EquipmentType.Weapon) matching = matching.FindAll
-        (equipment => selectedCharacter.playerStats.allowedWeaponTypes.Contains(equipment.weaponType));
-        foreach(Equipment item in matching)
-        {
-            Equipment captured = item;
-            string label = selectedSlotType == Equipment.EquipmentType.Weapon ? $"{captured.equipmentName} ({captured.weaponType})" : captured.equipmentName;
-            options.Add(new MenuOption (label, () => EquipEquipment(captured)));
-        }
-        return options;
-    }
-void EquipEquipment(Equipment newEquipment)
-    {
-        Equipment previous = selectedCharacter.Equip(newEquipment);
-        InventoryManager.Instance.LoseItem(newEquipment);
-        if(previous != null)
-        InventoryManager.Instance.PickupEquipment(previous);
-        PopAndRefresh(CharacterMenu());
-    }
-    void UnequipEquipment()
-    {
-        Equipment removed = selectedCharacter.GetEquipped(selectedSlotType);
-        selectedCharacter.Unequip(selectedSlotType);
-        if(removed != null) InventoryManager.Instance.PickupEquipment(removed);
-        PopAndRefresh(CharacterMenu());
-    }
-    bool IsActive(GameObject characterObject)
-    {
-        return System.Array.IndexOf(PlayerParty.instance.ActiveParty, characterObject) >= 0;
-    }
-    List<MenuOption> SwapMenu()
-    {
-        List<MenuOption> options = new List<MenuOption>();
-        GameObject selectedObject = selectedCharacter.gameObject;
-        bool selectedIsActive = IsActive(selectedObject);
-        foreach(GameObject characterObject in PlayerParty.instance.playableCharacters)
-        {
-           if(characterObject == selectedObject) continue;
-           if(IsActive(characterObject) == selectedIsActive) continue;
-           ActiveStats other = characterObject.GetComponent<ActiveStats>();
-           if(other == null) continue;
-           GameObject capturedObject = characterObject;
-           options.Add(new MenuOption($"{other.currentName} Lv.{other.currentLevel}", () => DoSwap(capturedObject))); 
-        }
-        return options;
-    }
-    void DoSwap(GameObject other)
-    {
-        PlayerParty.instance.Swap(selectedCharacter.gameObject, other);
-        RefreshPartyBar();
-        PopAndRefresh(CharacterMenu());
-    }
-    List<MenuOption> SkillTreeMenu()
-    {
-        List<MenuOption> options = new List<MenuOption>();
-        if(selectedCharacter.playerStats.skillTrees == null) return options;
-        for(int i = 0; i < selectedCharacter.playerStats.skillTrees.trees.Count; i++)
-        {
-            SkillTree tree = selectedCharacter.playerStats.skillTrees.trees[i];
-            int capturedIndex = i;
-            int points = selectedCharacter.GetTreePoints(i);
-            options.Add(new MenuOption($"{tree.treeName} ({points} pts)", () => OpenTreeNodes(capturedIndex)));
-        }
-        return options;
-    }
-    void OpenTreeNodes(int treeIndex)
-    {
-        selectedTreeIndex = treeIndex;
-        string treeName = selectedCharacter.playerStats.skillTrees.trees[treeIndex].treeName;
-        OpenScreen(TreeNodeMenu(), treeName);
-    }
-    List<MenuOption> TreeNodeMenu()
-    {
-        List<MenuOption> options = new List<MenuOption>();
-        SkillTree tree = selectedCharacter.playerStats.skillTrees.trees[selectedTreeIndex];
-        int points = selectedCharacter.GetTreePoints(selectedTreeIndex);
-        MenuOption spendOption = new MenuOption($"Spend Point ({selectedCharacter.skillPoints} available)", SpendPoint);
-        spendOption.enabled = selectedCharacter.skillPoints > 0;
-        options.Add(spendOption);
-        foreach(SkillTreePath path in tree.paths)
-        {
-            bool unlocked = selectedCharacter.IsPathUnlocked(path);
-            string status = unlocked ? "Unlocked" : $"{points}/{path.pointsRequired}";
-            MenuOption nodeOption = new MenuOption($"{path.pathName} ({status})", () => { });
-            nodeOption.enabled = false;
-            options.Add(nodeOption);
-        }
-        return options;
-    }
-void SpendPoint()
-    {
-        selectedCharacter.SpendSkillPoint(selectedTreeIndex);
-        RefreshScreen(TreeNodeMenu());
-    }
-    PlayerStats selectedBondPartner;
-    List<MenuOption> OpenBondMenu()
-    {
-        return BondRosterMenu();
-    }
-     List<MenuOption> BondRosterMenu()
-    {
-        List<MenuOption> options = new List<MenuOption>();
-        foreach(GameObject characterObject in PlayerParty.instance.playableCharacters)
-        {
-            ActiveStats character = characterObject.GetComponent<ActiveStats>();
-            if(character == null) continue;
-            ActiveStats captured = character;
-            options.Add(new MenuOption(captured.currentName, () => OpenPartnerList(captured)));
-        }
-        return options;
-    } 
-      void OpenPartnerList(ActiveStats character)
-    {
-        selectedCharacter = character;
-        OpenScreen(PartnerMenu(), character.currentName);
-    }
-    List<MenuOption> PartnerMenu()
-    {
-        List<MenuOption> options = new List<MenuOption>();
-        foreach (BondData data in selectedCharacter.playerStats.bonds)
-        {
-            BondRank rank = selectedCharacter.GetBondRank(data.partner);
-            string label = $"{data.partner.characterName} ({rank})";
-            BondData capturedData = data;
-            MenuOption option = new MenuOption(label, () => OpenConversationList(capturedData));
-            options.Add(option);
-        }
-        return options;
-    }
-    void OpenConversationList(BondData data)
-    {
-        selectedBondPartner = data.partner;
-        OpenScreen(ConversationMenu(data), data.partner.characterName);
-    }
-    List<MenuOption> ConversationMenu(BondData data)
-    {
-        List<MenuOption> options = new List<MenuOption>();
-        BondProgress progress = selectedCharacter.GetBondProgress(data.partner);
-        BondRank currentRank = selectedCharacter.GetBondRank(data.partner);
-        for(int i = 0; i < data.conversations.Count; i++)
-        {
-            BondConversation conversation = data.conversations[i];
-            bool viewed = progress.conversationsViewed[i];
-            bool available = !viewed && currentRank >= conversation.requiredRank;
-            int capturedIndex = i;
-            BondConversation capturedConversation = conversation;
-            MenuOption option = new MenuOption(
-                viewed ? $"{conversation.requiredRank} Rank (Viewed)" : $"{conversation.requiredRank} Rank",
-                () => PlayConversation(data, capturedConversation, capturedIndex));
-                option.enabled = available;
-                options.Add(option);
-        }
-            return options;
-        }
-         void PlayConversation(BondData data, BondConversation conversation, int index)
-    {
-        string speakerLabel = $"{selectedCharacter.currentName} & {data.partner.characterName}";
-        string[] lines = conversation.dialogue.Split('\n');
-        DialogueBox.instance.StartDialogue(speakerLabel, lines, () => MarkViewed(data, index));
-    }
-    void MarkViewed(BondData data, int index)
-    {
-        BondProgress progress = selectedCharacter.GetBondProgress(data.partner);
-        progress.conversationsViewed[index] = true;
-        RefreshScreen(ConversationMenu(data));
-    }
-    public TextMeshProUGUI bestiaryDetailText;
-    List<MenuOption> OpenBestiaryMenu()
-    {
-        if(bestiaryDetailText != null) bestiaryDetailText.text = "";
-        return EnemyListMenu();
-    }
-      List<MenuOption> EnemyListMenu()
-        {
-            List<MenuOption> options = new List<MenuOption>();
-            foreach (EnemyStats enemy in BestiaryManager.instance.allEnemies)
-            {
-                EnemyStats captured = enemy;
-                bool discovered = BestiaryManager.instance.IsDiscovered(enemy);
-                string label = discovered ? enemy.enemyName : "???";
-                options.Add(new MenuOption(label, () => ShowDetail(captured)));
-            }
-            return options;
-        }
-        void ShowDetail(EnemyStats enemy)
-        {
-            if(bestiaryDetailText == null) return;
-            bool discovered = BestiaryManager.instance.IsDiscovered(enemy);
-            bestiaryDetailText.text = discovered
-            ? $"{enemy.enemyName}\nLv.{enemy.level}\nHP: {enemy.hp} MP: {enemy.mp}\nSTR: {enemy.strength} MAG: {enemy.magic} DEF: {enemy.defense} WIS: {enemy.wisdom}\n\n{enemy.dexEntry}"
-            : "Not yet encountered.";
-        }
-public TextMeshProUGUI forgeGoldText;
-public TextMeshProUGUI forgeFeedbackText;
-public int enhanceBaseCost = 100;
-public int enhanceCostPerLevel = 50;
-public int enhanceStrengthGain = 2;
-public int maxEnhancementLevel = 10;
-public int addElementCost = 200;
-Equipment selectedWeaponForElement;
-public List<CraftRecipe> craftRecipes = new List<CraftRecipe>();
-public List<AlchemyRecipe> alchemyRecipes = new List<AlchemyRecipe>();
-Baggable selectedFirstItem;
-List<MenuOption> OpenForgeMenu()
-    {
-        if(forgeFeedbackText != null) forgeFeedbackText.text = "";
-        UpdateForgeGoldText();
-        return ForgeMainMenu();
-    }
-     void UpdateForgeGoldText()
-    {
-        if(forgeGoldText != null && Wallet.instance != null) forgeGoldText.text = $"{Wallet.instance.currentGold} Gold"; 
-    }
-    bool TrySpendForge(int cost)
-    {
-        if(Wallet.instance == null || !Wallet.instance.SpendGold(cost))
-        {
-            if(forgeFeedbackText != null) forgeFeedbackText.text = "Not enough gold.";
-            return false;
-        }
-        UpdateForgeGoldText();
-        return true;
-    }
-     List<MenuOption> ForgeMainMenu()
-    {
-        return new List<MenuOption>
-        {
-            new MenuOption("Enhance Weapon", EnhanceListMenu), new MenuOption("Add Element", ElementListMenu),
-            new MenuOption("Smelt and Craft", SmeltCraftMenu), new MenuOption("Alchemy", AlchemyFirstItemMenu)
-        };
-    }
-    List<MenuOption> EnhanceListMenu()
-    {
-        List<MenuOption> options = new List<MenuOption>();
-        foreach(Equipment equipment in InventoryManager.Instance.items.OfType<Equipment>())
-        {
-            if(equipment.equipmentType != Equipment.EquipmentType.Weapon) continue;
-            Equipment captured = equipment;
-            int cost = EnhanceCost(captured.enhancementLevel);
-            bool atMax = captured.enhancementLevel >= maxEnhancementLevel;
-            string label = atMax ? $"{captured.equipmentName} (MAX)" : $"{captured.equipmentName} - STR {captured.strength} -> {captured.strength + enhanceStrengthGain} ({cost}g)";
-        MenuOption option = new MenuOption(label, () => EnhanceWeapon(captured));
-        option.enabled = !atMax;
-        options.Add(option);
-        }
-         foreach(GameObject characterObject in PlayerParty.instance.playableCharacters)
-    {
-        ActiveStats character = characterObject.GetComponent<ActiveStats>();
-        if(character == null || character.weaponSlot == null) continue;
-        Equipment equipped = character.weaponSlot;
-        ActiveStats capturedOwner = character;
-        int cost = EnhanceCost(equipped.enhancementLevel);
-        bool atMax = equipped.enhancementLevel >= maxEnhancementLevel;
-        string label = atMax 
-        ? $"{equipped.equipmentName} (Equipped: {character.currentName}) (MAX)" : 
-        $"{equipped.equipmentName} (Equipped: {character.currentName}) - STR {equipped.strength} -> {equipped.strength + enhanceStrengthGain} ({cost}g)";
-        MenuOption option = new MenuOption(label, () => EnhanceWeapon(equipped, capturedOwner));
-        option.enabled = !atMax;
-        options.Add(option);
-    }
-    return options;
-    }
-    int EnhanceCost(int currentLevel) => enhanceBaseCost + (currentLevel * enhanceCostPerLevel);
-    void EnhanceWeapon(Equipment original, ActiveStats owner = null)
-    {
-        int cost = EnhanceCost(original.enhancementLevel);
-        if (!TrySpendForge(cost)) return;
-        Equipment enhanced = Instantiate(original);
-        enhanced.baseAssetName = string.IsNullOrEmpty(original.baseAssetName) ? original.name : original.baseAssetName;
-        enhanced.strength += enhanceStrengthGain;
-        enhanced.enhancementLevel = original.enhancementLevel + 1;
-        enhanced.equipmentName = StripSuffix(original.equipmentName) + $" +{enhanced.enhancementLevel}";
-        if(owner != null)
-        {
-            owner.Equip(enhanced);
-        }
-        else
-         {
-        InventoryManager.Instance.LoseItem(original);
-        InventoryManager.Instance.PickupEquipment(enhanced); 
-        }
-        if(forgeFeedbackText != null) forgeFeedbackText.text = $"Enhanced to {enhanced.equipmentName}.";
-        RefreshScreen(EnhanceListMenu());
-    }
-    string StripSuffix(string name)
-    {
-        int plusIndex = name.LastIndexOf(" +");
-        return plusIndex >= 0 ? name.Substring(0, plusIndex) : name;
-    }
-    List<MenuOption> ElementListMenu()
-    {
-        List<MenuOption> options = new List<MenuOption>();
-        foreach(Equipment equipment in InventoryManager.Instance.items.OfType<Equipment>())
-        {
-            if(equipment.equipmentType != Equipment.EquipmentType.Weapon) continue;
-            if(equipment.element != Element.None) continue;
-            Equipment captured = equipment;
-            options.Add(new MenuOption
-            ($"{captured.equipmentName} ({addElementCost}g)", () => OpenElementPicker(captured)));
-        }
-        return options;
-    }
-      void OpenElementPicker(Equipment weapon)
-    {
-        selectedWeaponForElement = weapon;
-        OpenScreen(ElementPickerMenu(), weapon.equipmentName);
-    }
-    List<MenuOption> ElementPickerMenu()
-    {
-        List<MenuOption> options = new List<MenuOption>();
-        foreach(Element element in System.Enum.GetValues(typeof(Element)))
-        {
-            if(element == Element.None) continue;
-            Element captured = element;
-            options.Add(new MenuOption(captured.ToString(), () => AddElement(captured)));
-        }
-        return options;
-    }
-    void AddElement(Element element)
-    {
-        Equipment original = selectedWeaponForElement;
-        if(!TrySpendForge(addElementCost)) return;
-        Equipment enhanced = Instantiate(original);
-        enhanced.baseAssetName = string.IsNullOrEmpty(original.baseAssetName) ? original.name : original.baseAssetName;
-        enhanced.element = element;
-        enhanced.equipmentName = $"{original.equipmentName} ({element})";
-        InventoryManager.Instance.LoseItem(original);
-        InventoryManager.Instance.PickupEquipment(enhanced);
-        if(forgeFeedbackText != null) forgeFeedbackText.text = $"{enhanced.equipmentName} imbued with {element}";
-        PopAndRefresh(ElementListMenu());
-    }
-     List<MenuOption> SmeltCraftMenu()
-    {
-        return new List<MenuOption>
-        {
-            new MenuOption("Smelt", SmeltListMenu),
-            new MenuOption("Craft", CraftListMenu)
-        };
-    }
-    List<MenuOption> SmeltListMenu()
-    {
-        List<MenuOption> options = new List<MenuOption>();
-        foreach(Equipment equipment in InventoryManager.Instance.items.OfType<Equipment>())
-        {
-            if(equipment.smeltYield == null || equipment.smeltYield.Count == 0) continue;
-            Equipment captured = equipment;
-            string yieldText = string.Join(", ", captured.smeltYield.Select(material => $"{material.amount}x {material.material.itemName}"));
-        options.Add(new MenuOption($"{captured.equipmentName} -> {yieldText}", () => SmeltWeapons(captured)));
-        }
-        return options;
-    }
-    void SmeltWeapons(Equipment equipment)
-    {
-        InventoryManager.Instance.LoseItem(equipment);
-        foreach (MaterialAmount material in equipment.smeltYield)
-        {
-            for(int i = 0; i < material.amount; i++) InventoryManager.Instance.PickupItem(material.material);
-        }
-        if(forgeFeedbackText != null) forgeFeedbackText.text = $"Smelted{equipment.equipmentName}.";
-        RefreshScreen(SmeltListMenu());
-    }
-    List<MenuOption> CraftListMenu()
-    {
-        List<MenuOption> options = new List<MenuOption>();
-        foreach (CraftRecipe recipe in craftRecipes)
-        {
-            if(recipe == null) continue;
-            if(recipe.result == null && recipe.itemResult == null) continue;
-            CraftRecipe captured = recipe;
-            string resultName = recipe.result != null ? recipe.result.equipmentName : recipe.itemResult.itemName;
-            string costText = string.Join(", ", captured.requiredMaterials.Select(materials => $"{materials.amount}x {materials.material.itemName}"));
-     MenuOption option = new MenuOption($"{resultName} ({costText})", () => CraftEquipment(captured));
-     option.enabled = HasMaterials(captured);
-     options.Add(option);
-        }
-        return options;
-    }
-    bool HasMaterials(CraftRecipe recipe)
-    {
-        foreach(MaterialAmount required in recipe.requiredMaterials)
-        {
-            int owned = InventoryManager.Instance.items.FindAll(item => item == required.material).Count;
-            if (owned < required.amount) return false;
-        }
-        return true;
-    }
-    void CraftEquipment(CraftRecipe recipe)
-    {
-        if(!HasMaterials(recipe)){if(forgeFeedbackText != null) forgeFeedbackText.text = "Missing materials."; return;}
-  foreach(MaterialAmount required in recipe.requiredMaterials)
-        {
-            for(int i = 0; i < required.amount; i++) InventoryManager.Instance.LoseItem(required.material);
-        }
-        string craftedName;
-        if(recipe.result != null)
-        {
-        Equipment crafted = Instantiate(recipe.result);
-        InventoryManager.Instance.PickupEquipment(crafted);
-        craftedName = crafted.equipmentName;
-        }
-        else
-        {
-            InventoryManager.Instance.PickupItem(recipe.itemResult);
-            craftedName = recipe.itemResult.itemName;
-        }
-        if(forgeFeedbackText != null) forgeFeedbackText.text = $"Crafted{craftedName}.";
-        RefreshScreen(CraftListMenu());
-    }
-    List<MenuOption> AlchemyFirstItemMenu()
-    {
-        List<MenuOption> options = new List<MenuOption>();
-        foreach (Baggable item in InventoryManager.Instance.items)
-        {
-            Baggable captured = item;
-            options.Add(new MenuOption(captured.DisplayName, () => OpenAlchemySecondItem(captured)));
-        }
-        return options;
-    }
-    void OpenAlchemySecondItem(Baggable first)
-    {
-        selectedFirstItem = first;
-        OpenScreen(AlchemySecondItemMenu(), first.DisplayName);
-    }
-    List<MenuOption> AlchemySecondItemMenu()
-    {
-        List<MenuOption> options = new List<MenuOption>();
-        List<Baggable> remaining = new List<Baggable>(InventoryManager.Instance.items);
-        remaining.Remove(selectedFirstItem);
-        foreach (Baggable item in remaining)
-        {
-            Baggable captured = item;
-            options.Add(new MenuOption(captured.DisplayName, () => CombineItems(captured)));
-        }
-        return options;
-    }
-     void CombineItems(Baggable second)
-    {
-        Baggable first = selectedFirstItem;
-        AlchemyRecipe matched = alchemyRecipes.Find(recipe => recipe != null &&
-        ((recipe.ingredientA == first && recipe.ingredientB == second) ||
-        (recipe.ingredientA == second && recipe.ingredientB == first)));
-        if(matched == null || matched.result == null)
-        {
-            if(forgeFeedbackText != null) forgeFeedbackText.text = $"{first.DisplayName} + {second.DisplayName} does nothing.";
-            screenHistory.Clear();
-            OpenScreen(ForgeMainMenu(), "Forge");
+            partyController.HandleBack();
             return;
         }
-        InventoryManager.Instance.LoseItem(first);
-        InventoryManager.Instance.LoseItem(second);
-        if(matched.result is Item resultItem) InventoryManager.Instance.PickupItem(resultItem);
-        else if(matched.result is Equipment resultEquipment) InventoryManager.Instance.PickupEquipment(Instantiate(resultEquipment));
-        if(forgeFeedbackText != null) forgeFeedbackText.text = $"{first.DisplayName} + {second.DisplayName} became {matched.result.DisplayName}.";
-    screenHistory.Clear();
-    OpenScreen(ForgeMainMenu(), "Forge");
+        if(ScreenDepth > 1) PreviousScreen();
+        else Close();
     }
-    List<MenuOption> OpenSettingsMenu()
+    void HandleTabInput()
     {
-        return SettingsMenuList();
-    }
-    List<MenuOption> SettingsMenuList()
-    {
-        List<MenuOption> options = new List<MenuOption>();
-        if(SettingsManager.instance == null)
+        if(Input.GetKeyDown(nextTopTabKey))
         {
-            options.Add(new MenuOption("Settings unavailable", () => { }) {enabled = false});
-            return options;
+            if(partyTabActive && partyController != null && partyController.InCharacterDetail)
+            partyController.ExitCharacterDetail();
+            if(topTabGroup != null) topTabGroup.NextTab();
+            return;
         }
-        SettingsManager setting = SettingsManager.instance;
-        options.Add(new MenuOption($"Music Volume: {Mathf.RoundToInt(setting.musicVolume * 100)}%", CycleMusicVolume));
-        options.Add(new MenuOption($"SFX Volume: {Mathf.RoundToInt(setting.sfxVolume * 100)}%", CycleSfxVolume));
-        options.Add(new MenuOption($"Dialogue Text Speed: {setting.dialogueTextSpeed:0}", CycleDialogueTextSpeed));
-        options.Add(new MenuOption($" Battle Text Speed: {setting.battleTextSpeed:0}", CycleBattleTextSpeed));
-        options.Add(new MenuOption($"Battle Speed: {setting.battleSpeedMultiplier: 0.0}x", CycleBattleSpeed));
-        options.Add(new MenuOption($"Text Color R: {Mathf.RoundToInt(setting.uiTextColor.r * 100)}%", () => CycleTextColorChannel(0)));
-        options.Add(new MenuOption($"Text Color G: {Mathf.RoundToInt(setting.uiTextColor.g * 100)}%", () => CycleTextColorChannel(1)));
-        options.Add(new MenuOption($"Text Color B: {Mathf.RoundToInt(setting.uiTextColor.b * 100)}%", () => CycleTextColorChannel(2)));
-        options.Add(new MenuOption($"Panel Color R: {Mathf.RoundToInt(setting.menuPanelColor.r * 100)}%", () => CyclePanelColorChannel(0)));
-        options.Add(new MenuOption($"Panel Color G: {Mathf.RoundToInt(setting.menuPanelColor.g * 100)}%", () => CyclePanelColorChannel(1)));
-        options.Add(new MenuOption($"Panel Color B: {Mathf.RoundToInt(setting.menuPanelColor.b * 100)}%", () => CyclePanelColorChannel(2)));
-        options.Add(new MenuOption($"Panel Opacity: {Mathf.RoundToInt(setting.menuPanelColor.a * 100)}%", CyclePanelOpacity));
-        options.Add(new MenuOption($"Border Color R: {Mathf.RoundToInt(setting.menuBorderColor.r * 100)}%", () => CycleBorderColorChannel(0)));
-        options.Add(new MenuOption($"Border Color G: {Mathf.RoundToInt(setting.menuBorderColor.g * 100)}%", () => CycleBorderColorChannel(1)));
-        options.Add(new MenuOption($"Border Color B: {Mathf.RoundToInt(setting.menuBorderColor.b * 100)}%", () => CycleBorderColorChannel(2)));
-        options.Add(new MenuOption($"Border Thickness: {setting.menuBorderThickness:0}px", CycleBorderThickness));
-        return options;
-    }
-    void RefreshSettingsScreen()
-    {
-        RefreshScreen(SettingsMenuList());
-    }
-    void CycleMusicVolume()
-    {
-        SettingsManager.instance.SetMusicVolume(NextVolumeStep(SettingsManager.instance.musicVolume));
-        RefreshSettingsScreen();
-    }
-    void CycleSfxVolume()
-    {
-        SettingsManager.instance.SetSfxVolume(NextVolumeStep(SettingsManager.instance.sfxVolume));
-        RefreshSettingsScreen();
-    }
-    void CycleDialogueTextSpeed()
-    {
-        SettingsManager.instance.dialogueTextSpeed = NextTextSpeedStep(SettingsManager.instance.dialogueTextSpeed);
-       RefreshSettingsScreen(); 
-    }
-    void CycleBattleTextSpeed()
-    {
-        SettingsManager.instance.battleTextSpeed = NextTextSpeedStep(SettingsManager.instance.battleTextSpeed);
-        RefreshSettingsScreen();
-    }
-    void CycleBattleSpeed()
-    {
-        SettingsManager.instance.battleSpeedMultiplier = NextBattleSpeedStep(SettingsManager.instance.battleSpeedMultiplier);
-        RefreshSettingsScreen();
-    }
-    void CycleTextColorChannel(int channel)
-    {
-        Color c = SetChannel(SettingsManager.instance.uiTextColor, channel, NextVolumeStep(GetChannel(SettingsManager.instance.uiTextColor, channel)));
-        SettingsManager.instance.SetTextColor(c);
-        RefreshSettingsScreen();
-    }
-    void CyclePanelColorChannel(int channel)
-    {
-        Color c = SetChannel(SettingsManager.instance.menuPanelColor, channel, NextVolumeStep(GetChannel(SettingsManager.instance.menuPanelColor, channel)));
-        SettingsManager.instance.SetMenuPanelColor(c);
-        RefreshSettingsScreen();
-    }
-    void CyclePanelOpacity()
-    {
-        Color c = SettingsManager.instance.menuPanelColor;
-        c.a = NextVolumeStep(c.a);
-        SettingsManager.instance.SetMenuPanelColor(c);
-        RefreshSettingsScreen();
-    }
-    void CycleBorderColorChannel(int channel)
-    {
-        Color c = SetChannel(SettingsManager.instance.menuBorderColor, channel, NextVolumeStep(GetChannel(SettingsManager.instance.menuBorderColor, channel)));
-        SettingsManager.instance.SetMenuBorderColor(c);
-        RefreshSettingsScreen();
-    }
-    void CycleBorderThickness()
-    {
-        float next = SettingsManager.instance.menuBorderThickness + 1f;
-        if(next > 10f) next = 1f;
-        SettingsManager.instance.SetMenuBorderThickness(next);
-        RefreshSettingsScreen();
-    }
-    float GetChannel(Color c, int channel) => channel == 0 ? c.r : channel == 1 ? c.g : c.b;
-    Color SetChannel(Color c, int channel, float value)
-    {
-        if(channel == 0) c.r = value; else if(channel == 1) c.g = value; else c.b = value;
-        return c;
-    }
-    float NextVolumeStep(float current)
-    {
-        float next = current + 0.1f;
-        return next > 1.001f ? 0f : Mathf.Clamp01(next);
-    }
-    float NextTextSpeedStep(float current)
-    {
-        float next = current + 10f;
-        return next > 100f ? 10f : next;
-    }
-    float NextBattleSpeedStep(float current)
-    {
-        float next = current + 0.5f;
-        return next > 2.5f ? 0.5f : next;
+        if(Input.GetKeyDown(previousTopTabKey))
+        {
+            if(partyTabActive && partyController != null && partyController.InCharacterDetail)
+            partyController.ExitCharacterDetail();
+            if(topTabGroup != null) topTabGroup.PreviousTab();
+            return;
+        }
+        if(partyTabActive && partyController != null) partyController.HandleTabInput();
     }
 }
 

@@ -23,6 +23,16 @@ public class BondProgressSaveData
     public List<bool> conversationsViewed;
 }
 [System.Serializable]
+public class PersonalEquipmentSaveData
+{
+    public string baseAssetName;
+    public string equipmentName;
+    public int strength;
+    public int enhancementLevel;
+    public Element element;
+    public int equippedSlot = -1;
+}
+[System.Serializable]
 public class CharacterSaveData
 {
     public string character;
@@ -31,7 +41,8 @@ public class CharacterSaveData
     public int currentExperience;
     public int currentExpToNextLevel;
     public int currentLevel;
-    public EquipmentSaveData weapon, head, body, shield, accessory;
+    public List<string> personalItemNames = new List<string>();
+    public List<PersonalEquipmentSaveData> personalEquipment = new List<PersonalEquipmentSaveData>();
     public List<string> learnedSpells;
     public List<string> learnedArts;
     public List<string> learnedFusions;
@@ -79,4 +90,5 @@ public class SaveData
  public SettingsSaveData settings;
  public string sceneName;
  public float playerPosX, playerPosY, playerPosZ;
+ public string savedAt;
 }

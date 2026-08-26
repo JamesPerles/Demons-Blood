@@ -15,14 +15,24 @@ public class SaveManager : MonoBehaviour
     const string FusionsFolder = "Fusions";
     const string QuestsFolder = "Quests";
     const string PlayerStatsFolder = "PartyMembers";
-    string SavePath => Path.Combine(Application.persistentDataPath, "save.json");
+    string SavePath(int slot) => Path.Combine(Application.persistentDataPath, $"save_slot{slot}.json");
+    [System.Serializable]
+    public class SaveSlotSummary
+    {
+        public bool exists;
+        public string sceneName;
+        public int gold;
+        public string savedAt;
+        public string leadCharacterName = "";
+        public int leadCharacterLevel;
+    }
     void Awake()
     {
         if(instance == null) {instance = this; DontDestroyOnLoad(gameObject);}
         else Destroy(gameObject);
     }
-    public bool SaveExists() => File.Exists(SavePath);
-    public void SaveGame()
+    public bool SaveExists(int slot = 0) => File.Exists(SavePath(slot));
+    public void SaveGame(int slot = 0)
     {
         SaveData data = new SaveData();
         data.gold = Wallet.instance.currentGold;
@@ -70,6 +80,7 @@ if(SettingsManager.instance != null)
             };
         }
         data.sceneName = SceneManager.GetActiveScene().name;
+        data.savedAt = System.DateTime.Now.ToString("MMM d, h:mm tt");
         GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
         if(playerObj != null)
         {
@@ -83,8 +94,8 @@ if(SettingsManager.instance != null)
             Debug.LogWarning("Could not find object tagged Player/ postion not correctly saved.");
         }
         string json = JsonUtility.ToJson(data,true);
-        File.WriteAllText(SavePath,json);
-        Debug.Log($"Game saved to{SavePath}");
+        File.WriteAllText(SavePath(slot),json);
+        Debug.Log($"Game saved to{SavePath(slot)}");
     }
     EquipmentSaveData SaveEquipment(Equipment equipment)
     {
@@ -105,15 +116,38 @@ if(SettingsManager.instance != null)
         charac.currentExperience = character.currentExperience;
         charac.currentExpToNextLevel = character.currentExpToNextLevel;
         charac.currentLevel = character.currentLevel;
-        charac.weapon = SaveEquipment(character.weaponSlot);
-        charac.head = SaveEquipment(character.headSlot);
-        charac.body = SaveEquipment(character.bodySlot);
-        charac.shield = SaveEquipment(character.shieldSlot);
-        charac.accessory = SaveEquipment(character.accessorySlot);
+        charac.personalItemNames = new List<string>();
+        charac.personalEquipment = new List<PersonalEquipmentSaveData>();
+        foreach(Baggable carried in character.personalInventory.items)
+        {
+            if(carried is Equipment equipment)
+            {
+                int equippedSlot = -1;
+                if(character.weaponSlot == equipment) equippedSlot = (int) Equipment.EquipmentType.Weapon;
+                else if(character.headSlot == equipment) equippedSlot = (int) Equipment.EquipmentType.Head;
+                else if(character.bodySlot == equipment) equippedSlot = (int) Equipment.EquipmentType.Body;
+                else if(character.shieldSlot == equipment) equippedSlot = (int) Equipment.EquipmentType.Shield;
+                else if(character.accessorySlot == equipment) equippedSlot = (int) Equipment.EquipmentType.Accessory;
+                charac.personalEquipment.Add(new PersonalEquipmentSaveData
+                {
+                    baseAssetName = string.IsNullOrEmpty(equipment.baseAssetName) ? equipment.name : equipment.baseAssetName,
+                    equipmentName = equipment.equipmentName,
+                    strength = equipment.strength,
+                    enhancementLevel = equipment.enhancementLevel,
+                    element = equipment.element,
+                    equippedSlot = equippedSlot
+                });
+            }
+            else if(carried is Item item)
+            {
+                charac.personalItemNames.Add(item.name);
+            }
+        }
         charac.learnedArts = character.learnedArts.Select(art => art.name).ToList();
         charac.learnedSpells = character.learnedSpells.Select(spell => spell.name).ToList();
         charac.learnedFusions = character.learnedFusions.Select(fusion => fusion.name).ToList();
         charac.learnedSkills = character.learnedSkills.Select(skill => skill.name).ToList();
+        charac.skillSlots = character.skillSlots.Select(skill => skill != null ? skill.name : "").ToList();
         charac.skillPoints = character.skillPoints;
         charac.treePoints = character.SaveTreePoints();
         charac.unlockedPaths = character.SavePaths();
@@ -126,10 +160,10 @@ if(SettingsManager.instance != null)
             conversationsViewed = new List<bool>(bondpartner.conversationsViewed)});
             return charac;
     }
-    public void LoadGame()
+    public void LoadGame(int slot = 0)
     {
         if(!SaveExists()) {Debug.LogWarning("No save found."); return;}
-        string json = File.ReadAllText(SavePath);
+        string json = File.ReadAllText(SavePath(slot));
         SaveData data = JsonUtility.FromJson<SaveData>(json);
         StartCoroutine(LoadingGame(data));
     }
@@ -224,6 +258,19 @@ if(SettingsManager.instance != null)
         instance.element = data.element;
         return instance;
     }
+    Equipment LoadPersonalEquipment(PersonalEquipmentSaveData data)
+    {
+        if(data == null || string.IsNullOrEmpty(data.baseAssetName)) return null;
+        Equipment baseAsset = Resources.Load<Equipment>($"{EquipmentFolder}/{data.baseAssetName}");
+        if(baseAsset == null) {Debug.LogWarning($" Could not find Equipment '{data.baseAssetName}' in Resources/{EquipmentFolder}"); return null;}
+        Equipment instance = Instantiate(baseAsset);
+        instance.baseAssetName = data.baseAssetName;
+        instance.equipmentName = data.equipmentName;
+        instance.strength = data.strength;
+        instance.enhancementLevel = data.enhancementLevel;
+        instance.element = data.element;
+        return instance;
+    }
     void LoadCharacter(ActiveStats character, CharacterSaveData charsave)
     {
         character.currentHP = charsave.currentHP;
@@ -232,11 +279,29 @@ if(SettingsManager.instance != null)
         character.currentExpToNextLevel = charsave.currentExpToNextLevel;
         character.currentLevel = charsave.currentLevel;
         character.currentMagicAffinity = charsave.magicAffinity;
-        character.weaponSlot = LoadEquipment(charsave.weapon);
-        character.headSlot = LoadEquipment(charsave.head);
-        character.bodySlot = LoadEquipment(charsave.body);
-        character.shieldSlot = LoadEquipment(charsave.shield);
-        character.accessorySlot = LoadEquipment(charsave.accessory);
+        character.personalInventory.items.Clear();
+        character.weaponSlot = null;
+        character.headSlot = null;
+        character.bodySlot = null;
+        character.shieldSlot = null;
+        character.accessorySlot = null;
+        foreach(string itemName in charsave.personalItemNames)
+        {
+            Item item = Resources.Load<Item>($"{ItemsFolder}/{itemName}");
+            if(item != null) character.personalInventory.AddItem(item);
+            else Debug.LogWarning($"Could not find Item '{itemName}' in Resources/{ItemsFolder} for {charsave.character}'s personal inventory");
+        }
+        foreach(PersonalEquipmentSaveData equipData in charsave.personalEquipment)
+        {
+            Equipment loaded = LoadPersonalEquipment(equipData);
+            if(loaded == null) continue;
+            character.personalInventory.AddItem(loaded);
+            if(equipData.equippedSlot == (int)Equipment.EquipmentType.Weapon) character.weaponSlot = loaded;
+            else if(equipData.equippedSlot == (int)Equipment.EquipmentType.Head) character.headSlot = loaded;
+            else if(equipData.equippedSlot == (int)Equipment.EquipmentType.Body) character.bodySlot = loaded;
+            else if(equipData.equippedSlot == (int)Equipment.EquipmentType.Shield) character.shieldSlot = loaded;
+            else if(equipData.equippedSlot == (int)Equipment.EquipmentType.Accessory) character.accessorySlot = loaded;
+        }
         character.learnedSpells.Clear();
         foreach(string numbr in charsave.learnedSpells){var spell = Resources.Load<Spell>($"{SpellsFolder}/{numbr}"); if(spell != null) character.learnedSpells.Add(spell);}
        character.learnedArts.Clear();
@@ -261,5 +326,30 @@ if(SettingsManager.instance != null)
             progress.conversationsViewed = new List<bool>(bondprogress.conversationsViewed);
         }
         character.RefreshStats();
+    }
+    public SaveSlotSummary GetSlotSummary(int slot)
+    {
+        SaveSlotSummary summary = new SaveSlotSummary();
+        if(!SaveExists(slot)) return summary;
+        try
+        {
+            string json = File.ReadAllText(SavePath(slot));
+            SaveData data = JsonUtility.FromJson<SaveData>(json);
+            summary.exists = true;
+            summary.sceneName = data.sceneName;
+            summary.gold = data.gold;
+            summary.savedAt = data.savedAt;
+            if(data.characters != null && data.characters.Count > 0)
+            {
+                summary.leadCharacterName = data.characters[0].character;
+                summary.leadCharacterLevel = data.characters[0].currentLevel;
+            }
+        }
+        catch(System.Exception ex)
+        {
+            Debug.LogWarning($"Could not read save slot {slot} : {ex.Message}");
+            summary.exists = false;
+        }
+        return summary;
     }
 }

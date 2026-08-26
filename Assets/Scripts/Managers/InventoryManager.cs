@@ -45,4 +45,22 @@ public class InventoryManager : MonoBehaviour
             if (label != null) label.text = item.DisplayName;
         }
     }
+    public bool AddPersonalInventory(Baggable item, ActiveStats target)
+    {
+        if(item == null || target == null) return false;
+        if(!items.Contains(item)) return false;
+        if(!target.personalInventory.CanAdd()) return false;
+        items.Remove(item);
+        target.personalInventory.AddItem(item);
+        return true;
+    }
+    public bool RemovePersonalInventory(Baggable item, ActiveStats source)
+    {
+        if(item == null || source == null) return false;
+        if(!source.personalInventory.Contains(item)) return false;
+        if(item is Equipment equipment) source.UnequipRemovedEquipment(equipment);
+        source.personalInventory.RemoveItem(item);
+        items.Add(item);
+        return true;
+    }
 }

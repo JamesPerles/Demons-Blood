@@ -107,6 +107,9 @@ protected void SetDisplayActive(bool active)
         {
             button.interactable = option.enabled;
             button.onClick.AddListener(() => onClick(option));
+            Image targetGraphic = button.targetGraphic as Image;
+            if(targetGraphic != null)
+            targetGraphic.color = option.enabled ? button.colors.normalColor : button.colors.disabledColor;
         }
         var relay = entry.GetComponent<MenuEntrySelect>();
         if(relay == null) relay = entry.AddComponent<MenuEntrySelect>();
@@ -119,6 +122,14 @@ protected void SetDisplayActive(bool active)
         entryOptionMap[entry] = option;
         spawnedEntries.Add(entry);
         return entry;
+    }
+    public void RegisterEntry(GameObject entry, MenuOption option)
+    {
+        entryOptionMap[entry] = option;
+        if(!spawnedEntries.Contains(entry)) spawnedEntries.Add(entry);
+        MenuEntrySelect relay = entry.GetComponent<MenuEntrySelect>();
+        if(relay == null) relay = entry.AddComponent<MenuEntrySelect>();
+        relay.owner = this;
     }
     protected void EmptyMenu(float fontSize)
     {

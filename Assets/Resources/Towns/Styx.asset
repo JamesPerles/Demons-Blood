@@ -19,3 +19,6 @@ MonoBehaviour:
   associatedQuests: []
   shops: []
   npcs: []
+  mapPosition: {x: 5, y: 19}
+  undiscoveredHint: '? ? ?'
+  connectedTowns: []

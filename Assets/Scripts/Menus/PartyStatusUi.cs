@@ -2,26 +2,6 @@ using UnityEngine;
 using TMPro;
 using System.Collections.Generic;
 using UnityEngine.UI;
-[System.Serializable]
-public class PartyMemberSlot
-{
-public GameObject root;
-public Image icon;
-public TextMeshProUGUI nameText;
-public TextMeshProUGUI levelText;
-public Image hpFill;
-public TextMeshProUGUI hpText;
-public Image mpFill;
-public TextMeshProUGUI mpText;
-public Image transformFill;
-public TextMeshProUGUI transformText;
-public GameObject activeHighlight;
-public GameObject divider;
-}
-public class PartyMemberSlotView : MonoBehaviour
-    {
-        public PartyMemberSlot slot;
-    }
 public class PartyStatusUI : MonoBehaviour
     {
         public GameObject slotPrefab;
@@ -30,18 +10,27 @@ public class PartyStatusUI : MonoBehaviour
         public Color deadNameColor = new Color(0.6f, 0.15f, 0.15f);
         public RectTransform borderRect;
         List<GameObject> spawnedSlots = new List<GameObject>();
-        public void Refresh(List<ActiveStats> party, ActiveStats activeMember)
+        public void Refresh(List<ActiveStats> party)
         {
-            foreach(GameObject spawned in spawnedSlots) Destroy(spawned);
-            spawnedSlots.Clear();
             if(party == null || slotPrefab == null || slotParent == null) return;
             List<ActiveStats> livingRoster = new List<ActiveStats>();
             foreach(var member in party) if(member != null) livingRoster.Add(member);
+            while (spawnedSlots.Count < livingRoster.Count)
+        {
+            GameObject spawned = Instantiate(slotPrefab, slotParent);
+            spawnedSlots.Add(spawned);
+        }
+        while(spawnedSlots.Count > livingRoster.Count)
+        {
+            int lastIndex = spawnedSlots.Count - 1;
+            Destroy(spawnedSlots[lastIndex]);
+            spawnedSlots.RemoveAt(lastIndex);
+        }
             for(int i = 0; i < livingRoster.Count; i++)
             {
                 ActiveStats member = livingRoster[i];
-                GameObject spawned = Instantiate(slotPrefab, slotParent);
-                spawnedSlots.Add(spawned);
+                GameObject spawned = spawnedSlots[i];
+                spawned.transform.SetSiblingIndex(i);
                 PartyMemberSlotView view = spawned.GetComponent<PartyMemberSlotView>();
                 if(view == null || view.slot == null) continue;
                 PartyMemberSlot slot = view.slot;
@@ -53,10 +42,9 @@ public class PartyStatusUI : MonoBehaviour
                     slot.nameText.color = isDead ? deadNameColor : aliveNameColor;
                 }
                 if(slot.levelText != null) slot.levelText.text = $"LV {member.currentLevel}";
-                SetBar(slot.hpFill, slot.hpText, member.currentHP, member.finalHP);
-                SetBar(slot.mpFill, slot.mpText, member.currentMP, member.finalMP);
+                SetBar(slot.hpFill, slot.hpText, "HP", member.currentHP, member.finalHP);
+                SetBar(slot.mpFill, slot.mpText, "MP",member.currentMP, member.finalMP);
                 SetTransformBar(slot.transformFill, slot.transformText, member.transformGauge, member.transformGaugeMax);
-                if(slot.activeHighlight != null) slot.activeHighlight.SetActive(!isDead && member == activeMember);
                 bool isLast = i == livingRoster.Count - 1;
                 if(slot.divider != null) slot.divider.SetActive(!isLast);
             }
@@ -66,15 +54,15 @@ public class PartyStatusUI : MonoBehaviour
             LayoutRebuilder.ForceRebuildLayoutImmediate(borderRect);
         }
         }
-void SetBar(Image fill, TextMeshProUGUI label, int current, int max)
+void SetBar(Image fill, TextMeshProUGUI label, string prefix, int current, int max)
     {
         if(fill != null) fill.fillAmount = max > 0 ? Mathf.Clamp01((float) current / max) : 0f;
-        if(label != null) label.text = $"{current}/{max}";
+        if(label != null) label.text = $"{prefix}: {current}/{max}";
     }
     void SetTransformBar(Image fill, TextMeshProUGUI label, float current, float max)
     {
         float percent = max > 0 ? Mathf.Clamp01(current / max) : 0f;
         if(fill != null) fill.fillAmount = percent;
-        if(label != null) label.text = $"{Mathf.RoundToInt(percent * 100f)}%";
+        if(label != null) label.text = $"Trans {Mathf.RoundToInt(percent * 100f)}%";
     }
 }
