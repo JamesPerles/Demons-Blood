@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
-[CreateAssetMenu(fileName = "New Craft Recipe", menuName = "Recipe")]
+[CreateAssetMenu(fileName = "New Craft Recipe", menuName = "Recipe/Craft")]
 public class CraftRecipe : ScriptableObject
 {
 public Equipment result;

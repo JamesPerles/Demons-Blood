@@ -5,7 +5,7 @@ using System.Linq;
 using TMPro;
 public class InventoryMenu : MonoBehaviour, ICardHighlightHandler, ITabVisualOwner, IPageableTab
 {
-    public PauseMenu host;
+public PauseMenu host;
  public TextMeshProUGUI itemFeedbackText;
  public GameObject itemCardPrefab;
  public Transform itemCardParent;
@@ -13,7 +13,9 @@ public class InventoryMenu : MonoBehaviour, ICardHighlightHandler, ITabVisualOwn
  public Button useButton;
  public TextMeshProUGUI useButtonLabel;
  public Button sendButton;
+ public TextMeshProUGUI sendButtonLabel;
  public Button discardButton;
+ public TextMeshProUGUI discardButtonLable;
 public Color cardBorderDefault = new Color32(0x3A, 0x16, 0x16, 0xFF);
 public Color cardBorderSelected = new Color32(0xD8, 0x5A, 0x30, 0xFF);
 public Color cardBackgroundSelected = new Color32(0x24, 0x10, 0x10, 0xFF);
@@ -84,6 +86,8 @@ int selectedItemCount;
             discardButton.onClick.RemoveAllListeners();
             discardButton.onClick.AddListener(DiscardSelected);
         }
+        if(sendButtonLabel != null) sendButtonLabel.text = "Send";
+        if(discardButtonLable != null) discardButtonLable.text = "Discard";
     }
     List<(Baggable item, int count)> BuildGroupedList()
     {
@@ -270,7 +274,7 @@ int selectedItemCount;
         spawnedCards.Add(cancelObj);
         if(cancelView != null)
         {
-            if(cancelView.titleText != null) cancelView.titleText.text = "Cance;";
+            if(cancelView.titleText != null) cancelView.titleText.text = "Cancel";
             if(cancelView.subText != null) cancelView.subText.text = "";
             MenuOption cancelOption = new MenuOption("Cancel", () => { }) { description = "Return to the item list."};
             host.RegisterEntry(cancelObj, cancelOption);

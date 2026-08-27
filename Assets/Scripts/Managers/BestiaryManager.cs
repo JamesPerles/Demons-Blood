@@ -17,5 +17,5 @@ public class BestiaryManager : MonoBehaviour
     }
     public bool IsDiscovered(EnemyStats enemy) => enemy != null && discoveredEnemies.Contains(enemy.enemyID);
     public List<int> GetDiscoveredIDs() => new List<int>(discoveredEnemies);
-    public void LoadDiscovered(List<int> ids) { discoveredEnemies = new HashSet<int>(ids);} //is this for saving
+    public void LoadDiscovered(List<int> ids) { discoveredEnemies = new HashSet<int>(ids);}
     }

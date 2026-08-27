@@ -56,7 +56,6 @@
     <Compile Include="Assets\Scripts\Menus\InventoryMenu.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Effects\Restore.cs" />
     <Compile Include="Assets\Scripts\Battle Scripts\EnemyAI.cs" />
-    <Compile Include="Assets\Scripts\MapNodeViewer.cs" />
     <Compile Include="Assets\Scripts\Managers\AudioManager.cs" />
     <Compile Include="Assets\Scripts\Managers\Wallet.cs" />
     <Compile Include="Assets\Scripts\CombatantViewer.cs" />
@@ -117,8 +116,6 @@
     <Compile Include="Assets\Scripts\ScriptableObjects\Forge\MaterialAmount.cs" />
     <Compile Include="Assets\Scripts\PersonalInventory.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Items\Equipment.cs" />
-    <Compile Include="Assets\Scripts\ScriptableObjects\Areas\TownData.cs" />
-    <Compile Include="Assets\Scripts\Managers\MapManager.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Learnables\Learnable.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Forge\CraftRecipe.cs" />
     <Compile Include="Assets\Scripts\Menus\LoadMainMenu.cs" />
@@ -130,6 +127,7 @@
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_PhoneNumberValidator.cs" />
     <Compile Include="Assets\Scripts\Menus\MenuEntrySelect.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\SkewTextExample.cs" />
+    <Compile Include="Assets\Scripts\ScriptableObjects\Areas\LocationData.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Learnables\Effect.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Quests\QuestProgress.cs" />
     <Compile Include="Assets\Scripts\IPageableTab.cs" />
@@ -142,6 +140,7 @@
     <Compile Include="Assets\Scripts\Menus\MenuBase.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_TextInfoDebugTool.cs" />
     <Compile Include="Assets\Scripts\Menus\MenuPanelTheme.cs" />
+    <Compile Include="Assets\Scripts\SettingsMenu.cs" />
     <Compile Include="Assets\Scripts\Battle Scripts\EncounterTable.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Element.cs" />
     <Compile Include="Assets\Scripts\Managers\BestiaryManager.cs" />

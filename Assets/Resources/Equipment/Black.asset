@@ -23,5 +23,20 @@ MonoBehaviour:
   affinity: 0
   speed: 0
   luck: 0
+  Accuracy: 0
+  Evasion: 0
+  Precision: 0
+  Foresight: 0
+  Critical: 0
+  Dodge: 0
   equipmentType: 0
   weaponType: 0
+  sellPrice: 0
+  buyPrice: 0
+  baseAssetName: 
+  enhancementLevel: 0
+  element: 0
+  smeltYield:
+  - material: {fileID: 11400000, guid: f0c2f8034a5aaa244b371adab6620f9d, type: 2}
+    amount: 500
+  effects: []

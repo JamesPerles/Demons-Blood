@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3ce276c3cb74abc4fa9c2b2eb8e2cabd, type: 3}
+  m_Name: New Craft Recipe
+  m_EditorClassIdentifier: Assembly-CSharp::CraftRecipe
+  result: {fileID: 11400000, guid: 2eb72906ca6a70143b202895f6cabf4b, type: 2}
+  itemResult: {fileID: 11400000, guid: 169b3c88d6848da4d9653aef5487390b, type: 2}
+  requiredMaterials:
+  - material: {fileID: 11400000, guid: f0c2f8034a5aaa244b371adab6620f9d, type: 2}
+    amount: 1
+  goldCost: 0

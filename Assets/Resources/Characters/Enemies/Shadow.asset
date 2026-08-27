@@ -50,5 +50,11 @@ MonoBehaviour:
   dexEntry: A shadow monster that is made of pure darkness
   specialAttacks: []
   basicAttackWeight: 50
-  lootTable: []
-  stealTable: []
+  lootTable:
+  - item: {fileID: 11400000, guid: f0c2f8034a5aaa244b371adab6620f9d, type: 2}
+    quantity: 1
+    dropChance: 4
+  stealTable:
+  - item: {fileID: 11400000, guid: f0c2f8034a5aaa244b371adab6620f9d, type: 2}
+    quantity: 1
+    stealChance: 4
