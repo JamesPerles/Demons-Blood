@@ -6,7 +6,12 @@ public class LocationEntrance : MonoBehaviour
 {
 public LocationData locationData;
 public List<string> entrySpawnPointNames = new List<string>();
+public bool hasSceneTransition = true;
 bool isLoading = false;
+void Awake()
+    {
+        if(locationData != null) locationData.worldPosition = transform.position;
+    }
 void OnTriggerEnter2D(Collider2D other)
     {
         if(isLoading || !other.CompareTag("Player")) return;
@@ -15,6 +20,9 @@ void OnTriggerEnter2D(Collider2D other)
 public void Interact()
     {
         if(locationData == null || string.IsNullOrEmpty(locationData.sceneName)) return;
+        locationData.discovered = true;
+        if(!hasSceneTransition) return;
+        if(string.IsNullOrEmpty(locationData.sceneName)) return;
         isLoading = true;
         BattleManager.lastTown = locationData.sceneName;
         StartCoroutine(LoadTown());

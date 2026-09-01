@@ -51,6 +51,7 @@
   <ItemGroup>
     <Compile Include="Assets\Scripts\Player\IInteractable.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Items\Baggable.cs" />
+    <Compile Include="Assets\Scripts\SettingRowView.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\ShaderPropAnimator.cs" />
     <Compile Include="Assets\Scripts\Player\PlayerParty.cs" />
     <Compile Include="Assets\Scripts\Menus\InventoryMenu.cs" />
@@ -101,7 +102,6 @@
     <Compile Include="Assets\Scripts\Menus\PauseMenu.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Forge\AlchemyRecipe.cs" />
     <Compile Include="Assets\Scripts\Menus\PartyMemberSlotView.cs" />
-    <Compile Include="Assets\Scripts\ScriptableObjects\Areas\TownEntrance.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_UiFrameRateCounter.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\SimpleScript.cs" />
     <Compile Include="Assets\Scripts\QuestCardView.cs" />
@@ -115,6 +115,7 @@
     <Compile Include="Assets\Scripts\ScriptableObjects\Effects\StatChangeEffect.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Forge\MaterialAmount.cs" />
     <Compile Include="Assets\Scripts\PersonalInventory.cs" />
+    <Compile Include="Assets\Scripts\PartyRosterSlotView.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Items\Equipment.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Learnables\Learnable.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Forge\CraftRecipe.cs" />
@@ -165,6 +166,7 @@
     <Compile Include="Assets\Scripts\Menus\MapMenu.cs" />
     <Compile Include="Assets\Scripts\RosterController.cs" />
     <Compile Include="Assets\Scripts\Menus\PartyMenu.cs" />
+    <Compile Include="Assets\Scripts\ScriptableObjects\Areas\LocationEntrance.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\UI\TextMesh Pro\Shaders\TMPro.cginc" />

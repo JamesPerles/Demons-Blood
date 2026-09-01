@@ -76,12 +76,12 @@ void Awake()
         if (walletText != null && Wallet.instance != null)
         walletText.text = $"{Wallet.instance.currentGold} Gold";
     }
-public void ShowRosterPanel()
+public void ShowRosterPanel(bool showStatsExtra = false)
     {
         if(rosterPanel != null) rosterPanel.SetActive(true);
         if(listPanel != null) listPanel.SetActive(false);
         if(infoPanel != null) infoPanel.SetActive(false);
-        if(statsExtraPanel != null) statsExtraPanel.SetActive(false);
+        if(statsExtraPanel != null) statsExtraPanel.SetActive(showStatsExtra);
     }
     public void ShowListPanel()
     {
@@ -90,9 +90,9 @@ public void ShowRosterPanel()
         if(infoPanel != null) infoPanel.SetActive(false);
         if(statsExtraPanel != null) statsExtraPanel.SetActive(false);
     }
-    public void ShowInfoPanel()
+    public void ShowInfoPanel(bool showRoster = false)
     {
-        if(rosterPanel != null) rosterPanel.SetActive(false);
+        if(rosterPanel != null) rosterPanel.SetActive(showRoster);
         if(listPanel != null) listPanel.SetActive(false);
         if(infoPanel != null) infoPanel.SetActive(true);
         if(statsExtraPanel != null) statsExtraPanel.SetActive(false);
@@ -123,6 +123,7 @@ public void ShowRosterPanel()
         ClearScreenHistory();
         ClearCardHighlightHandler();
         ClearPageableTab();
+        (partyController as ITabVisualOwner)?.HideVisuals();
         (questController as ITabVisualOwner)?.HideVisuals();
         (mapController as ITabVisualOwner)?.HideVisuals();
         (miscController as ITabVisualOwner)?.HideVisuals();

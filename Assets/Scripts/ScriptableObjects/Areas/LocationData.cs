@@ -10,7 +10,7 @@ public LocationType locationType = LocationType.Town;
 [TextArea] public string description;
 public string sceneName;
 public bool discovered;
-public Vector2 mapPosition;
+public Vector2 worldPosition;
 public string undiscoveredHint = "? ? ?";
 public List<Quest> associatedQuests = new List<Quest>();
 public List<ShopStats> shops = new List<ShopStats>();

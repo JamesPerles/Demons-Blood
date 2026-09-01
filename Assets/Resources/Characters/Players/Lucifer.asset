@@ -51,9 +51,9 @@ MonoBehaviour:
     - requiredRank: 1
       dialogue: Amy. I love you
   immunities: []
-  allowedWeaponTypes: 
+  allowedWeaponTypes: 0000000001000000
   personalSkill: {fileID: 0}
-  skillTrees: {fileID: 0}
+  skillTrees: {fileID: 11400000, guid: 2cacbd9a304b8f144a800992f9f94297, type: 2}
   bio: 'One of the last members of the royal family of Tartarus. Him and his siblings
     went into hiding across Titan after the fall of their kingdom 10 years ago. But
     ever since then Lucifer has has one thing on his mind. Revenge. '

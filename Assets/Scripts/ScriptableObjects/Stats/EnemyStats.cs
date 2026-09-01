@@ -39,6 +39,7 @@ public class EnemyStats : ScriptableObject
     public List<StatusEffect> immunities = new List<StatusEffect>();
     public int enemyID;
     public string dexEntry;
+    public enum Race {Zombie, Ghost, Bird, Flyer, Beast, Human, Elemental, Devil, Angel, Aqua, Fish, Insect, Mineral, Dragon, Machine, Plant}
      public enum EnemySpecialAttackCategory { Art, Spell, Fusion}
     [System.Serializable]
     public class EnemySpecialAttack

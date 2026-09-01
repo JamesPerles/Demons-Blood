@@ -9,6 +9,7 @@ public class MiscellaneousMenu : MonoBehaviour, ICardHighlightHandler, ITabVisua
     public GameObject saveSlotCardPrefab;
     public Transform saveSlotCardParent;
     public int maxSaveSlots = 1;
+    public SettingsMenu settingsController;
     public Color cardBorderDefault = new Color32(0x3A, 0x16, 0x16, 0xFF);
     public Color cardBorderSelected = new Color32(0xD8, 0x5A, 0x30, 0xFF);
     public Color cardBackgroundSelected = new Color32(0x24, 0x10, 0x10, 0xFF);
@@ -17,6 +18,7 @@ public class MiscellaneousMenu : MonoBehaviour, ICardHighlightHandler, ITabVisua
     const string colorMuted = "#8A8580";
     const string colorBody = "#C9C2C2";
     const string colorBright = "#E8E4E0";
+    const string colorDone = "#639922";
     const string dot = "\u00B7";
     List<GameObject> spawnedCards = new List<GameObject>();
     public void OpenTab()
@@ -28,6 +30,7 @@ public class MiscellaneousMenu : MonoBehaviour, ICardHighlightHandler, ITabVisua
     {
         if(bestiaryCardParent != null) bestiaryCardParent.gameObject.SetActive(false);
         if(saveSlotCardParent != null) saveSlotCardParent.gameObject.SetActive(false);
+        if(settingsController != null) settingsController.HideVisuals();
     }
     void SetupMiniTabs()
     {
@@ -49,6 +52,7 @@ public class MiscellaneousMenu : MonoBehaviour, ICardHighlightHandler, ITabVisua
         host.ClearScreenHistory();
         if(bestiaryCardParent != null) bestiaryCardParent.gameObject.SetActive(true);
         if(saveSlotCardParent != null) saveSlotCardParent.gameObject.SetActive(false);
+        if(settingsController != null) settingsController.HideVisuals();
         host.ShowSplitPanel();
         host.SetBreadcrumbSuffix("Misc > Bestiary");
         host.SetCardHighlightHandler(this);
@@ -58,15 +62,13 @@ public class MiscellaneousMenu : MonoBehaviour, ICardHighlightHandler, ITabVisua
     {
         if(bestiaryCardParent != null) bestiaryCardParent.gameObject.SetActive(false);
         if(saveSlotCardParent != null) saveSlotCardParent.gameObject.SetActive(false);
-        host.ClearCardHighlightHandler();
-        host.ShowListPanel();
-        host.SetBreadcrumbSuffix("Misc > Settings");
-        host.SwitchTab(SettingsMenuList(), "Settings", 0, false);
+        if(settingsController != null) settingsController.OpenSettings();
     }
     void ShowSaveTab()
     {
        if(bestiaryCardParent != null) bestiaryCardParent.gameObject.SetActive(false);
        if(saveSlotCardParent != null) saveSlotCardParent.gameObject.SetActive(true);
+       if(settingsController != null) settingsController.HideVisuals();
        host.ShowSplitPanel();
        host.SetBreadcrumbSuffix("Misc > Save");
        host.SetCardHighlightHandler(this);
@@ -76,6 +78,7 @@ public class MiscellaneousMenu : MonoBehaviour, ICardHighlightHandler, ITabVisua
     {
        if(bestiaryCardParent != null) bestiaryCardParent.gameObject.SetActive(false);
        if(saveSlotCardParent != null) saveSlotCardParent.gameObject.SetActive(true);
+       if(settingsController != null) settingsController.HideVisuals();
        host.ShowSplitPanel();
        host.SetBreadcrumbSuffix("Misc > Load");
        host.SetCardHighlightHandler(this);
@@ -181,6 +184,37 @@ public class MiscellaneousMenu : MonoBehaviour, ICardHighlightHandler, ITabVisua
         result += $"<color={colorBody}>{enemy.dexEntry}</color>\n\n";
         result += $"<size=75%><color={colorMuted}>STATS</color></size>\n";
         result += $"<color={colorBright}>HP {enemy.hp}{dot} MP {enemy.mp} {dot} STR {enemy.strength} {dot} MAG {enemy.magic} {dot} DEF{enemy.defense} {dot} WIS {enemy.wisdom} {dot} TEC {enemy.tech} {dot} AFF {enemy.affinity} {dot} SPD {enemy.speed} {dot} LCK {enemy.luck}</color>";
+        if(enemy.magicAffinity != Element.None)
+        {
+            result += $"<size=75%><color={colorMuted}>AFFINITY</color></size>\n";
+            result += $"<color={colorBright}>{enemy.magicAffinity}</color>\n\n";
+        }
+        if(enemy.immunities != null && enemy.immunities.Count > 0)
+        {
+            List<string> immuneNames = new List<string>();
+            foreach(StatusEffect status in enemy.immunities) if(status != null) immuneNames.Add(status.name);
+            result += $"<size=75%><color={colorMuted}>IMMUNE TO</color></size>\n";
+            result += $"<color={colorBright}>{string.Join(", ", immuneNames)}</color>\n\n";
+        }
+        if(enemy.lootTable != null && enemy.lootTable.Count > 0)
+        {
+             result += $"<size=75%><color={colorMuted}>DROPS</color></size>\n";
+             foreach(EnemyStats.LootDrop drop in enemy.lootTable)
+            {
+                if(drop == null || drop.item == null) continue;
+                result += $"<color={colorBright}>{drop.item.itemName}</color> <color={colorDone}>{drop.dropChance}%</color>\n";
+            }
+            result += "\n";
+        }
+        if(enemy.stealTable != null && enemy.lootTable.Count > 0)
+        {
+             result += $"<size=75%><color={colorMuted}>STEALABLE</color></size>\n";
+             foreach(EnemyStats.StealDrop steal in enemy.stealTable)
+            {
+                if(steal == null || steal.item == null) continue;
+                result += $"<color={colorBright}>{steal.item.itemName}</color> <color={colorDone}>{steal.stealChance}%</color>\n";
+            }
+        }
         return result;
     }
     public void OnCardHighlighted(GameObject entry)

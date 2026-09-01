@@ -149,6 +149,7 @@ GameObject:
   - component: {fileID: 7389793167803622004}
   - component: {fileID: 3624411850483553115}
   - component: {fileID: 847198520837062942}
+  - component: {fileID: 4411534950383779216}
   m_Layer: 5
   m_Name: Node
   m_TagString: Untagged
@@ -258,3 +259,20 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls: []
+--- !u!114 &4411534950383779216
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8108608702165286203}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 707cb8c7a0548ea469dea7ba419b9b66, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::QuestCardView
+  borderImage: {fileID: 3624411850483553115}
+  backgroundImage: {fileID: 0}
+  titleText: {fileID: 1253849248902587262}
+  subText: {fileID: 0}
+  button: {fileID: 847198520837062942}

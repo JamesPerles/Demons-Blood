@@ -2,20 +2,26 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
-public class RosterController : MonoBehaviour
+public class RosterController : MonoBehaviour, ICardHighlightHandler
 {
     public GameObject slotPrefab;
     public Transform slotParent;
-    public Color aliveNameColor = Color.white;
-    public Color deadNameColor = new Color(0.6f, 0.15f, 0.15f);
-    public Color pickedUpColor = new Color(1f, 0.85f, 0.3f);
+    public ScrollRect rosterScrollRect;
+    public Color cardBorderDefault = new Color32(0x3A, 0x16, 0x16, 0xFF);
+    public Color cardBorderSelected = new Color32(0xD8, 0x5A, 0x30, 0xFF);
+    public Color cardBackgroundSelected = new Color32(0x24, 0x10, 0x10, 0xFF);
+    public Color aliveNameColor = new Color32(0xC9, 0xC2, 0xC2, 0xFF);
+    public Color deadNameColor = new Color32(0xE2, 0x4B, 0x4A, 0xFF);
+    public Color pickedUpNameColor = new Color32(0xF2, 0xF2, 0xF2, 0xFF);
+    public Color hpColor = new Color32(0x63, 0x99, 0x22, 0xFF);
+    public Color mpColor = new Color32(0x37, 0x8A, 0xDD, 0xFF);
     List<GameObject> spawnedSlots = new List<GameObject>();
     List<GameObject> orderedCharacters = new List<GameObject>();
-    MenuBase owner;
+    PauseMenu owner;
     System.Action <GameObject> onConfirmCharacter;
     GameObject pickedUpCharacter;
     public bool HasPickedUp => pickedUpCharacter != null;
-    public void Init(MenuBase owner)
+    public void Init(PauseMenu owner)
     {
         this.owner = owner;
     }
@@ -23,50 +29,84 @@ public class RosterController : MonoBehaviour
     {
         onConfirmCharacter = onConfirm;
         if(PlayerParty.instance == null || slotPrefab == null || slotParent == null) return;
-        spawnedSlots.RemoveAll(slot => slot == null);
-        GameObject[] roster = PlayerParty.instance.playableCharacters;
-        while(spawnedSlots.Count < roster.Length)
-        spawnedSlots.Add(Instantiate(slotPrefab, slotParent));
-        while(spawnedSlots.Count > roster.Length)
-        {
-            int lastIndex = spawnedSlots.Count - 1;
-            Destroy(spawnedSlots[lastIndex]);
-            spawnedSlots.RemoveAt(lastIndex);
-        }
+        foreach(GameObject slot in spawnedSlots) Destroy(slot);
+        spawnedSlots.Clear();
         orderedCharacters.Clear();
-        for (int i = 0; i < roster.Length; i++)
-        {
-            GameObject characterObject = roster[i];
-            orderedCharacters.Add(characterObject);
-            GameObject spawned = spawnedSlots[i];
-            spawned.transform.SetSiblingIndex(i);
+        GameObject[] roster = PlayerParty.instance.playableCharacters;
+        foreach(GameObject characterObject in roster) SpawnSlot(characterObject);
+        if(spawnedSlots.Count > 0 && owner != null) owner.EntryHighlight(spawnedSlots[0]);
+    }
+            GameObject SpawnSlot(GameObject characterObject)
+            {
             ActiveStats stats = characterObject.GetComponent<ActiveStats>();
-            PartyMemberSlotView view = spawned.GetComponent<PartyMemberSlotView>();
-            if(stats == null || view == null || view.slot == null) continue;
-            PartyMemberSlot slot = view.slot;
+            if(stats == null || slotPrefab == null || slotParent == null) return null;
+            GameObject spawned = Instantiate(slotPrefab, slotParent);
+            spawnedSlots.Add(spawned);
+            orderedCharacters.Add(characterObject);
+            PartyRosterSlotView view = spawned.GetComponent<PartyRosterSlotView>();
+            if(view == null) return spawned;
             bool isDead = stats.currentHP <= 0;
             bool isPickedUp = pickedUpCharacter ==characterObject;
-            if(slot.root != null) slot.root.SetActive(true);
-            if(slot.nameText != null)
+            if(view.nameText != null)
             {
-                slot.nameText.text = stats.currentName;
-                slot.nameText.color = isPickedUp ? pickedUpColor : (isDead ? deadNameColor : aliveNameColor);
+                view.nameText.text = stats.currentName;
+               view.nameText.color = isPickedUp ? pickedUpNameColor : (isDead ? deadNameColor : aliveNameColor);
             }
-            if(slot.levelText != null) slot.levelText.text = $"LV {stats.currentLevel}";
-            SetBar(slot.hpFill, slot.hpText, "HP", stats.currentHP, stats.finalHP);
-            SetBar(slot.mpFill, slot.mpText, "MP", stats.currentMP, stats.finalMP);
-            SetTransformBar(slot.transformFill, slot.transformText, stats.transformGauge, stats.transformGaugeMax);
-            bool isLast = i == roster.Length - 1;
-            if(slot.divider != null) slot.divider.SetActive(!isLast);
+            if(view.levelText != null) view.levelText.text = $"LV {stats.currentLevel}";
+            SetBar(view.hpFill, view.hpText, "HP", stats.currentHP, stats.finalHP, hpColor);
+            SetBar(view.mpFill, view.mpText, "MP", stats.currentMP, stats.finalMP, mpColor);
             GameObject capturedCharacter = characterObject;
-            Button button = spawned.GetComponent<Button>();
-            if(button != null)
+            GameObject capturedSlot = spawned;
+            MenuOption option = new MenuOption(stats.currentName, () => { });
+            if(owner != null) owner.RegisterEntry(spawned, option);
+            if(view.button != null)
             {
-                button.onClick.RemoveAllListeners();
-                button.onClick.AddListener(() => HandleConfirm(capturedCharacter));
+                view.button.onClick.RemoveAllListeners();
+                view.button.onClick.AddListener(() =>
+                {
+                    if(owner != null) owner.EntryHighlight(capturedSlot);
+                     HandleConfirm(capturedCharacter);
+            });
+        } 
+        SetCardVisual(view, isPickedUp);
+        return spawned;
+    }
+public void FocusCharacter(GameObject character)
+    {
+        if(character == null) return;
+        int existingIndex = orderedCharacters.IndexOf(character);
+        bool cardIsAlive = existingIndex >= 0 && spawnedSlots[existingIndex] != null;
+        if(!cardIsAlive)
+        {
+            for(int i = spawnedSlots.Count - 1; i >= 0; i--)
+            {
+                if(spawnedSlots[i] != null) Destroy(spawnedSlots[i]);
             }
-            if(owner != null) owner.RegisterEntry(spawned, new MenuOption(stats.currentName, () => { }));
+            spawnedSlots.Clear();
+            orderedCharacters.Clear();
+            SpawnSlot(character);
         }
+        else
+        {
+        for(int i = spawnedSlots.Count - 1; i >= 0; i--)
+        {
+            if(i >= orderedCharacters.Count || orderedCharacters[i] == character) continue;
+            if(spawnedSlots[i] != null) Destroy(spawnedSlots[i]);
+            spawnedSlots.RemoveAt(i);
+            orderedCharacters.RemoveAt(i);
+        }
+        }
+        if(spawnedSlots.Count == 0) return;
+        spawnedSlots[0].transform.SetSiblingIndex(0);
+        PartyRosterSlotView view = spawnedSlots[0].GetComponent<PartyRosterSlotView>();
+        if(view == null) return;
+        SetCardVisual(view, true);
+        if(view.button != null) view.button.interactable = false;
+    }
+    void ResetScrollToTop()
+    {
+        if(rosterScrollRect == null && slotParent != null) rosterScrollRect = slotParent.GetComponentInParent<ScrollRect>();
+        if(rosterScrollRect != null) rosterScrollRect.verticalNormalizedPosition = 1f;
     }
 void HandleConfirm(GameObject character)
     {
@@ -92,15 +132,34 @@ void HandleConfirm(GameObject character)
         pickedUpCharacter = null;
         Refresh(onConfirmCharacter);
     }
-    void SetBar(Image fill, TextMeshProUGUI label, string prefix, int current, int max)
+     public void OnCardHighlighted(GameObject entry)
     {
-        if(fill != null) fill.fillAmount = max > 0 ? Mathf.Clamp01((float) current / max) : 0f;
-        if(label != null) label.text = $"{prefix}: {current}/{max}";
+        for(int i = 0; i < spawnedSlots.Count; i++)
+        {
+            if(spawnedSlots[i] == null) continue;
+            PartyRosterSlotView view = spawnedSlots[i].GetComponent<PartyRosterSlotView>();
+            if(view == null) continue;
+            bool isPickedUp = i < orderedCharacters.Count && orderedCharacters [i] == pickedUpCharacter;
+            SetCardVisual(view, spawnedSlots[i] == entry || isPickedUp);
     }
-     void SetTransformBar(Image fill, TextMeshProUGUI label, float current, float max)
+    }
+    void SetCardVisual(PartyRosterSlotView view, bool selected)
     {
-        float percent = max > 0 ? Mathf.Clamp01(current / max) : 0f;
-        if(fill != null) fill.fillAmount = percent; 
-        if(label != null) label.text = $"Trans {Mathf.RoundToInt(percent * 100f)}%";
+        if(view.borderImage != null) view.borderImage.color = selected ? cardBorderSelected : cardBorderDefault;
+        if(view.backgroundImage != null)
+        {
+            Color bg = cardBackgroundSelected;
+            bg.a = selected ? 1f : 0f;
+            view.backgroundImage.color = bg;
+        }
+    }
+    void SetBar(Image fill, TextMeshProUGUI label, string prefix, int current, int max, Color color)
+    {
+        if(fill != null) 
+        {
+            fill.fillAmount = max > 0 ? Mathf.Clamp01((float) current / max) : 0f;
+            fill.color = color;
+        }
+        if(label != null) label.text = $"{prefix}: {current}/{max}";
     }
 }

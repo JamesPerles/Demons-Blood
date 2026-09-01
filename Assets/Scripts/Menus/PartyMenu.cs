@@ -45,6 +45,7 @@ public void OpenTab()
         if(rosterController != null)
         {
             rosterController.Init(host);
+            host.SetCardHighlightHandler(rosterController);
             rosterController.Refresh(OpenCharacterDetail);
         }
         host.SetBreadcrumbSuffix("Party");

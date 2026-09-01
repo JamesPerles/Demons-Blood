@@ -10,18 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0c439888dd43dac4aacfb612e570cffe, type: 3}
-  m_Name: Styx
+  m_Name: Styx Sewers
   m_EditorClassIdentifier: Assembly-CSharp::TownData
-  locationName: Styx
-  locationType: 0
-  description: The capital city of Styx which has the same for some reason
+  locationName: Sewers
+  locationType: 1
+  description: A sewer near Styx. People have recnelty been going missing here.
   sceneName: TownTest
   discovered: 1
-  worldPosition: {x: 0, y: 0}
+  worldPosition: {x: -7.7, y: 0.43000007}
   undiscoveredHint: '? ? ?'
-  associatedQuests:
-  - {fileID: 11400000, guid: 1541f4a666b35a641a5aefbfe41a7afb, type: 2}
-  shops:
-  - {fileID: 11400000, guid: b4d2f5a6f394f364e94d32d0523d4b19, type: 2}
+  associatedQuests: []
+  shops: []
   npcs: []
   icon: {fileID: -5177388603050735206, guid: a12c01a2b2dc63c448a98d087ffb7a12, type: 3}

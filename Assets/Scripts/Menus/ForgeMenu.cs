@@ -339,6 +339,8 @@ public void OpenTab()
         enhanced.equipmentName = StripSuffix(original.equipmentName) + $" +{enhanced.enhancementLevel}";
         if(owner != null)
         {
+            owner.personalInventory.RemoveItem(original);
+            owner.personalInventory.AddItem(enhanced);
             owner.Equip(enhanced);
         }
         else
