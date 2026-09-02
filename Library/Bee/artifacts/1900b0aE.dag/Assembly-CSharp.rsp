@@ -417,6 +417,7 @@
 "Assets/Scripts/Battle Scripts/ICombatant.cs"
 "Assets/Scripts/Battle Scripts/Random Encounters.cs"
 "Assets/Scripts/CombatantViewer.cs"
+"Assets/Scripts/GridCardPager.cs"
 "Assets/Scripts/ICardHighlightHandler.cs"
 "Assets/Scripts/IPageableTab.cs"
 "Assets/Scripts/ITabVisualOwner.cs"

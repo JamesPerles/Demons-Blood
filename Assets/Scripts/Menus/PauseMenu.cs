@@ -49,6 +49,11 @@ void Awake()
         if(Input.GetKeyDown(KeyCode.Space)) NextPage();
         HandleTabInput();
     }
+    void HandlePageInput()
+    {
+        if(activePageableTab != null) activePageableTab.NextPage();
+        else NextPage();
+    }
     public void Open()
     {
         isOpen = true;
@@ -69,7 +74,6 @@ void Awake()
         activeCardHandler = null;
         if(partyController != null) partyController.ResetState();
     }
-    
     protected override string BreadcrumbPrefix() => "Pause";
     void UpdateWallet()
     {
@@ -172,6 +176,3 @@ public void ShowRosterPanel(bool showStatsExtra = false)
         if(partyTabActive && partyController != null) partyController.HandleTabInput();
     }
 }
-
-
-

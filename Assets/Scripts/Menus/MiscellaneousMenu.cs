@@ -1,7 +1,7 @@
 using UnityEngine;
 using TMPro;
 using System.Collections.Generic;
-public class MiscellaneousMenu : MonoBehaviour, ICardHighlightHandler, ITabVisualOwner
+public class MiscellaneousMenu : MonoBehaviour, ICardHighlightHandler, ITabVisualOwner, IPageableTab
 {
     public PauseMenu host;
     public GameObject bestiaryCardPrefab;
@@ -20,10 +20,14 @@ public class MiscellaneousMenu : MonoBehaviour, ICardHighlightHandler, ITabVisua
     const string colorBright = "#E8E4E0";
     const string colorDone = "#639922";
     const string dot = "\u00B7";
-    List<GameObject> spawnedCards = new List<GameObject>();
+    GridCardPager bestiaryPager;
+    GridCardPager savePager;
+    GridCardPager activePager;
     public void OpenTab()
     {
         host.PrepareTabSwitch();
+        if(bestiaryPager == null) bestiaryPager = new GridCardPager(bestiaryCardPrefab, bestiaryCardParent, host, 3, 3);
+        if(savePager == null) savePager = new GridCardPager(saveSlotCardPrefab, saveSlotCardParent, host, 3, 3);
         SetupMiniTabs();
     }
      public void HideVisuals()
@@ -40,7 +44,7 @@ public class MiscellaneousMenu : MonoBehaviour, ICardHighlightHandler, ITabVisua
         {
             new TabDefinition("Bestiary", ShowBestiaryTab),
             new TabDefinition("Settings", ShowSettingsTab),
-             new TabDefinition("Save", ShowSaveTab),
+            new TabDefinition("Save", ShowSaveTab),
             new TabDefinition("Load", ShowLoadTab),
             new TabDefinition("Quit", QuitGame), 
         };
@@ -56,12 +60,14 @@ public class MiscellaneousMenu : MonoBehaviour, ICardHighlightHandler, ITabVisua
         host.ShowSplitPanel();
         host.SetBreadcrumbSuffix("Misc > Bestiary");
         host.SetCardHighlightHandler(this);
+        host.SetPageableTab(this);
         RebuildBestiaryCards();
     }
     void ShowSettingsTab()
     {
         if(bestiaryCardParent != null) bestiaryCardParent.gameObject.SetActive(false);
         if(saveSlotCardParent != null) saveSlotCardParent.gameObject.SetActive(false);
+        host.ClearPageableTab();
         if(settingsController != null) settingsController.OpenSettings();
     }
     void ShowSaveTab()
@@ -72,6 +78,8 @@ public class MiscellaneousMenu : MonoBehaviour, ICardHighlightHandler, ITabVisua
        host.ShowSplitPanel();
        host.SetBreadcrumbSuffix("Misc > Save");
        host.SetCardHighlightHandler(this);
+       activePager = savePager;
+       host.SetPageableTab(this);
        RebuildSlotCards(true); 
     }
    void ShowLoadTab()
@@ -82,43 +90,36 @@ public class MiscellaneousMenu : MonoBehaviour, ICardHighlightHandler, ITabVisua
        host.ShowSplitPanel();
        host.SetBreadcrumbSuffix("Misc > Load");
        host.SetCardHighlightHandler(this);
+       activePager = savePager;
+       host.SetPageableTab(this);
        RebuildSlotCards(false); 
+    }
+    public void NextPage()
+    {
+        activePager?.NextPage();
+        if(activePager != null && activePager.SpawnedCards.Count > 0) host.EntryHighlight(activePager.SpawnedCards[0]);
+    }
+    public void PreviousPage()
+    {
+        activePager?.PreviousPage();
+        if(activePager != null && activePager.SpawnedCards.Count > 0) host.EntryHighlight(activePager.SpawnedCards[0]);
     }
     void RebuildSlotCards(bool saveMode)
     {
-        foreach(GameObject card in spawnedCards) Destroy(card);
-        spawnedCards.Clear();
-        if(saveSlotCardPrefab == null || saveSlotCardParent == null || SaveManager.instance == null) return;
+        if(savePager == null || saveSlotCardPrefab == null || saveSlotCardParent == null || SaveManager.instance == null) return;
+        List<CardGridSpec> specs = new List<CardGridSpec>();
         for(int slot = 0; slot < maxSaveSlots; slot++)
         {
             SaveManager.SaveSlotSummary summary = SaveManager.instance.GetSlotSummary(slot);
-            GameObject cardObj = Instantiate(saveSlotCardPrefab, saveSlotCardParent);
-            QuestCardView view = cardObj.GetComponent<QuestCardView>();
-            spawnedCards.Add(cardObj);
-            if(view == null) continue;
             string title = $"Slot {slot + 1}";
             string subText = summary.exists ? $"{summary.leadCharacterName} Lv.{summary.leadCharacterLevel}" : "Empty";
-            if(view.titleText != null) view.titleText.text = title;
-            if(view.subText != null) view.subText.text = subText;
             int capturedSlot = slot;
-            MenuOption option = new MenuOption(title, () => { }) {description = BuildSlotDetail(summary, slot) };
-            host.RegisterEntry(cardObj, option);
             bool clickable = saveMode || summary.exists;
-            if(view.button != null)
-            {
-                view.button.interactable = clickable;
-                view.button.onClick.RemoveAllListeners();
-                GameObject capturedCard = cardObj;
-                view.button.onClick.AddListener(() =>
-                {
-                    host.EntryHighlight(capturedCard);
-                    if(saveMode) ConfirmSaveSlot(capturedSlot);
-                    else ConfirmLoadSlot(capturedSlot);
-                });
-            }
-            SetCardVisual(view, false);
+            specs.Add(new CardGridSpec(title, subText, BuildSlotDetail(summary, slot),
+            () => { if(saveMode) ConfirmSaveSlot(capturedSlot); else ConfirmLoadSlot(capturedSlot); }, clickable));
         }
-        if(spawnedCards.Count > 0) host.EntryHighlight(spawnedCards[0]);
+        savePager.SetSpecs(specs);
+        if(savePager.SpawnedCards.Count > 0) host.EntryHighlight(savePager.SpawnedCards[0]);
      }
     string BuildSlotDetail(SaveManager.SaveSlotSummary summary, int slot)
     {
@@ -146,31 +147,18 @@ public class MiscellaneousMenu : MonoBehaviour, ICardHighlightHandler, ITabVisua
     }
     void RebuildBestiaryCards()
     {
-        foreach(GameObject card in spawnedCards) Destroy(card);
-        spawnedCards.Clear();
-        if(bestiaryCardPrefab == null || bestiaryCardParent == null || BestiaryManager.instance == null) return;
+        if(bestiaryPager == null || bestiaryCardPrefab == null || bestiaryCardParent == null || BestiaryManager.instance == null) return;
+        List<CardGridSpec> specs = new List<CardGridSpec>();
         foreach(EnemyStats enemy in BestiaryManager.instance.allEnemies)
         {
             if(enemy == null) continue;
-            GameObject cardObj = Instantiate(bestiaryCardPrefab, bestiaryCardParent);
-            QuestCardView view = cardObj.GetComponent<QuestCardView>();
-            spawnedCards.Add(cardObj);
-            if(view == null) continue;
             bool discovered = BestiaryManager.instance.IsDiscovered(enemy);
             string title = discovered ? enemy.enemyName : "? ? ?";
-            if(view.titleText != null) view.titleText.text = title;
-            if(view.subText != null) view.subText.text = "";
-            MenuOption option = new MenuOption(title, () => { }) {description = BuildBestiaryDetail(enemy, discovered)};
-            host.RegisterEntry(cardObj, option);
-            if(view.button != null)
-            {
-                view.button.onClick.RemoveAllListeners();
-                GameObject capturedCard = cardObj;
-                view.button.onClick.AddListener(() => host.EntryHighlight(capturedCard));
-            }
-            SetCardVisual(view, false);
+            EnemyStats captured = enemy;
+            specs.Add(new CardGridSpec(title, "", BuildBestiaryDetail(captured, discovered), () => { }));
         }
-        if(spawnedCards.Count > 0) host.EntryHighlight(spawnedCards[0]);
+        bestiaryPager.SetSpecs(specs);
+        if(bestiaryPager.SpawnedCards.Count > 0) host.EntryHighlight(bestiaryPager.SpawnedCards[0]);
         else if(host.detailText != null) host.detailText.text = "No enemies known yet";
     }
     string BuildBestiaryDetail(EnemyStats enemy, bool discovered)
@@ -219,11 +207,13 @@ public class MiscellaneousMenu : MonoBehaviour, ICardHighlightHandler, ITabVisua
     }
     public void OnCardHighlighted(GameObject entry)
     {
-        for(int i = 0; i < spawnedCards.Count; i++)
+        if(activePager == null) return;
+        for(int i = 0; i < activePager.SpawnedCards.Count; i++)
         {
-            QuestCardView view = spawnedCards[i].GetComponent<QuestCardView>();
+            if(activePager.SpawnedCards[i] == null) continue;
+            QuestCardView view = activePager.SpawnedCards[i].GetComponent<QuestCardView>();
             if(view == null) continue;
-            SetCardVisual(view, spawnedCards[i] == entry);
+            SetCardVisual(view, activePager.SpawnedCards[i] == entry);
         }
     }
     void SetCardVisual(QuestCardView view, bool selected)
@@ -236,33 +226,6 @@ public class MiscellaneousMenu : MonoBehaviour, ICardHighlightHandler, ITabVisua
             view.backgroundImage.color = bg;
         }
         if(view.titleText != null) view.titleText.color = selected ? cardTitleSelected : cardTitleDefault;
-    }
-    List<MenuOption> SettingsMenuList()
-    {
-        List<MenuOption> options = new List<MenuOption>();
-        if(SettingsManager.instance == null)
-        {
-            options.Add(new MenuOption("Settings unavailable", () => { }) {enabled = false});
-            return options;
-        }
-        SettingsManager setting = SettingsManager.instance;
-        options.Add(new MenuOption($"Music Volume: {Mathf.RoundToInt(setting.musicVolume * 100)}%", CycleMusicVolume));
-        options.Add(new MenuOption($"SFX Volume: {Mathf.RoundToInt(setting.sfxVolume * 100)}%", CycleSfxVolume));
-        options.Add(new MenuOption($"Dialogue Text Speed: {setting.dialogueTextSpeed:0}", CycleDialogueTextSpeed));
-        options.Add(new MenuOption($" Battle Text Speed: {setting.battleTextSpeed:0}", CycleBattleTextSpeed));
-        options.Add(new MenuOption($"Battle Speed: {setting.battleSpeedMultiplier: 0.0}x", CycleBattleSpeed));
-        options.Add(new MenuOption($"Text Color R: {Mathf.RoundToInt(setting.uiTextColor.r * 100)}%", () => CycleTextColorChannel(0)));
-        options.Add(new MenuOption($"Text Color G: {Mathf.RoundToInt(setting.uiTextColor.g * 100)}%", () => CycleTextColorChannel(1)));
-        options.Add(new MenuOption($"Text Color B: {Mathf.RoundToInt(setting.uiTextColor.b * 100)}%", () => CycleTextColorChannel(2)));
-        options.Add(new MenuOption($"Panel Color R: {Mathf.RoundToInt(setting.menuPanelColor.r * 100)}%", () => CyclePanelColorChannel(0)));
-        options.Add(new MenuOption($"Panel Color G: {Mathf.RoundToInt(setting.menuPanelColor.g * 100)}%", () => CyclePanelColorChannel(1)));
-        options.Add(new MenuOption($"Panel Color B: {Mathf.RoundToInt(setting.menuPanelColor.b * 100)}%", () => CyclePanelColorChannel(2)));
-        options.Add(new MenuOption($"Panel Opacity: {Mathf.RoundToInt(setting.menuPanelColor.a * 100)}%", CyclePanelOpacity));
-        options.Add(new MenuOption($"Border Color R: {Mathf.RoundToInt(setting.menuBorderColor.r * 100)}%", () => CycleBorderColorChannel(0)));
-        options.Add(new MenuOption($"Border Color G: {Mathf.RoundToInt(setting.menuBorderColor.g * 100)}%", () => CycleBorderColorChannel(1)));
-        options.Add(new MenuOption($"Border Color B: {Mathf.RoundToInt(setting.menuBorderColor.b * 100)}%", () => CycleBorderColorChannel(2)));
-        options.Add(new MenuOption($"Border Thickness: {setting.menuBorderThickness:0}px", CycleBorderThickness));
-        return options;
     }
     void SaveGame()
     {
@@ -281,87 +244,5 @@ public class MiscellaneousMenu : MonoBehaviour, ICardHighlightHandler, ITabVisua
         #else 
         Application.Quit();
         #endif
-    }
-    void RefreshSettingsScreen()
-    {
-        host.RefreshScreen(SettingsMenuList());
-    }
-    void CycleMusicVolume()
-    {
-        SettingsManager.instance.SetMusicVolume(NextVolumeStep(SettingsManager.instance.musicVolume));
-        RefreshSettingsScreen();
-    }
-    void CycleSfxVolume()
-    {
-        SettingsManager.instance.SetSfxVolume(NextVolumeStep(SettingsManager.instance.sfxVolume));
-        RefreshSettingsScreen();
-    }
-    void CycleDialogueTextSpeed()
-    {
-        SettingsManager.instance.dialogueTextSpeed = NextTextSpeedStep(SettingsManager.instance.dialogueTextSpeed);
-       RefreshSettingsScreen(); 
-    }
-    void CycleBattleTextSpeed()
-    {
-        SettingsManager.instance.battleTextSpeed = NextTextSpeedStep(SettingsManager.instance.battleTextSpeed);
-        RefreshSettingsScreen();
-    }
-    void CycleBattleSpeed()
-    {
-        SettingsManager.instance.battleSpeedMultiplier = NextBattleSpeedStep(SettingsManager.instance.battleSpeedMultiplier);
-        RefreshSettingsScreen();
-    }
-    void CycleTextColorChannel(int channel)
-    {
-        Color c = SetChannel(SettingsManager.instance.uiTextColor, channel, NextVolumeStep(GetChannel(SettingsManager.instance.uiTextColor, channel)));
-        SettingsManager.instance.SetTextColor(c);
-        RefreshSettingsScreen();
-    }
-    void CyclePanelColorChannel(int channel)
-    {
-        Color c = SetChannel(SettingsManager.instance.menuPanelColor, channel, NextVolumeStep(GetChannel(SettingsManager.instance.menuPanelColor, channel)));
-        SettingsManager.instance.SetMenuPanelColor(c);
-        RefreshSettingsScreen();
-    }
-    void CyclePanelOpacity()
-    {
-        Color c = SettingsManager.instance.menuPanelColor;
-        c.a = NextVolumeStep(c.a);
-        SettingsManager.instance.SetMenuPanelColor(c);
-        RefreshSettingsScreen();
-    }
-    void CycleBorderColorChannel(int channel)
-    {
-        Color c = SetChannel(SettingsManager.instance.menuBorderColor, channel, NextVolumeStep(GetChannel(SettingsManager.instance.menuBorderColor, channel)));
-        SettingsManager.instance.SetMenuBorderColor(c);
-        RefreshSettingsScreen();
-    }
-    void CycleBorderThickness()
-    {
-        float next = SettingsManager.instance.menuBorderThickness + 1f;
-        if(next > 10f) next = 1f;
-        SettingsManager.instance.SetMenuBorderThickness(next);
-        RefreshSettingsScreen();
-    }
-    float GetChannel(Color c, int channel) => channel == 0 ? c.r : channel == 1 ? c.g : c.b;
-    Color SetChannel(Color c, int channel, float value)
-    {
-        if(channel == 0) c.r = value; else if(channel == 1) c.g = value; else c.b = value;
-        return c;
-    }
-    float NextVolumeStep(float current)
-    {
-        float next = current + 0.1f;
-        return next > 1.001f ? 0f : Mathf.Clamp01(next);
-    }
-    float NextTextSpeedStep(float current)
-    {
-        float next = current + 10f;
-        return next > 100f ? 10f : next;
-    }
-    float NextBattleSpeedStep(float current)
-    {
-        float next = current + 0.5f;
-        return next > 2.5f ? 0.5f : next;
     }
 }

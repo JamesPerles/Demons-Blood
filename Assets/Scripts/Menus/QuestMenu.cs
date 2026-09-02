@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
-public class QuestMenu : MonoBehaviour, ICardHighlightHandler
+public class QuestMenu : MonoBehaviour, ICardHighlightHandler, IPageableTab
 {
 public PauseMenu host;
 public GameObject questCardPrefab;
@@ -20,14 +20,17 @@ const string colorPending = "#5F5E5A";
 const string dot = "\u00B7";
 const string checkMark = "\u2713";
 const string circleMark = "\u25CB";
-List<GameObject> spawnedCards = new List<GameObject>();
+GridCardPager pager;
 List<QuestProgress> currentActiveList = new List<QuestProgress>();
 List<Quest> currentCompletedList = new List<Quest>();
 bool showingCompleted = false;
 public void OpenTab()
     {
+        host.PrepareTabSwitch();
+        if(pager == null) pager = new GridCardPager(questCardPrefab, questCardParent, host, 3, 3);
         host.ShowSplitPanel();
         host.SetCardHighlightHandler(this);
+        host.SetPageableTab(this);
         SetupMiniTabs();
     }
     void SetupMiniTabs()
@@ -61,47 +64,37 @@ void ShowQuestList(bool mainQuests)
     }
     void RebuildCards()
     {
-        foreach(GameObject card in spawnedCards) Destroy(card);
-        spawnedCards.Clear();
-        if(questCardPrefab == null || questCardParent == null) return;
-        int count = showingCompleted ? currentCompletedList.Count : currentActiveList.Count;
-        for(int i = 0; i < count; i++)
-        {
-            GameObject cardObj = Instantiate(questCardPrefab, questCardParent);
-            QuestCardView view = cardObj.GetComponent<QuestCardView>();
-            spawnedCards.Add(cardObj);
-            if(view == null) continue;
-            string title;
-            string subText;
-            string detail;
+        if(pager == null || questCardPrefab == null || questCardParent == null) return;
+           List<CardGridSpec> specs = new List<CardGridSpec>();
             if(showingCompleted)
             {
-                Quest quest = currentCompletedList[i];
-                title = quest.questName;
-                subText = "Completed";
-                detail = BuildCompletedDetail(quest);
+                foreach(Quest quest in currentCompletedList)
+                {
+                    Quest captured = quest;
+                    specs.Add(new CardGridSpec(quest.questName, "Completed", BuildCompletedDetail(captured), () => { }));
+                }
             }
             else
             {
-                QuestProgress progress = currentActiveList[i];
-                title = progress.quest.questName;
-                subText = BuildProgressSubText(progress);
-                detail = BuildActiveDetail(progress);
-            }
-            if(view.titleText != null) view.titleText.text = title;
-            if(view.subText != null) view.subText.text = subText;
-            MenuOption option = new MenuOption(title, () => { }) { description = detail};
-            host.RegisterEntry(cardObj, option);
-            if(view.button != null)
+            foreach(QuestProgress progress in currentActiveList)
             {
-                view.button.onClick.RemoveAllListeners();
-                GameObject capturedCard = cardObj;
-                view.button.onClick.AddListener(() => host.EntryHighlight(capturedCard));
+                QuestProgress captured = progress;
+                specs.Add(new CardGridSpec(progress.quest.questName, BuildProgressSubText(progress), BuildActiveDetail(captured), () => { }));
             }
-            SetCardVisual(view, false);
         }
-        if(spawnedCards.Count > 0) host.EntryHighlight(spawnedCards[0]);
+        pager.SetSpecs(specs);
+        if(pager.SpawnedCards.Count > 0) host.EntryHighlight(pager.SpawnedCards[0]);
         else if(host.detailText != null) host.detailText.text = showingCompleted ? "No completed quests yet." : "No quests in this category";
+    }
+    public void NextPage()
+    {
+        pager?.NextPage();
+        if(pager != null && pager.SpawnedCards.Count > 0) host.EntryHighlight(pager.SpawnedCards[0]);
+    }
+    public void PreviousPage()
+    {
+        pager?.PreviousPage();
+        if(pager != null && pager.SpawnedCards.Count > 0) host.EntryHighlight(pager.SpawnedCards[0]);
     }
     string BuildProgressSubText(QuestProgress progress)
     {
@@ -184,11 +177,13 @@ void ShowQuestList(bool mainQuests)
     }
         public void OnCardHighlighted(GameObject entry)
     {
-        for(int i = 0; i < spawnedCards.Count; i++)
+        if(pager == null) return;
+        for(int i = 0; i < pager.SpawnedCards.Count; i++)
         {
-            QuestCardView view = spawnedCards[i].GetComponent<QuestCardView>();
+            if(pager.SpawnedCards[i] == null) continue;
+            QuestCardView view = pager.SpawnedCards[i].GetComponent<QuestCardView>();
             if(view == null) continue;
-            SetCardVisual(view, spawnedCards[i] == entry);
+            SetCardVisual(view, pager.SpawnedCards[i] == entry);
         }
     }
     void SetCardVisual(QuestCardView view, bool selected)

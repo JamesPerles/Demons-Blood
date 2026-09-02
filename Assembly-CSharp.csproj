@@ -157,6 +157,7 @@
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_TextEventHandler.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Effects\StatusEffect.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\DropdownSample.cs" />
+    <Compile Include="Assets\Scripts\GridCardPager.cs" />
     <Compile Include="Assets\Scripts\Battle Scripts\HitFlicker.cs" />
     <Compile Include="Assets\Scripts\Menus\BattleDialogueBox.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\WarpTextExample.cs" />

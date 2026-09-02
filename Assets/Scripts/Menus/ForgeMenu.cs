@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using System;
-public class ForgeMenu : MonoBehaviour, ICardHighlightHandler, ITabVisualOwner
+public class ForgeMenu : MonoBehaviour, ICardHighlightHandler, ITabVisualOwner, IPageableTab
 {
 public PauseMenu host;
 public TextMeshProUGUI forgeGoldText;
@@ -29,7 +29,7 @@ public int maxEnhancementLevel = 10;
 public int addElementCost = 200;
 public List<CraftRecipe> craftRecipes = new List<CraftRecipe>();
 public List<AlchemyRecipe> alchemyRecipes = new List<AlchemyRecipe>();
-List<GameObject> spawnedCraftCards = new List<GameObject>();
+GridCardPager pager;
 CraftRecipe selectedRecipe;
 Equipment selectedEnhanceTarget;
 ActiveStats selectedEnhanceOwner;
@@ -41,6 +41,7 @@ bool elementStage2;
 public void OpenTab()
     {
         host.PrepareTabSwitch();
+        if(pager == null) pager = new GridCardPager(craftCardPrefab, craftCardParent, host, 3, 3);
         if(forgeFeedbackText != null) forgeFeedbackText.text = "";
         UpdateForgeGoldText();
         SetupMiniTabs();
@@ -64,29 +65,6 @@ public void OpenTab()
         };
         host.miniTabGroup.SetTabs(tabs, 0);
     }
-    GameObject SpawnCard(string title, string subText, string detailText, Action onSelect)
-    {
-        GameObject cardObj = Instantiate(craftCardPrefab, craftCardParent);
-        QuestCardView view = cardObj.GetComponent<QuestCardView>();
-        spawnedCraftCards.Add(cardObj);
-        if(view == null) return cardObj;
-        if(view.titleText != null) view.titleText.text = title;
-        if(view.subText != null) view.subText.text = subText;
-        MenuOption option = new MenuOption(title, () => { }) { description = detailText };
-        host.RegisterEntry(cardObj, option);
-        if(view.button != null)
-        {
-            view.button.onClick.RemoveAllListeners();
-            GameObject capturedCard = cardObj;
-            view.button.onClick.AddListener(() =>
-            {
-                host.EntryHighlight(capturedCard);
-                onSelect?.Invoke();
-            });
-        }
-        SetCardVisual(view, false);
-        return cardObj;
-    }
     void SetActionButton(string label, bool enabled, Action onClick)
     {
         if(craftActionButton == null) return;
@@ -100,18 +78,24 @@ public void OpenTab()
     {
         if(craftActionButton != null) craftActionButton.gameObject.SetActive(false);
     }
-    void ClearCards()
-    {
-        foreach(GameObject card in spawnedCraftCards) Destroy(card);
-        spawnedCraftCards.Clear();
-    }
     void OpenCardTab(string breadcrumbSuffix)
     {
         if(craftCardParent != null) craftCardParent.gameObject.SetActive(true);
         host.ShowSplitPanel();
         host.SetBreadcrumbSuffix(breadcrumbSuffix);
         host.SetCardHighlightHandler(this);
+        host.SetPageableTab(this);
         UpdateForgeGoldText();
+    }
+    public void NextPage()
+    {
+        pager?.NextPage();
+        pager?.SelectFirstOnPage();
+    }
+    public void PreviousPage()
+    {
+        pager?.PreviousPage();
+        pager?.SelectFirstOnPage();
     }
     void ShowCraftTab()
     {
@@ -120,8 +104,8 @@ public void OpenTab()
     }
     void RebuildCraftCards()
     {
-        ClearCards();
-        if(craftCardPrefab == null || craftCardParent == null) return;
+        if(pager == null || craftCardPrefab == null || craftCardParent == null) return;
+        List<CardGridSpec> specs = new List<CardGridSpec>();
         foreach(CraftRecipe recipe in craftRecipes)
         {
             if(recipe == null) continue;
@@ -129,14 +113,10 @@ public void OpenTab()
             string resultName = recipe.result != null ? recipe.result.equipmentName : recipe.itemResult.itemName;
             bool hasMaterials = HasMaterials(recipe);
             CraftRecipe captured = recipe;
-            SpawnCard(resultName, hasMaterials ? "" : "missing materials", BuildCraftDetail(captured), () => SelectCraftRecipe(captured));
+            specs.Add(new CardGridSpec(resultName, hasMaterials ? "" : "missing materials", BuildCraftDetail(captured), () => SelectCraftRecipe(captured)));
         }
-            CraftRecipe first = craftRecipes.Find(recipe => recipe != null && (recipe.result != null || recipe.itemResult != null));
-            if(first != null)
-            {
-                host.EntryHighlight(spawnedCraftCards[0]);
-                SelectCraftRecipe(first);
-            }
+            pager.SetSpecs(specs);
+            if(pager.SpawnedCards.Count > 0) pager.SelectFirstOnPage();
             else
             {
                 HideActionButton();
@@ -150,7 +130,7 @@ public void OpenTab()
             SetActionButton("Craft", canCraft, CraftSelectedRecipe);
         }
         string BuildCraftDetail(CraftRecipe recipe)
-    {
+        {
         string resultName = recipe.result != null ? recipe.result.equipmentName : recipe.itemResult.itemName;
         string subtitle = recipe.result != null
         ? $"weapon/equipment {dot} {BuildEquipmentStatLine(recipe.result)}"
@@ -218,11 +198,13 @@ public void OpenTab()
     }
     public void OnCardHighlighted(GameObject entry)
     {
-        for(int i = 0; i < spawnedCraftCards.Count; i++)
+        if(pager == null) return;
+        for(int i = 0; i < pager.SpawnedCards.Count; i++)
         {
-            QuestCardView view = spawnedCraftCards[i].GetComponent<QuestCardView>();
+            if(pager.SpawnedCards[i] == null) continue;
+            QuestCardView view = pager.SpawnedCards[i].GetComponent<QuestCardView>();
             if(view == null) continue;
-            SetCardVisual(view, spawnedCraftCards[i] == entry);
+            SetCardVisual(view, pager.SpawnedCards[i] == entry);
         }
     }
     void SetCardVisual(QuestCardView view, bool selected)
@@ -257,18 +239,15 @@ public void OpenTab()
     }
     void RebuildEnhanceCards()
     {
-        ClearCards();
-        if(craftCardPrefab == null || craftCardParent == null) return;
-        Equipment firstTarget = null;
-        ActiveStats firstOwner = null;
+        if(pager == null || craftCardPrefab == null || craftCardParent == null) return;
+        List<CardGridSpec> specs = new List<CardGridSpec>();
         foreach(Equipment equipment in InventoryManager.Instance.items.OfType<Equipment>())
         {
             if(equipment.equipmentType != Equipment.EquipmentType.Weapon) continue;
             Equipment captured = equipment;
             bool atMax = captured.enhancementLevel >= maxEnhancementLevel;
             string sub = atMax ? "Max Level" : $"+{captured.enhancementLevel} {dot} {EnhanceCost(captured.enhancementLevel)}g";
-            SpawnCard(captured.equipmentName, sub, BuildEnhanceDetail(captured, null), () => SelectEnhanceTarget(captured, null));
-            if(firstTarget == null) { firstTarget = captured; firstOwner = null; }
+            specs.Add(new CardGridSpec(captured.equipmentName, sub, BuildEnhanceDetail(captured, null), () => SelectEnhanceTarget(captured, null)));
         }
         if(PlayerParty.instance != null)
         {
@@ -283,15 +262,11 @@ public void OpenTab()
         string sub = atMax 
         ? $"Equipped: {character.currentName} {dot} MAX"
         : $"Equipped: {character.currentName} {dot} +{equipped.enhancementLevel} {dot} {EnhanceCost(equipped.enhancementLevel)}g";
-        SpawnCard(equipped.equipmentName, sub, BuildEnhanceDetail(capturedEquipped, capturedOwner), () => SelectEnhanceTarget(capturedEquipped, capturedOwner));
-        if(firstTarget == null) { firstTarget = capturedEquipped; firstOwner = capturedOwner; }
+        specs.Add(new CardGridSpec(equipped.equipmentName, sub, BuildEnhanceDetail(capturedEquipped, capturedOwner), () => SelectEnhanceTarget(capturedEquipped, capturedOwner)));
     }
    }
-    if(firstTarget != null)
-        {
-            host.EntryHighlight(spawnedCraftCards[0]);
-            SelectEnhanceTarget(firstTarget, firstOwner);
-        }
+    pager.SetSpecs(specs);
+    if(pager.SpawnedCards.Count > 0) pager.SelectFirstOnPage();
         else
         {
             HideActionButton();
@@ -365,22 +340,17 @@ public void OpenTab()
     void RebuildElementCards()
     {
         if(elementStage2) {RebuildElementPickCards(); return; }
-        ClearCards();
-        if(craftCardPrefab == null || craftCardParent == null) return;
-        Equipment first = null;
+        if(pager == null || craftCardPrefab == null || craftCardParent == null) return;
+        List<CardGridSpec> specs = new List<CardGridSpec>();
         foreach(Equipment equipment in InventoryManager.Instance.items.OfType<Equipment>())
         {
             if(equipment.equipmentType != Equipment.EquipmentType.Weapon) continue;
             if(equipment.element != Element.None) continue;
             Equipment captured = equipment;
-            SpawnCard(captured.equipmentName, $"{addElementCost}g", BuildElementDetail(captured), () => SelectElementTarget(captured));
-            if(first == null) first = captured;
+            specs.Add(new CardGridSpec(captured.equipmentName, $"{addElementCost}g", BuildElementDetail(captured), () => SelectElementTarget(captured)));
         }
-        if(first != null)
-        {
-            host.EntryHighlight(spawnedCraftCards[0]);
-            SelectElementTarget(first);
-        }
+        pager.SetSpecs(specs);
+        if(pager.SpawnedCards.Count > 0) pager.SelectFirstOnPage();
         else
         {
             HideActionButton();
@@ -402,16 +372,17 @@ public void OpenTab()
     }
     void RebuildElementPickCards()
     {
-        ClearCards();
-        if(craftCardPrefab == null || craftCardParent == null) return;
-        SpawnCard("Cancel", "", "Return to weapon selection.", () => {elementStage2 = false; RebuildElementCards(); });
+        if(pager == null || craftCardPrefab == null || craftCardParent == null) return;
+        List<CardGridSpec> specs = new List<CardGridSpec>();
+        specs.Add(new CardGridSpec("Cancel", "", "Return to weapon selection.", () => {elementStage2 = false; RebuildElementCards(); }));
         foreach(Element element in Enum.GetValues(typeof(Element)))
         {
             if(element == Element.None) continue;
             Element captured = element;
             string detail = $"<size=140%><color=#F2F2F2>{captured}</color></size>\n<size=80%><color={colorMuted}>imbue{selectedWeaponForElement?.equipmentName} with {captured} affinity</color></size>";
-            SpawnCard(captured.ToString(), "", detail, () => AddElement(captured));
+            specs.Add(new CardGridSpec(captured.ToString(), "", detail, () => AddElement(captured)));
         }
+        pager.SetSpecs(specs);
         HideActionButton();
         if(host.detailText != null)
         host.detailText.text = $"<size=140%><color=#F2F2F2>Choose an element</color></size>\n<size=80%><color={colorMuted}>for {selectedWeaponForElement?.equipmentName}</color></size>";
@@ -437,21 +408,16 @@ public void OpenTab()
     }
     void RebuildSmeltCards()
     {
-        ClearCards();
-        if(craftCardPrefab == null || craftCardParent == null) return;
-        Equipment first = null;
+        if(pager == null || craftCardPrefab == null || craftCardParent == null) return;
+        List<CardGridSpec> specs = new List<CardGridSpec>();
         foreach(Equipment equipment in InventoryManager.Instance.items.OfType<Equipment>())
         {
             if(equipment.smeltYield == null || equipment.smeltYield.Count == 0) continue;
             Equipment captured = equipment;
-            SpawnCard(captured.equipmentName, "", BuildSmeltDetail(captured), () => SelectSmeltTarget(captured));
-            if(first == null) first = captured;
+            specs.Add(new CardGridSpec(captured.equipmentName, "", BuildSmeltDetail(captured), () => SelectSmeltTarget(captured)));
         }
-        if(first != null)
-        {
-            host.EntryHighlight(spawnedCraftCards[0]);
-            SelectSmeltTarget(first);
-        }
+        pager.SetSpecs(specs);
+        if(pager.SpawnedCards.Count > 0) pager.SelectFirstOnPage();
         else
         {
             HideActionButton();
@@ -505,22 +471,17 @@ public void OpenTab()
    void RebuildAlchemyCards()
     {
         if(alchemyStage2) {RebuildAlchemySecondCards(); return; }
-        ClearCards();
-        if(craftCardPrefab == null || craftCardParent == null) return;
+        if(pager == null || craftCardPrefab == null || craftCardParent == null) return;
         List<(Baggable item, int count)> grouped = BuildAlchemyGroupedList();
-        Baggable first = null;
+        List<CardGridSpec> specs = new List<CardGridSpec>();
         foreach(var entry in grouped)
         {
             Baggable captured = entry.item;
             int capturedCount = entry.count;
-            SpawnCard(captured.DisplayName, $"x{capturedCount}", BuildAlchemyItemDetail(captured, capturedCount), () => SelectAlchemyFirst(captured));
-            if(first == null) first = captured;
+            specs.Add(new CardGridSpec(captured.DisplayName, $"x{capturedCount}", BuildAlchemyItemDetail(captured, capturedCount), () => SelectAlchemyFirst(captured)));
         }
-        if(first != null)
-        {
-            host.EntryHighlight(spawnedCraftCards[0]);
-            SelectAlchemyFirst(first);
-        }
+        pager.SetSpecs(specs);
+        if(pager.SpawnedCards.Count > 0) pager.SelectFirstOnPage();
         else
         {
             HideActionButton();
@@ -540,9 +501,9 @@ public void OpenTab()
     }
     void RebuildAlchemySecondCards()
     {
-        ClearCards();
-        if(craftCardPrefab == null || craftCardParent == null) return;
-        SpawnCard("Cancel", "", "Return to ingredient selection.", () => {alchemyStage2 = false; RebuildAlchemyCards(); });
+        if(pager == null || craftCardPrefab == null || craftCardParent == null) return;
+        List<CardGridSpec> specs = new List<CardGridSpec>();
+        specs.Add(new CardGridSpec("Cancel", "", "Return to ingredient selection.", () => {alchemyStage2 = false; RebuildAlchemyCards(); }));
         List<(Baggable item, int count)> grouped = BuildAlchemyGroupedList();
         foreach (var entry in grouped)
         {
@@ -551,8 +512,9 @@ public void OpenTab()
             if(captured == selectedFirstItem) availableCount--;
             if(availableCount <= 0) continue;
             string detail = $"<size=140%><color=#F2F2F2>{selectedFirstItem?.DisplayName} + {captured.DisplayName}</color></size>\n<size=80%><color={colorMuted}>owned x {availableCount} {dot} combine these two?</color></size>";
-            SpawnCard(captured.DisplayName, $"x{availableCount}", detail, () => CombineItems(captured));
+            specs.Add(new CardGridSpec(captured.DisplayName, $"x{availableCount}", detail, () => CombineItems(captured)));
         }
+        pager.SetSpecs(specs);
         HideActionButton();
         if(host.detailText != null)
         host.detailText.text = $"<size=140%><color=#F2F2F2>Combine with...</color></size>\n<size=80%><color={colorMuted}>what pairs with {selectedFirstItem?.DisplayName}?</color></size>";

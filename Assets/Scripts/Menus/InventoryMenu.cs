@@ -9,7 +9,6 @@ public PauseMenu host;
  public TextMeshProUGUI itemFeedbackText;
  public GameObject itemCardPrefab;
  public Transform itemCardParent;
- public int itemsPerPage = 6;
  public Button useButton;
  public TextMeshProUGUI useButtonLabel;
  public Button sendButton;
@@ -29,13 +28,13 @@ enum Category { Consumables, Equipment, KeyItems }
 enum Mode { Category, ChooseUseTarget, ChooseSendTarget }
 Category activeCategory = Category.Consumables;
 Mode mode = Mode.Category;
-int currentPage = 0;
-List<GameObject> spawnedCards = new List<GameObject>();
+GridCardPager pager;
 Baggable selectedItem;
 int selectedItemCount;
     public void OpenTab()
     {
         host.PrepareTabSwitch();
+        if(pager == null) pager = new GridCardPager(itemCardPrefab, itemCardParent, host, 3, 3);
         SetupMiniTabs();
     }
     public void HideVisuals()
@@ -59,7 +58,6 @@ int selectedItemCount;
     {
         activeCategory = category;
         mode = Mode.Category;
-        currentPage = 0;
         if(itemCardParent != null) itemCardParent.gameObject.SetActive(true);
         host.ShowSplitPanel();
         string suffix = category == Category.Consumables ? "Inventory > Items" : category == Category.Equipment ? "Inventory > Equipment" : "Inventory > Key Items";
@@ -67,7 +65,7 @@ int selectedItemCount;
         host.SetCardHighlightHandler(this);
         host.SetPageableTab(this);
         WireActionButtons();
-        RebuildCards();
+        RebuildCards(0);
     }
     void WireActionButtons()
     {
@@ -111,51 +109,27 @@ int selectedItemCount;
         foreach(Item item in order) result.Add((item, counts[item]));
         return result;
     }
-    void RebuildCards()
+    void RebuildCards(int page)
     {
-        foreach(GameObject card in spawnedCards) Destroy(card);
-        spawnedCards.Clear();
-        if(itemCardPrefab == null || itemCardParent == null) return;
+        if(pager == null || itemCardPrefab == null || itemCardParent == null) return;
         if(mode != Mode.Category) {RebuildTargetCards(); return; }
         List<(Baggable item, int count)> grouped = BuildGroupedList();
-        int maxPage = Mathf.Max(0, (grouped.Count - 1) / itemsPerPage);
-        currentPage = Mathf.Clamp(currentPage, 0, maxPage);
-        int start = currentPage * itemsPerPage;
-        int count = Mathf.Min(itemsPerPage, grouped.Count - start);
-        for(int i = start; i < start + count; i++)
+        List<CardGridSpec> specs = new List<CardGridSpec>();
+        foreach(var entry in grouped)
         {
-            var entry = grouped[i];
-            GameObject cardObj = Instantiate(itemCardPrefab, itemCardParent);
-            QuestCardView view = cardObj.GetComponent<QuestCardView>();
-            spawnedCards.Add(cardObj);
-            if(view == null) continue;
-            if(view.titleText != null) view.titleText.text = entry.item.DisplayName;
-            if(view.subText != null) view.subText.text = activeCategory == Category.Equipment ? "" : $"x{entry.count}";
             Baggable capturedItem = entry.item;
             int capturedCount = entry.count;
-            MenuOption option = new MenuOption(entry.item.DisplayName, () => { }) {description = BuildItemDetail(capturedItem, capturedCount) };
-            host.RegisterEntry(cardObj, option);
-            if(view.button != null)
+            string sub = activeCategory == Category.Equipment ? "" : $"x{entry.count}";
+            specs.Add(new CardGridSpec(entry.item.DisplayName, sub, BuildItemDetail(capturedItem, capturedCount), () =>
             {
-                view.button.onClick.RemoveAllListeners();
-                GameObject capturedCard = cardObj;
-                view.button.onClick.AddListener(() =>
-                {
                     selectedItem = capturedItem;
                     selectedItemCount = capturedCount;
-                    host.EntryHighlight(capturedCard);
                     RefreshActionButtons();
-                });
-            }
-            SetCardVisual(view, false);
+                }));;
         }
-        if(host.pageText != null) host.pageText.text = maxPage > 0 ? $"page {currentPage + 1} / {maxPage + 1}" : "";
-        if(spawnedCards.Count > 0 && grouped.Count > 0)
-        {
-            selectedItem = grouped[start].item;
-            selectedItemCount = grouped[start].count;
-            host.EntryHighlight(spawnedCards[0]);
-        }
+        pager.SetSpecs(specs, page);
+        if(host.pageText != null && pager.MaxPage == 0) host.pageText.text = "";
+        if(pager.SpawnedCards.Count > 0) pager.SelectFirstOnPage();
         else
         {
             selectedItem = null;
@@ -235,77 +209,47 @@ int selectedItemCount;
     public void NextPage()
     {
         if(mode != Mode.Category) return;
-        List<(Baggable, int)> grouped = BuildGroupedList();
-        int maxPage = Mathf.Max(0, (grouped.Count - 1) / itemsPerPage);
-        currentPage = currentPage >= maxPage ? 0 : currentPage + 1;
-        RebuildCards();
+        RebuildCards(pager.CurrentPage + 1 > pager.MaxPage ? 0 : pager.CurrentPage + 1);
     }
     public void PreviousPage()
     {
         if(mode != Mode.Category) return;
-        List<(Baggable, int)> grouped = BuildGroupedList();
-        int maxPage = Mathf.Max(0, (grouped.Count - 1) / itemsPerPage);
-        currentPage = currentPage <= 0 ? maxPage : currentPage - 1;
-        RebuildCards();
+        RebuildCards(pager.CurrentPage - 1 < 0 ? pager.MaxPage : pager.CurrentPage - 1);
     }
     void BeginUseFlow()
     {
         if(selectedItem == null) return;
         mode = Mode.ChooseUseTarget;
-        RebuildCards();
+        RebuildCards(0);
     }
     void BeginSendFlow()
     {
         if(selectedItem == null) return;
         mode = Mode.ChooseSendTarget;
-        RebuildCards();
+        RebuildCards(0);
     }
     void DiscardSelected()
     {
         if(selectedItem == null) return;
         InventoryManager.Instance.LoseItem(selectedItem);
         if(itemFeedbackText != null) itemFeedbackText.text = $"Discarded {selectedItem.DisplayName}";
-        RebuildCards();
+        RebuildCards(0);
     }
     void RebuildTargetCards()
     {
-        GameObject cancelObj = Instantiate(itemCardPrefab, itemCardParent);
-        QuestCardView cancelView = cancelObj.GetComponent<QuestCardView>();
-        spawnedCards.Add(cancelObj);
-        if(cancelView != null)
+        List<CardGridSpec> specs = new List<CardGridSpec>();
+        specs.Add(new CardGridSpec("Cancel", "", "Return to the item list.", () => {mode = Mode.Category; RebuildCards(0); }));
+        if(PlayerParty.instance != null)
         {
-            if(cancelView.titleText != null) cancelView.titleText.text = "Cancel";
-            if(cancelView.subText != null) cancelView.subText.text = "";
-            MenuOption cancelOption = new MenuOption("Cancel", () => { }) { description = "Return to the item list."};
-            host.RegisterEntry(cancelObj, cancelOption);
-            if(cancelView.button != null)
-            {
-                cancelView.button.onClick.RemoveAllListeners();
-                cancelView.button.onClick.AddListener(() => { mode = Mode.Category; RebuildCards(); });
-            }
-            SetCardVisual(cancelView, false);
-        }
-        if(PlayerParty.instance == null) return;
         foreach(GameObject characterObject in PlayerParty.instance.playableCharacters)
         {
             ActiveStats character = characterObject.GetComponent<ActiveStats>();
             if(character == null) continue;
-            GameObject cardObj = Instantiate(itemCardPrefab, itemCardParent);
-            QuestCardView view = cardObj.GetComponent<QuestCardView>();
-            spawnedCards.Add(cardObj);
-            if(view == null) continue;
-            if(view.titleText != null) view.titleText.text = character.currentName;
-            if(view.subText != null) view.subText.text = $"HP {character.currentHP}/{character.finalHP}";
             ActiveStats capturedCharacter = character;
-            MenuOption option = new MenuOption(character.currentName, () => { }) {description = $"HP {character.currentHP}/{character.finalHP}"};
-            host.RegisterEntry(cardObj, option);
-            if(view.button != null)
-            {
-                view.button.onClick.RemoveAllListeners();
-                view.button.onClick.AddListener(() => ConfirmTarget(capturedCharacter));
-            }
-            SetCardVisual(view, false);
+            specs.Add(new CardGridSpec(character.currentName, $"HP {character.currentHP}/{character.finalHP}", $"HP {character.currentHP}/{character.finalHP}", () => ConfirmTarget(capturedCharacter)));
         }
+    }
+        pager.SetSpecs(specs);
         if(host.detailText != null)
         host.detailText.text = mode == Mode.ChooseUseTarget
         ? $"<size=140%><color=#F2F2F2>Choose a target</color></size>\n<size=80%><color={colorMuted}>who should receive {selectedItem?.DisplayName}?</color></size>"
@@ -314,7 +258,7 @@ int selectedItemCount;
     }
     void ConfirmTarget(ActiveStats target)
     {
-        if(selectedItem == null) {mode = Mode.Category; RebuildCards(); return; }
+        if(selectedItem == null) {mode = Mode.Category; RebuildCards(0); return; }
         if(mode == Mode.ChooseUseTarget)
         {
             if(selectedItem is Item item && item.itemType == Item.ItemType.Consumable)
@@ -339,15 +283,17 @@ int selectedItemCount;
             itemFeedbackText.text = moved ? $"Sent {selectedItem.DisplayName} to {target.currentName}." : $"{target.currentName}'s bag is full.";
         }
         mode = Mode.Category;
-        RebuildCards();
+        RebuildCards(0);
     }
     public void OnCardHighlighted(GameObject entry)
     {
-        for(int i = 0; i < spawnedCards.Count; i++)
+        if(pager == null) return;
+        for(int i = 0; i < pager.SpawnedCards.Count; i++)
         {
-            QuestCardView view = spawnedCards[i].GetComponent<QuestCardView>();
+            if(pager.SpawnedCards[i] == null) continue;
+            QuestCardView view = pager.SpawnedCards[i].GetComponent<QuestCardView>();
             if(view == null) continue;
-            SetCardVisual(view, spawnedCards[i] == entry);
+            SetCardVisual(view, pager.SpawnedCards[i] == entry);
         }
     }
     void SetCardVisual(QuestCardView view, bool selected)
