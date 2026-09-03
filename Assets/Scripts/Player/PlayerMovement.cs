@@ -22,9 +22,9 @@ public class PlayerMovement : MonoBehaviour
         else if (Input.GetKey(KeyCode.DownArrow)) input = Vector2.down;
         else if (Input.GetKey(KeyCode.LeftArrow)) input = Vector2.left;
         else if (Input.GetKey(KeyCode.RightArrow)) input = Vector2.right;
-   if (input != Vector2.zero) {facingDirection = input;StartMoving(); }
-   if (!isRunning && Input.GetKeyDown(KeyCode.LeftShift)) isRunning = true;
-   else if (isRunning && Input.GetKeyDown(KeyCode.LeftShift)) isRunning = false;
+        if (input != Vector2.zero) {facingDirection = input;StartMoving(); }
+        if (!isRunning && Input.GetKeyDown(KeyCode.LeftShift)) isRunning = true;
+        else if (isRunning && Input.GetKeyDown(KeyCode.LeftShift)) isRunning = false;
     }
     void StartMoving()
     {

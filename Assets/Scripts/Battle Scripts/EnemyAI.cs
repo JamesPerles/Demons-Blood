@@ -54,8 +54,8 @@ public class EnemyAI : MonoBehaviour , ICombatant
     public List<Art> learnedArts = new List<Art>();
     public List<Fusion> learnedFusions = new List<Fusion>();
     public List<Skill> learnedSkills {get; set;} = new List<Skill>();
-   public List<Skill> equippedSkills => learnedSkills;
-   public List<ActiveStatusEffect> activeStatuses {get; set;} = new List<ActiveStatusEffect>();
+    public List<Skill> equippedSkills => learnedSkills;
+    public List<ActiveStatusEffect> activeStatuses {get; set;} = new List<ActiveStatusEffect>();
     public float transformMultiplier = 1f;
     public bool isTransformed {get; protected set;} = false;
     Dictionary<Stat, int> statStages = new Dictionary<Stat, int>();
@@ -63,7 +63,7 @@ public class EnemyAI : MonoBehaviour , ICombatant
     public void ChangeStatStage(Stat stat, int amount)
     {
         int current = GetStatStage(stat);
-        statStages[stat] = Mathf.Clamp(current + amount, StatStageUtility.MinStage, StatStageUtility.MaxStage);
+        statStages[stat] = Mathf.Clamp(current + amount, StatStage.MinStage, StatStage.MaxStage);
         RecalculateStats();
     }
     void Awake()
@@ -142,16 +142,16 @@ public class EnemyAI : MonoBehaviour , ICombatant
         ApplyEquipmentSlot(bodySlot);
         ApplyEquipmentSlot(shieldSlot);
         ApplyEquipmentSlot(accessorySlot);
-        finalHP = Mathf.RoundToInt(finalHP * StatStageUtility.Multiplier(GetStatStage(Stat.HP)));
-       finalMP = Mathf.RoundToInt(finalMP * StatStageUtility.Multiplier(GetStatStage(Stat.MP)));
-       finalStrength = Mathf.RoundToInt(finalStrength * StatStageUtility.Multiplier(GetStatStage(Stat.Strength)));
-       finalMagic = Mathf.RoundToInt(finalMagic * StatStageUtility.Multiplier(GetStatStage(Stat.Magic)));
-       finalDefense = Mathf.RoundToInt(finalDefense * StatStageUtility.Multiplier(GetStatStage(Stat.Defense)));
-       finalWisdom = Mathf.RoundToInt(finalWisdom * StatStageUtility.Multiplier(GetStatStage(Stat.Wisdom)));
-       finalTech = Mathf.RoundToInt(finalTech * StatStageUtility.Multiplier(GetStatStage(Stat.Tech)));
-       finalAffinity = Mathf.RoundToInt(finalAffinity * StatStageUtility.Multiplier(GetStatStage(Stat.Affinity)));
-       finalSpeed = Mathf.RoundToInt(finalSpeed * StatStageUtility.Multiplier(GetStatStage(Stat.Speed)));
-       finalLuck = Mathf.RoundToInt(finalLuck * StatStageUtility.Multiplier(GetStatStage(Stat.Luck)));
+        finalHP = Mathf.RoundToInt(finalHP * StatStage.Multiplier(GetStatStage(Stat.HP)));
+        finalMP = Mathf.RoundToInt(finalMP * StatStage.Multiplier(GetStatStage(Stat.MP)));
+        finalStrength = Mathf.RoundToInt(finalStrength * StatStage.Multiplier(GetStatStage(Stat.Strength)));
+        finalMagic = Mathf.RoundToInt(finalMagic * StatStage.Multiplier(GetStatStage(Stat.Magic)));
+        finalDefense = Mathf.RoundToInt(finalDefense * StatStage.Multiplier(GetStatStage(Stat.Defense)));
+        finalWisdom = Mathf.RoundToInt(finalWisdom * StatStage.Multiplier(GetStatStage(Stat.Wisdom)));
+        finalTech = Mathf.RoundToInt(finalTech * StatStage.Multiplier(GetStatStage(Stat.Tech)));
+        finalAffinity = Mathf.RoundToInt(finalAffinity * StatStage.Multiplier(GetStatStage(Stat.Affinity)));
+        finalSpeed = Mathf.RoundToInt(finalSpeed * StatStage.Multiplier(GetStatStage(Stat.Speed)));
+        finalLuck = Mathf.RoundToInt(finalLuck * StatStage.Multiplier(GetStatStage(Stat.Luck)));
         finalHP = Mathf.RoundToInt(finalHP * transformMultiplier);
         finalMP = Mathf.RoundToInt(finalMP * transformMultiplier);
         finalStrength = Mathf.RoundToInt(finalStrength * transformMultiplier);
@@ -194,7 +194,7 @@ public class EnemyAI : MonoBehaviour , ICombatant
         if(learnable is Fusion fusion) return currentHP >= fusion.HPCost && currentMP >= fusion.MPCost;
         return false;
     }
-    public void PaySpecialCost(Learnable learnable)
+    public void PayCost(Learnable learnable)
     {
         if(learnable is Art art) currentHP = Mathf.Max(0, currentHP - art.Cost);
         else if(learnable is Spell spell) currentMP = Mathf.Max(0, currentMP - spell.Cost);
@@ -216,6 +216,43 @@ public class EnemyAI : MonoBehaviour , ICombatant
         roll -= currentItemChance;
         return EnemyActionType.Run;
     } 
+       public ActiveStats ChooseTarget(List<ActiveStats> players)
+    {
+        Dictionary<ActiveStats, int> weights = new Dictionary<ActiveStats, int>();
+        foreach (ActiveStats player in players)
+        {
+            int weight = enemyStats.baseTargetWeight;
+            bool isLowHP = player.currentHP <= (player.finalHP * enemyStats.targetHPThreshold / 100);
+            if(isLowHP) weight += enemyStats.lowHPWeightBonus;
+            int potentialDamage = Mathf.Max(1, finalStrength - player.finalDefense);
+            bool wouldKill = player.currentHP <= potentialDamage;
+            if(wouldKill) weight += enemyStats.killWeightBonus;
+            if(player.isDefending) weight -= enemyStats.defendingWeightBonus;
+            weights[player] = Mathf.Max(0, weight);
+        }
+        int totalWeight = 0;
+        foreach (int weight in weights.Values) totalWeight += weight;
+        if (totalWeight <= 0) return players[Random.Range(0, players.Count)];
+        int roll = Random.Range(0, totalWeight);
+        foreach (ActiveStats player in players)
+        {
+            if (roll < weights[player]) return player;
+            roll -= weights[player];
+        }
+        return players[players.Count - 1]; 
+    }
+    public bool aiChanged = false;
+    public virtual void ChangeAI()
+    {
+        if(currentHP < currentHPThreshold && !aiChanged)
+        {
+            currentAttackChance += currentIncreaseAttackChance;
+            currentDefendChance += currentIncreaseDefendChance;
+            currentItemChance += currentIncreaseItemChance;
+            currentRunChance += currentIncreaseRunChance;
+            aiChanged = true;
+        }
+    }
     public void Defend()
     {
         isDefending = true;
@@ -234,18 +271,6 @@ public class EnemyAI : MonoBehaviour , ICombatant
     {
         currentMP = Mathf.Min(currentMP + amount, finalMP);
     }
-    public bool aiShifted = false;
-    public virtual void ChangeAI()
-    {
-        if(currentHP < currentHPThreshold && !aiShifted)
-        {
-            currentAttackChance += currentIncreaseAttackChance;
-            currentDefendChance += currentIncreaseDefendChance;
-            currentItemChance += currentIncreaseItemChance;
-            currentRunChance += currentIncreaseRunChance;
-            aiShifted = true;
-        }
-    }
     public virtual void CheckTransform()
     {
         if(!isTransformed && enemyStats.transformHPThreshold > 0 && currentHP <= enemyStats.transformHPThreshold && currentHP > 0)
@@ -255,36 +280,11 @@ public class EnemyAI : MonoBehaviour , ICombatant
             RecalculateStats();
         }
     }
-   public ActiveStats  ChooseTarget(List<ActiveStats> players)
-    {
-        Dictionary<ActiveStats, int> weights = new Dictionary<ActiveStats, int>();
-        foreach (ActiveStats player in players)
-        {
-            int weight = enemyStats.baseTargetWeight;
-            bool isLowHP = player.currentHP <= (player.finalHP * enemyStats.targetHPThreshold / 100);
-            if(isLowHP) weight += enemyStats.lowHPWeightBonus; //what determines islowHP?
-            int potentialDamage = Mathf.Max(1, finalStrength - player.finalDefense);
-            bool wouldKill = player.currentHP <= potentialDamage;
-            if(wouldKill) weight += enemyStats.killWeightBonus;
-            if(player.isDefending) weight -= enemyStats.defendingWeightBonus;
-            weights[player] = Mathf.Max(0, weight);
-        }
-        int totalWeight = 0;
-        foreach (int weight in weights.Values) totalWeight += weight;
-        if (totalWeight <= 0) return players[Random.Range(0, players.Count)];
-        int roll = Random.Range(0, totalWeight);
-        foreach (ActiveStats player in players)
-        {
-            if (roll < weights[player]) return player;
-            roll -= weights[player];
-        }
-        return players[players.Count - 1]; 
-    }
     public void ApplyStatus(StatusEffect status)
     {
         if(status == null) return;
         ActiveStatusEffect existing = activeStatuses.Find(active => active.statusEffect == status);
-       if(existing != null) existing.remainingTurns = status.duration;
+        if(existing != null) existing.remainingTurns = status.duration;
         else activeStatuses.Add(new ActiveStatusEffect {statusEffect = status, remainingTurns = status.duration});
     }
     public void RemoveStatus(StatusEffect status)

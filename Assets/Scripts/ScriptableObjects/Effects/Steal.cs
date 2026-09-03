@@ -18,14 +18,15 @@ public class Steal : Effect
     int roll = Random.Range(0,100);
     if (roll < stealChance)
     {
-EnemyStats.LootDrop stolen = stealable[Random.Range(0, stealable.Count)];
-InventoryManager.Instance.PickupItem(stolen.item);
-enemyTarget.enemyStats.lootTable.Remove(stolen);
-yield return BattleTextBox.instance.ShowMessage($"{casterStats.currentName} stole {stolen.item.itemName} from {enemyTarget.currentName}!");
+        EnemyStats.LootDrop stolen = stealable[Random.Range(0, stealable.Count)];
+        InventoryManager.instance.PickupItem(stolen.item);
+        enemyTarget.enemyStats.lootTable.Remove(stolen);
+        yield return BattleTextBox.instance.ShowMessage
+        ($"{casterStats.currentName} stole {stolen.item.itemName} from {enemyTarget.currentName}!");
     }
     else
 {
     yield return BattleTextBox.instance.ShowMessage($"{casterStats.currentName} failed to steal ");
-}
-} 
-}
+    }
+        } 
+        }

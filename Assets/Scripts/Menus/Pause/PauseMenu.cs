@@ -77,8 +77,8 @@ void Awake()
     protected override string BreadcrumbPrefix() => "Pause";
     void UpdateWallet()
     {
-        if (walletText != null && Wallet.instance != null)
-        walletText.text = $"{Wallet.instance.currentGold} Gold";
+        if (walletText != null && WalletManager.instance != null)
+        walletText.text = $"{WalletManager.instance.currentGold} Gold";
     }
 public void ShowRosterPanel(bool showStatsExtra = false)
     {

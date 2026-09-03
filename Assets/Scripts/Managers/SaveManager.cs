@@ -35,12 +35,12 @@ public class SaveManager : MonoBehaviour
     public void SaveGame(int slot = 0)
     {
         SaveData data = new SaveData();
-        data.gold = Wallet.instance.currentGold;
+        data.gold = WalletManager.instance.currentGold;
         data.inventoryItemNames = new List<string>();
-        foreach(Item item in InventoryManager.Instance.items.OfType<Item>())
+        foreach(Item item in InventoryManager.instance.items.OfType<Item>())
         if(item != null) data.inventoryItemNames.Add(item.name);
         data.invetoryEquipment = new List<EquipmentSaveData>();
-        foreach(Equipment equipment in InventoryManager.Instance.items.OfType<Equipment>())
+        foreach(Equipment equipment in InventoryManager.instance.items.OfType<Equipment>())
         data.invetoryEquipment.Add(SaveEquipment(equipment));
         data.playablePartyOrder = new List<string>();
         data.characters = new List<CharacterSaveData>();
@@ -58,15 +58,16 @@ public class SaveManager : MonoBehaviour
         foreach (var progress in QuestManager.instance.activeQuests)
         data.activeQuests.Add(new QuestProgressSaveData
         {questName = progress.quest.name, currentStage = progress.currentStage, objectiveCounts = 
-        new List<int> (progress.objectiveCounts), chosenObjectivePerStage = new List<int> (progress.chosenObjectivePerStage), state = progress.state});
-data.completedQuests = new List<string>();
-foreach (var quest in QuestManager.instance.completedQuests)
-data.completedQuests.Add(quest.name);
-data.failedQuests = new List<string>();
-foreach(var quest in QuestManager.instance.failedQuests)
-data.failedQuests.Add(quest.name);
-data.discoveredEnemies = BestiaryManager.instance.GetDiscoveredIDs();
-if(SettingsManager.instance != null)
+        new List<int> (progress.objectiveCounts), chosenObjectivePerStage = 
+        new List<int> (progress.chosenObjectivePerStage), state = progress.state});
+        data.completedQuests = new List<string>();
+        foreach (var quest in QuestManager.instance.completedQuests)
+        data.completedQuests.Add(quest.name);
+        data.failedQuests = new List<string>();
+        foreach(var quest in QuestManager.instance.failedQuests)
+        data.failedQuests.Add(quest.name);
+        data.discoveredEnemies = BestiaryManager.instance.GetDiscoveredIDs();
+        if(SettingsManager.instance != null)
         {
             data.settings = new SettingsSaveData
             {
@@ -169,18 +170,18 @@ if(SettingsManager.instance != null)
     }
         IEnumerator LoadingGame(SaveData data)
         {
-             Wallet.instance.SetGold(data.gold);
-        InventoryManager.Instance.items.Clear();
+             WalletManager.instance.SetGold(data.gold);
+        InventoryManager.instance.items.Clear();
         foreach(string itemName in data.inventoryItemNames)
         {
             Item item = Resources.Load<Item>($"{ItemsFolder}/{itemName}");
-            if(item != null) InventoryManager.Instance.PickupItem(item);
+            if(item != null) InventoryManager.instance.PickupItem(item);
             else Debug.LogWarning($"Could not find Item '{itemName}' in Resources/{ItemsFolder}");
         }
         foreach(EquipmentSaveData equip in data.invetoryEquipment)
         {
             Equipment loaded = LoadEquipment(equip);
-            if(loaded != null) InventoryManager.Instance.PickupEquipment(loaded);
+            if(loaded != null) InventoryManager.instance.PickupItem(loaded);
         }
         List<GameObject> reordered = new List<GameObject>();
         foreach(string id in data.playablePartyOrder)
@@ -303,15 +304,20 @@ if(SettingsManager.instance != null)
             else if(equipData.equippedSlot == (int)Equipment.EquipmentType.Accessory) character.accessorySlot = loaded;
         }
         character.learnedSpells.Clear();
-        foreach(string numbr in charsave.learnedSpells){var spell = Resources.Load<Spell>($"{SpellsFolder}/{numbr}"); if(spell != null) character.learnedSpells.Add(spell);}
-       character.learnedArts.Clear();
-       foreach(string numbr in charsave.learnedArts){var art = Resources.Load<Art>($"{ArtsFolder}/{numbr}"); if(art != null) character.learnedArts.Add(art);}
-       character.learnedFusions.Clear();
-       foreach(string numbr in charsave.learnedFusions){var fusion = Resources.Load<Fusion>($"{FusionsFolder}/{numbr}"); if(fusion != null) character.learnedFusions.Add(fusion);}
-      character.learnedSkills.Clear();
-      foreach(string numbr in charsave.learnedSkills){var skill = Resources.Load<Skill>($"{SkillsFolder}/{numbr}"); if(skill != null) character.learnedSkills.Add(skill);}
-       for(int i = 0; i < character.skillSlots.Length && i < charsave.skillSlots.Count; i++)
-       character.skillSlots[i] = string.IsNullOrEmpty(charsave.skillSlots[i]) ? null : Resources.Load<Skill>($"{SkillsFolder}/{charsave.skillSlots[i]}");
+        foreach(string numbr in charsave.learnedSpells){var spell = 
+        Resources.Load<Spell>($"{SpellsFolder}/{numbr}"); if(spell != null) character.learnedSpells.Add(spell);}
+        character.learnedArts.Clear();
+        foreach(string numbr in charsave.learnedArts){var art = 
+        Resources.Load<Art>($"{ArtsFolder}/{numbr}"); if(art != null) character.learnedArts.Add(art);}
+        character.learnedFusions.Clear();
+        foreach(string numbr in charsave.learnedFusions){var fusion = 
+        Resources.Load<Fusion>($"{FusionsFolder}/{numbr}"); if(fusion != null) character.learnedFusions.Add(fusion);}
+        character.learnedSkills.Clear();
+        foreach(string numbr in charsave.learnedSkills){var skill = 
+        Resources.Load<Skill>($"{SkillsFolder}/{numbr}"); if(skill != null) character.learnedSkills.Add(skill);}
+        for(int i = 0; i < character.skillSlots.Length && i < charsave.skillSlots.Count; i++)
+        character.skillSlots[i] = string.IsNullOrEmpty
+        (charsave.skillSlots[i]) ? null : Resources.Load<Skill>($"{SkillsFolder}/{charsave.skillSlots[i]}");
         character.skillPoints = charsave.skillPoints;
         character.LoadTreePoints(charsave.treePoints);
         foreach(Vector2Int pair in charsave.unlockedPaths)

@@ -85,10 +85,10 @@ void Start()
         if (SelectedEncounter == null) return;
         GameObject spawnAnchor = GameObject.Find(SelectedEncounter.spawnPointName);
         if (spawnAnchor == null) {Debug.LogError("Could not find spawn point"); return;}
-    Vector3 basePos = spawnAnchor.transform.position;
-    int spawnedCount = 0;
-    Debug.Log("SpawningEnemies");
-    foreach (GameObject enemyPrefab in SelectedEncounter.enemies)
+        Vector3 basePos = spawnAnchor.transform.position;
+        int spawnedCount = 0;
+        Debug.Log("SpawningEnemies");
+        foreach (GameObject enemyPrefab in SelectedEncounter.enemies)
     {
         if (enemyPrefab == null) continue;
         Vector3 spawnPos = basePos + new Vector3 (spawnedCount * enemySpace, 0, 0);
@@ -108,7 +108,7 @@ void Start()
     {
       if(partyStatusUI != null) partyStatusUI.Refresh(players);
     }
-IEnumerator StartBattle()
+    IEnumerator StartBattle()
         {
             if(battleInProgress) yield break;
             battleInProgress = true;
@@ -117,7 +117,7 @@ IEnumerator StartBattle()
             if(encounterType == EncounterType.Ambush)
         {
             yield return StartCoroutine(BattleTextBox.instance.ShowMessage("Ambushed. Enemy Strikes The Unprepared Party."));
-            yield return StartCoroutine(EnemyOnlyRound());
+            yield return StartCoroutine(EnemyOnlyTurn());
         }   
             while (!AllPlayersDead() && !AllEnemiesDead() && !battleEscaped)
             {
@@ -134,7 +134,7 @@ IEnumerator StartBattle()
             }
             else yield return StartCoroutine(EndBattle());
         }
-        IEnumerator EnemyOnlyRound()
+        IEnumerator EnemyOnlyTurn()
     {
         List<EnemyAI> livingEnemies = enemies.FindAll(enemy => enemy.currentHP > 0);
         livingEnemies.Sort((first, second) => GetSpeed(second).CompareTo(GetSpeed(first)));
@@ -255,7 +255,7 @@ IEnumerator StartBattle()
     }
     IEnumerator TurnStartEffects(ICombatant combatant)
     {
-        if(combatant is ActiveStats gaugeOwner) gaugeOwner.GaugePerTurn();
+        if(combatant is ActiveStats gaugeOwner) gaugeOwner.GaugeTurn();
         yield return StartCoroutine(SkillEffects(combatant));
         yield return StartCoroutine(StatusEffectsTimer(combatant));
     }
@@ -413,7 +413,7 @@ IEnumerator StartBattle()
                    yield return StartCoroutine
                    (BattleTextBox.instance.ShowMessage($"{player.currentName} uses {item.itemName} on {itemTarget.currentName}!"));
                    if(item.effects != null) foreach (Effect effect in item.effects) if(effect != null) StartCoroutine(effect.Apply(player, itemTarget));
-                   InventoryManager.Instance.LoseItem(item);
+                   InventoryManager.instance.LoseItem(item);
                    break;
                     case CommandMenu.PlayerActionType.Art: 
                 {
@@ -521,7 +521,7 @@ IEnumerator StartBattle()
     IEnumerator EnemySpecial(EnemyAI enemy, ActiveStats target, EnemyStats.EnemySpecialAttack special)
     {
         Learnable learnable = special.learnable;
-        enemy.PaySpecialCost(learnable);
+        enemy.PayCost(learnable);
         List<ICombatant> livingPlayers = players.FindAll(player => player.currentHP > 0).Cast<ICombatant>().ToList();
         if(learnable is Art art)
         {
@@ -548,7 +548,7 @@ IEnumerator StartBattle()
             enemies.RemoveAll(enemy => enemy == null);
             turnOrder.AddRange(players.FindAll(player => player.currentHP > 0).Cast<ICombatant>());
             turnOrder.AddRange(enemies.FindAll(enemy => enemy.currentHP > 0).Cast<ICombatant>());
-            turnOrder.Sort((first, second) => GetSpeed(second).CompareTo(GetSpeed(first))); // so what is first and second supposed to be
+            turnOrder.Sort((first, second) => GetSpeed(second).CompareTo(GetSpeed(first)));
         }
         int EnemyLevel()
     {
@@ -610,10 +610,10 @@ IEnumerator StartBattle()
     }
     void ReviveInTown()
     {
-        if(Wallet.instance != null)
+        if(WalletManager.instance != null)
         {
-            int penalty = Wallet.instance.currentGold * townRevivePenaltyPercent / 100;
-        Wallet.instance.SpendGold(penalty);
+            int penalty = WalletManager.instance.currentGold * townRevivePenaltyPercent / 100;
+        WalletManager.instance.SpendGold(penalty);
         }
         foreach(ActiveStats player in players)
         {
@@ -656,12 +656,12 @@ IEnumerator StartBattle()
                     livingPlayers[j].AddBondPoints(livingPlayers[i].playerStats);
                 }
             }
-        if(totalGold > 0) Wallet.instance.AddGold(totalGold);
+        if(totalGold > 0) WalletManager.instance.AddGold(totalGold);
         if(totalGold > 0) yield return StartCoroutine(BattleTextBox.instance.ShowMessage($"The party earns {totalGold} gold!"));
         foreach (EnemyStats.LootDrop drop in earnedDrops)
         {
             for (int q = 0; q < drop.quantity; q++)
-            InventoryManager.Instance.PickupItem(drop.item);
+            InventoryManager.instance.PickupItem(drop.item);
             yield return StartCoroutine(BattleTextBox.instance.ShowMessage($" Found {drop.item.itemName} x{drop.quantity}"));
         }
     }

@@ -13,11 +13,11 @@ void Awake()
     }
     void Start()
     {
-        if(FlagManager.instance != null) FlagManager.instance.onFlagChanged += HandleFlagChanged;
+        if(FlagManager.instance != null) FlagManager.instance.onFlagChanged += FlagChanged;
     }
     void OnDisable()
     {
-        if(FlagManager.instance != null) FlagManager.instance.onFlagChanged -= HandleFlagChanged;
+        if(FlagManager.instance != null) FlagManager.instance.onFlagChanged -= FlagChanged;
     }
     public bool IsQuestAvailable(Quest quest)
     {
@@ -35,7 +35,7 @@ void Awake()
         if(!IsQuestAvailable(quest)) return;
   activeQuests.Add(new QuestProgress(quest));
     }
-    void HandleFlagChanged(string key)
+    void FlagChanged(string key)
     {
         List<QuestProgress> snapshot = new List<QuestProgress>(activeQuests);
         foreach(QuestProgress progress in snapshot)
@@ -106,13 +106,13 @@ void Awake()
                 {
                     OptionalObjective optional = objective.optionalObjectives[j];
                     if(optional.type == ObjectiveType.KillCount && optional.targetEnemy == enemy)
-                    CheckOptionalObjective(progress, i, j, optional);
+                    CheckOptional(progress, i, j, optional);
                 }
                 if(progress.currentStage != stageAtStart) break;
             }
         }
     }
-    public void ReportItemObtained(Item item)
+    public void ReportItemObtained(Baggable item)
     {
         if(item == null) return;
         List<QuestProgress> snapshot = new List<QuestProgress>(activeQuests);
@@ -137,13 +137,13 @@ void Awake()
                 {
                     OptionalObjective optional = objective.optionalObjectives[j];
                     if(optional.type == ObjectiveType.CollectItem && optional.targetItem == item)
-                    CheckOptionalObjective(progress, i, j, optional);
+                    CheckOptional(progress, i, j, optional);
                 }
                 if(progress.currentStage != stageAtStart) break;
             }
         }
     }
-    void CheckOptionalObjective(QuestProgress progress, int mainIndex, int subIndex, OptionalObjective optional)
+    void CheckOptional(QuestProgress progress, int mainIndex, int subIndex, OptionalObjective optional)
     {
         int tracker = progress.OptionalTracker(mainIndex, subIndex);
         if(tracker < 0 || tracker >= progress.optionalCounts.Count || progress.optionalClaimed[tracker]) return;
@@ -162,6 +162,17 @@ void Awake()
         QuestProgress progress =activeQuests.Find(prog => prog.quest == quest);
         if(progress != null && progress.state == QuestState.ReadyToTurnIn) CompleteQuest(progress);
     }
+    public bool IsObjectiveSatisfied(QuestProgress progress, int index)
+    {
+        QuestObjective objective = progress.CurrentStage.objectives[index];
+        switch(objective.type)
+        {
+            case ObjectiveType.Flag: return FlagManager.instance.GetFlag(objective.flagKey);
+            case ObjectiveType.KillCount:
+            case ObjectiveType.CollectItem: return progress.objectiveCounts[index] >= objective.requiredCount;
+            default: return false;
+        }
+    }
     void ObjectiveSatisfied(QuestProgress progress, int objectiveIndex)
     {
         QuestStage stage = progress.CurrentStage;
@@ -178,17 +189,6 @@ void Awake()
             for(int i = 0; i < stage.objectives.Count; i++)
             if(!IsObjectiveSatisfied(progress, i)) return;
             AdvanceStage(progress);
-        }
-    }
-    public bool IsObjectiveSatisfied(QuestProgress progress, int index)
-    {
-        QuestObjective objective = progress.CurrentStage.objectives[index];
-        switch(objective.type)
-        {
-            case ObjectiveType.Flag: return FlagManager.instance.GetFlag(objective.flagKey);
-            case ObjectiveType.KillCount:
-            case ObjectiveType.CollectItem: return progress.objectiveCounts[index] >= objective.requiredCount;
-            default: return false;
         }
     }
     void AdvanceStage(QuestProgress progress)
@@ -220,9 +220,9 @@ void Awake()
          GrantRewards(quest.goldReward, quest.expReward, quest.itemRewards, quest.equipmentRewards);
          GrantRewards(completedProgress.pendingOptionalGold, completedProgress.pendingOptionalExp, completedProgress.pendingOptionalItems, completedProgress.pendingOptionalEquipment);
 }
-void GrantRewards(int gold, int exp, List<Item> items, List<Equipment> equipment, string source = "")
+        void GrantRewards(int gold, int exp, List<Item> items, List<Equipment> equipment, string source = "")
     {
-        if(gold > 0 && Wallet.instance != null) Wallet.instance.AddGold(gold);
+        if(gold > 0 && WalletManager.instance != null) WalletManager.instance.AddGold(gold);
         if(exp > 0 && PlayerParty.instance != null)
         {
             foreach(GameObject characterObject in PlayerParty.instance.playableCharacters)
@@ -233,9 +233,9 @@ void GrantRewards(int gold, int exp, List<Item> items, List<Equipment> equipment
         }
         if(items != null)
         foreach(Item item in items)
-        if(item != null && InventoryManager.Instance != null) InventoryManager.Instance.PickupItem(item);
+        if(item != null && InventoryManager.instance != null) InventoryManager.instance.PickupItem(item);
         if(equipment != null)
         foreach(Equipment equip in equipment)
-        if(equip != null && InventoryManager.Instance != null) InventoryManager.Instance.PickupEquipment(equip);
+        if(equip != null && InventoryManager.instance != null) InventoryManager.instance.PickupItem(equip);
     }
 }

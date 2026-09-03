@@ -27,9 +27,9 @@ void Start()
             Debug.Log($"{gameObject.name} is empty");
             return;
         }
-        if(goldReward > 0 && Wallet.instance != null) Wallet.instance.AddGold(goldReward);
-        if(reward is Item item) InventoryManager.Instance.PickupItem(item);
-        else if(reward is Equipment equipment) InventoryManager.Instance.PickupEquipment(Instantiate(equipment));
+        if(goldReward > 0 && WalletManager.instance != null) WalletManager.instance.AddGold(goldReward);
+        if(reward is Item item) InventoryManager.instance.PickupItem(item);
+        else if(reward is Equipment equipment) InventoryManager.instance.PickupItem(Instantiate(equipment));
         FlagManager.instance.SetFlag(flagKey, true);
         RefreshSprite();
     }

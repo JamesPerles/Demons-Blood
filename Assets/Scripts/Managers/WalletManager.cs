@@ -1,7 +1,7 @@
 using UnityEngine;
-public class Wallet : MonoBehaviour
+public class WalletManager : MonoBehaviour
 {
-public static Wallet instance;
+public static WalletManager instance;
 public int currentGold = 0;
 void Awake()
     {

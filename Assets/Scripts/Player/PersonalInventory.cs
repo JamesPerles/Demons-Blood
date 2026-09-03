@@ -33,7 +33,7 @@ public class PersonalInventory
     {
         items.Sort((a, b) => string.Compare(a != null ? a.DisplayName : "", b != null ? b.DisplayName : ""));
     }
-    public void SortByType()
+    public void SortType()
     {
         items.Sort((a, b) =>
         {

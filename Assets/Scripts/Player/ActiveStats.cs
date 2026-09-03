@@ -61,19 +61,19 @@ public class ActiveStats : MonoBehaviour, ICombatant
     public float transformMultiplier = 1f;
     public float transformGauge = 0f;
     public float transformGaugeMax = 100f;
-    public float gaugeGainPerTurn = 5f;
-    public float gagueGainPerDamageDealt = 0.5f;
-    public float gaugeGainPerDamageTaken = 0.5f;
+    public float gaugePerTurn = 5f;
+    public float gaguePerDamageDealt = 0.5f;
+    public float gaugePerDamageTaken = 0.5f;
     public bool isTransformed {get; private set;} = false;
-    public bool transformUsedThisBattle {get; private set;} = false;
+    public bool transformedThisBattle {get; private set;} = false;
     int transformTurnsRemaining;
-    public bool transformReady => !transformUsedThisBattle && !isTransformed && transformGauge >= transformGaugeMax;
+    public bool transformReady => !transformedThisBattle && !isTransformed && transformGauge >= transformGaugeMax;
     Dictionary<Stat, int> statStages = new Dictionary<Stat, int>();
     public int GetStatStage(Stat stat) => statStages.TryGetValue(stat, out int value) ? value : 0;
     public void ChangeStatStage(Stat stat, int amount)
     {
         int current = GetStatStage(stat);
-        statStages[stat] = Mathf.Clamp(current + amount, StatStageUtility.MinStage, StatStageUtility.MaxStage);
+        statStages[stat] = Mathf.Clamp(current + amount, StatStage.MinStage, StatStage.MaxStage);
         RecalculateStats();
     }
     public void ResetStatStages()
@@ -246,16 +246,16 @@ public class ActiveStats : MonoBehaviour, ICombatant
         ApplyEquipmentSlot(shieldSlot);
         ApplyEquipmentSlot(accessorySlot);
         ApplyBondBonuses();
-        finalHP = Mathf.RoundToInt(finalHP * StatStageUtility.Multiplier(GetStatStage(Stat.HP)));
-       finalMP = Mathf.RoundToInt(finalMP * StatStageUtility.Multiplier(GetStatStage(Stat.MP)));
-       finalStrength = Mathf.RoundToInt(finalStrength * StatStageUtility.Multiplier(GetStatStage(Stat.Strength)));
-       finalMagic = Mathf.RoundToInt(finalMagic * StatStageUtility.Multiplier(GetStatStage(Stat.Magic)));
-       finalDefense = Mathf.RoundToInt(finalDefense * StatStageUtility.Multiplier(GetStatStage(Stat.Defense)));
-       finalWisdom = Mathf.RoundToInt(finalWisdom * StatStageUtility.Multiplier(GetStatStage(Stat.Wisdom)));
-       finalTech = Mathf.RoundToInt(finalTech * StatStageUtility.Multiplier(GetStatStage(Stat.Tech)));
-       finalAffinity = Mathf.RoundToInt(finalAffinity * StatStageUtility.Multiplier(GetStatStage(Stat.Affinity)));
-       finalSpeed = Mathf.RoundToInt(finalSpeed * StatStageUtility.Multiplier(GetStatStage(Stat.Speed)));
-       finalLuck = Mathf.RoundToInt(finalLuck * StatStageUtility.Multiplier(GetStatStage(Stat.Luck)));
+        finalHP = Mathf.RoundToInt(finalHP * StatStage.Multiplier(GetStatStage(Stat.HP)));
+       finalMP = Mathf.RoundToInt(finalMP * StatStage.Multiplier(GetStatStage(Stat.MP)));
+       finalStrength = Mathf.RoundToInt(finalStrength * StatStage.Multiplier(GetStatStage(Stat.Strength)));
+       finalMagic = Mathf.RoundToInt(finalMagic * StatStage.Multiplier(GetStatStage(Stat.Magic)));
+       finalDefense = Mathf.RoundToInt(finalDefense * StatStage.Multiplier(GetStatStage(Stat.Defense)));
+       finalWisdom = Mathf.RoundToInt(finalWisdom * StatStage.Multiplier(GetStatStage(Stat.Wisdom)));
+       finalTech = Mathf.RoundToInt(finalTech * StatStage.Multiplier(GetStatStage(Stat.Tech)));
+       finalAffinity = Mathf.RoundToInt(finalAffinity * StatStage.Multiplier(GetStatStage(Stat.Affinity)));
+       finalSpeed = Mathf.RoundToInt(finalSpeed * StatStage.Multiplier(GetStatStage(Stat.Speed)));
+       finalLuck = Mathf.RoundToInt(finalLuck * StatStage.Multiplier(GetStatStage(Stat.Luck)));
        finalHP = Mathf.RoundToInt(finalHP * transformMultiplier);
        finalMP = Mathf.RoundToInt(finalMP * transformMultiplier);
        finalStrength = Mathf.RoundToInt(finalStrength * transformMultiplier);
@@ -288,6 +288,58 @@ public class ActiveStats : MonoBehaviour, ICombatant
         if (Random.Range(0, 100) < playerStats.affinityGrowth) currentAffinity += 1;
         if (Random.Range(0, 100) < playerStats.speedGrowth) currentSpeed += 1;
         if (Random.Range(0, 100) < playerStats.luckGrowth) currentLuck += 1;
+    }
+     public Equipment Equip(Equipment newEquipment)
+{
+   if(newEquipment == null) return null;
+   if(!personalInventory.Contains(newEquipment)) return null;
+   if(newEquipment.equipmentType == Equipment.EquipmentType.Weapon && 
+   !playerStats.allowedWeaponTypes.Contains(newEquipment.weaponType)) return null;
+   Equipment previous = null;
+    switch (newEquipment.equipmentType)
+{
+    case Equipment.EquipmentType.Weapon: previous = weaponSlot; weaponSlot = newEquipment; break;
+    case Equipment.EquipmentType.Head: previous = headSlot; headSlot = newEquipment; break;
+    case Equipment.EquipmentType.Body: previous = bodySlot; bodySlot = newEquipment; break;
+    case Equipment.EquipmentType.Shield: previous = shieldSlot; shieldSlot = newEquipment; break;
+    case Equipment.EquipmentType.Accessory: previous = accessorySlot; accessorySlot = newEquipment; break;
+}
+RecalculateStats(); return previous;
+}
+public void Unequip(Equipment.EquipmentType slotType)
+    {
+        switch(slotType)
+        {
+            case Equipment.EquipmentType.Weapon: weaponSlot = null; break;
+            case Equipment.EquipmentType.Head: headSlot = null; break;
+            case Equipment.EquipmentType.Body: bodySlot = null; break;
+            case Equipment.EquipmentType.Shield: shieldSlot = null; break;
+            case Equipment.EquipmentType.Accessory: accessorySlot = null; break;
+        }
+        RecalculateStats();
+    }
+    public Equipment GetEquipped(Equipment.EquipmentType slotType)
+    {
+        switch (slotType)
+        {
+            case Equipment.EquipmentType.Weapon: return weaponSlot;
+            case Equipment.EquipmentType.Head: return headSlot;
+            case Equipment.EquipmentType.Body: return bodySlot;
+            case Equipment.EquipmentType.Shield: return shieldSlot;
+            case Equipment.EquipmentType.Accessory: return accessorySlot;
+            default: return null;
+        }
+    }
+    public void UnequipRemovedEquipment(Equipment equipment)
+    {
+        if(equipment == null) return;
+        if(weaponSlot == equipment) weaponSlot = null;
+        else if(headSlot == equipment) headSlot = null;
+        else if(bodySlot == equipment) bodySlot = null;
+        else if(shieldSlot == equipment) shieldSlot = null;
+        else if(accessorySlot == equipment) accessorySlot = null;
+        else return;
+        RecalculateStats();
     }
     public void CheckLearnSet(int previousLevel, int newLevel)
     {
@@ -401,58 +453,6 @@ public class ActiveStats : MonoBehaviour, ICombatant
         currentMP = Mathf.Min(currentMP + amount, finalMP);
         UpdateUI();
     }
-    public Equipment Equip(Equipment newEquipment)
-{
-   if(newEquipment == null) return null;
-   if(!personalInventory.Contains(newEquipment)) return null;
-   if(newEquipment.equipmentType == Equipment.EquipmentType.Weapon && 
-   !playerStats.allowedWeaponTypes.Contains(newEquipment.weaponType)) return null;
-   Equipment previous = null;
-switch (newEquipment.equipmentType)
-{
-    case Equipment.EquipmentType.Weapon: previous = weaponSlot; weaponSlot = newEquipment; break;
-    case Equipment.EquipmentType.Head: previous = headSlot; headSlot = newEquipment; break;
-    case Equipment.EquipmentType.Body: previous = bodySlot; bodySlot = newEquipment; break;
-    case Equipment.EquipmentType.Shield: previous = shieldSlot; shieldSlot = newEquipment; break;
-    case Equipment.EquipmentType.Accessory: previous = accessorySlot; accessorySlot = newEquipment; break;
-}
-RecalculateStats(); return previous;
-}
-public void Unequip(Equipment.EquipmentType slotType)
-    {
-        switch(slotType)
-        {
-            case Equipment.EquipmentType.Weapon: weaponSlot = null; break;
-            case Equipment.EquipmentType.Head: headSlot = null; break;
-            case Equipment.EquipmentType.Body: bodySlot = null; break;
-            case Equipment.EquipmentType.Shield: shieldSlot = null; break;
-            case Equipment.EquipmentType.Accessory: accessorySlot = null; break;
-        }
-        RecalculateStats();
-    }
-    public Equipment GetEquipped(Equipment.EquipmentType slotType)
-    {
-        switch (slotType)
-        {
-            case Equipment.EquipmentType.Weapon: return weaponSlot;
-            case Equipment.EquipmentType.Head: return headSlot;
-            case Equipment.EquipmentType.Body: return bodySlot;
-            case Equipment.EquipmentType.Shield: return shieldSlot;
-            case Equipment.EquipmentType.Accessory: return accessorySlot;
-            default: return null;
-        }
-    }
-    public void UnequipRemovedEquipment(Equipment equipment)
-    {
-        if(equipment == null) return;
-        if(weaponSlot == equipment) weaponSlot = null;
-        else if(headSlot == equipment) headSlot = null;
-        else if(bodySlot == equipment) bodySlot = null;
-        else if(shieldSlot == equipment) shieldSlot = null;
-        else if(accessorySlot == equipment) accessorySlot = null;
-        else return;
-        RecalculateStats();
-    }
     public void ApplyStatus(StatusEffect status)
     {
         if(status == null) return;
@@ -471,24 +471,24 @@ public void Unequip(Equipment.EquipmentType slotType)
     }
     public void GaugeDamageDealt(int damage)
     {
-        if(transformUsedThisBattle || isTransformed) return;
-        transformGauge = Mathf.Min(transformGaugeMax, transformGauge + damage * gagueGainPerDamageDealt);
+        if(transformedThisBattle || isTransformed) return;
+        transformGauge = Mathf.Min(transformGaugeMax, transformGauge + damage * gaguePerDamageDealt);
     }
     public void GaugeDamageTaken(int damage)
     {
-        if(transformUsedThisBattle || isTransformed) return;
-        transformGauge = Mathf.Min(transformGaugeMax, transformGauge + damage * gaugeGainPerDamageTaken);
+        if(transformedThisBattle || isTransformed) return;
+        transformGauge = Mathf.Min(transformGaugeMax, transformGauge + damage * gaugePerDamageTaken);
     }
-    public void GaugePerTurn()
+    public void GaugeTurn()
     {
-        if(transformUsedThisBattle || isTransformed) return;
-        transformGauge = Mathf.Min(transformGaugeMax, transformGauge + gaugeGainPerTurn);
+        if(transformedThisBattle || isTransformed) return;
+        transformGauge = Mathf.Min(transformGaugeMax, transformGauge + gaugePerTurn);
     }
     public void ActivateTransform()
     {
         if(!transformReady) return;
         isTransformed = true;
-        transformUsedThisBattle = true;
+        transformedThisBattle = true;
         transformTurnsRemaining = 3;
         transformMultiplier = 1.2f;
         RecalculateStats();
@@ -510,7 +510,7 @@ public void Unequip(Equipment.EquipmentType slotType)
     {
         transformGauge = 0f;
         isTransformed = false;
-        transformUsedThisBattle = false;
+        transformedThisBattle = false;
         transformTurnsRemaining = 0;
         transformMultiplier = 1f;
         RecalculateStats();

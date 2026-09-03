@@ -126,7 +126,7 @@ public void OpenTab()
         void SelectCraftRecipe(CraftRecipe recipe)
         {
             selectedRecipe = recipe;
-            bool canCraft = HasMaterials(recipe) && (recipe.goldCost <= 0 || (Wallet.instance != null && Wallet.instance.currentGold >= recipe.goldCost));
+            bool canCraft = HasMaterials(recipe) && (recipe.goldCost <= 0 || (WalletManager.instance != null && WalletManager.instance.currentGold >= recipe.goldCost));
             SetActionButton("Craft", canCraft, CraftSelectedRecipe);
         }
         string BuildCraftDetail(CraftRecipe recipe)
@@ -139,7 +139,7 @@ public void OpenTab()
         foreach(MaterialAmount material in recipe.requiredMaterials)
         {
             if(material == null || material.material == null) continue;
-            int owned = InventoryManager.Instance.items.FindAll(i => i == material.material).Count;
+            int owned = InventoryManager.instance.items.FindAll(i => i == material.material).Count;
             bool satisfied = owned >= material.amount;
             string color = satisfied ? colorDone : colorMuted;
             materials += $"{material.material.itemName} <color={color}>{Mathf.Min(owned, material.amount)} / {material.amount}</color>\n";
@@ -168,7 +168,7 @@ public void OpenTab()
     {
         foreach(MaterialAmount required in recipe.requiredMaterials)
         {
-            int owned = InventoryManager.Instance.items.FindAll(item => item == required.material).Count;
+            int owned = InventoryManager.instance.items.FindAll(item => item == required.material).Count;
             if(owned < required.amount) return false;
         }
         return true;
@@ -180,17 +180,17 @@ public void OpenTab()
         if(!HasMaterials(recipe)) { if(forgeFeedbackText != null) forgeFeedbackText.text = "Missing materials"; return;}
         if(recipe.goldCost > 0 && !TrySpendForge(recipe.goldCost)) return;
         foreach(MaterialAmount required in recipe.requiredMaterials)
-        for(int i = 0; i < required.amount; i++) InventoryManager.Instance.LoseItem(required.material);
+        for(int i = 0; i < required.amount; i++) InventoryManager.instance.LoseItem(required.material);
         string craftedName;
         if(recipe.result != null)
         {
             Equipment crafted = Instantiate(recipe.result);
-            InventoryManager.Instance.PickupEquipment(crafted);
+            InventoryManager.instance.PickupItem(crafted);
             craftedName = crafted.equipmentName;
         }
         else
         {
-            InventoryManager.Instance.PickupItem(recipe.itemResult);
+            InventoryManager.instance.PickupItem(recipe.itemResult);
             craftedName = recipe.itemResult.itemName;
         }
         if(forgeFeedbackText != null) forgeFeedbackText.text = $"Forged {craftedName}";
@@ -220,11 +220,11 @@ public void OpenTab()
     }
      void UpdateForgeGoldText()
     {
-        if(forgeGoldText != null && Wallet.instance != null) forgeGoldText.text = $"{Wallet.instance.currentGold} Gold"; 
+        if(forgeGoldText != null && WalletManager.instance != null) forgeGoldText.text = $"{WalletManager.instance.currentGold} Gold"; 
     }
     bool TrySpendForge(int cost)
     {
-        if(Wallet.instance == null || !Wallet.instance.SpendGold(cost))
+        if(WalletManager.instance == null || !WalletManager.instance.SpendGold(cost))
         {
             if(forgeFeedbackText != null) forgeFeedbackText.text = "Not enough gold.";
             return false;
@@ -241,7 +241,7 @@ public void OpenTab()
     {
         if(pager == null || craftCardPrefab == null || craftCardParent == null) return;
         List<CardGridSpec> specs = new List<CardGridSpec>();
-        foreach(Equipment equipment in InventoryManager.Instance.items.OfType<Equipment>())
+        foreach(Equipment equipment in InventoryManager.instance.items.OfType<Equipment>())
         {
             if(equipment.equipmentType != Equipment.EquipmentType.Weapon) continue;
             Equipment captured = equipment;
@@ -279,7 +279,7 @@ public void OpenTab()
         selectedEnhanceOwner = owner;
         bool atMax = equipment.enhancementLevel >= maxEnhancementLevel;
         int cost = EnhanceCost(equipment.enhancementLevel);
-        bool canAfford = Wallet.instance != null && Wallet.instance.currentGold >= cost;
+        bool canAfford = WalletManager.instance != null && WalletManager.instance.currentGold >= cost;
         SetActionButton("Enhance", !atMax && canAfford, () => EnhanceWeapon(selectedEnhanceTarget, selectedEnhanceOwner));
     }
     string BuildEnhanceDetail(Equipment equipment, ActiveStats owner)
@@ -320,8 +320,8 @@ public void OpenTab()
         }
         else
          {
-        InventoryManager.Instance.LoseItem(original);
-        InventoryManager.Instance.PickupEquipment(enhanced); 
+        InventoryManager.instance.LoseItem(original);
+        InventoryManager.instance.PickupItem(enhanced); 
         }
         if(forgeFeedbackText != null) forgeFeedbackText.text = $"Enhanced to {enhanced.equipmentName}.";
         RebuildEnhanceCards();
@@ -342,7 +342,7 @@ public void OpenTab()
         if(elementStage2) {RebuildElementPickCards(); return; }
         if(pager == null || craftCardPrefab == null || craftCardParent == null) return;
         List<CardGridSpec> specs = new List<CardGridSpec>();
-        foreach(Equipment equipment in InventoryManager.Instance.items.OfType<Equipment>())
+        foreach(Equipment equipment in InventoryManager.instance.items.OfType<Equipment>())
         {
             if(equipment.equipmentType != Equipment.EquipmentType.Weapon) continue;
             if(equipment.element != Element.None) continue;
@@ -360,7 +360,7 @@ public void OpenTab()
     void SelectElementTarget(Equipment weapon)
     {
         selectedWeaponForElement = weapon;
-        bool canAfford = Wallet.instance != null && Wallet.instance.currentGold >= addElementCost;
+        bool canAfford = WalletManager.instance != null && WalletManager.instance.currentGold >= addElementCost;
         SetActionButton("Choose Element", canAfford, () => {elementStage2 = true; RebuildElementCards(); });
     }
     string BuildElementDetail(Equipment equipment)
@@ -395,8 +395,8 @@ public void OpenTab()
         enhanced.baseAssetName = string.IsNullOrEmpty(original.baseAssetName) ? original.name : original.baseAssetName;
         enhanced.element = element;
         enhanced.equipmentName = $"{original.equipmentName} ({element})";
-        InventoryManager.Instance.LoseItem(original);
-        InventoryManager.Instance.PickupEquipment(enhanced);
+        InventoryManager.instance.LoseItem(original);
+        InventoryManager.instance.PickupItem(enhanced);
         if(forgeFeedbackText != null) forgeFeedbackText.text = $"{enhanced.equipmentName} imbued with {element}";
         elementStage2 = false;
         RebuildElementCards();
@@ -410,7 +410,7 @@ public void OpenTab()
     {
         if(pager == null || craftCardPrefab == null || craftCardParent == null) return;
         List<CardGridSpec> specs = new List<CardGridSpec>();
-        foreach(Equipment equipment in InventoryManager.Instance.items.OfType<Equipment>())
+        foreach(Equipment equipment in InventoryManager.instance.items.OfType<Equipment>())
         {
             if(equipment.smeltYield == null || equipment.smeltYield.Count == 0) continue;
             Equipment captured = equipment;
@@ -439,10 +439,10 @@ public void OpenTab()
     }
     void SmeltWeapons(Equipment equipment)
     {
-        InventoryManager.Instance.LoseItem(equipment);
+        InventoryManager.instance.LoseItem(equipment);
         foreach (MaterialAmount material in equipment.smeltYield)
         {
-            for(int i = 0; i < material.amount; i++) InventoryManager.Instance.PickupItem(material.material);
+            for(int i = 0; i < material.amount; i++) InventoryManager.instance.PickupItem(material.material);
         }
         if(forgeFeedbackText != null) forgeFeedbackText.text = $"Smelted {equipment.equipmentName}.";
         RebuildSmeltCards();
@@ -456,10 +456,10 @@ public void OpenTab()
     List<(Baggable item, int count)> BuildAlchemyGroupedList()
     {
         List<(Baggable, int)> result = new List<(Baggable, int)>();
-        if(InventoryManager.Instance == null) return result;
+        if(InventoryManager.instance == null) return result;
         Dictionary<Baggable, int> counts = new Dictionary<Baggable, int>();
         List<Baggable> order = new List<Baggable>();
-        foreach(Baggable item in InventoryManager.Instance.items)
+        foreach(Baggable item in InventoryManager.instance.items)
         {
             if(item == null) continue;
             if(!counts.ContainsKey(item)) { counts[item] = 0; order.Add(item); }
@@ -532,10 +532,10 @@ public void OpenTab()
             RebuildAlchemyCards();
             return;
         }
-        InventoryManager.Instance.LoseItem(first);
-        InventoryManager.Instance.LoseItem(second);
-        if(matched.result is Item resultItem) InventoryManager.Instance.PickupItem(resultItem);
-        else if(matched.result is Equipment resultEquipment) InventoryManager.Instance.PickupEquipment(Instantiate(resultEquipment));
+        InventoryManager.instance.LoseItem(first);
+        InventoryManager.instance.LoseItem(second);
+        if(matched.result is Item resultItem) InventoryManager.instance.PickupItem(resultItem);
+        else if(matched.result is Equipment resultEquipment) InventoryManager.instance.PickupItem(Instantiate(resultEquipment));
         if(forgeFeedbackText != null) forgeFeedbackText.text = $"{first.DisplayName} + {second.DisplayName} became {matched.result.DisplayName}.";
     alchemyStage2 = false;
     RebuildAlchemyCards();

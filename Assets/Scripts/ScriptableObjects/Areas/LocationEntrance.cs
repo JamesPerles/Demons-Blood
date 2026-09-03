@@ -25,9 +25,9 @@ public void Interact()
         if(string.IsNullOrEmpty(locationData.sceneName)) return;
         isLoading = true;
         BattleManager.lastTown = locationData.sceneName;
-        StartCoroutine(LoadTown());
+        StartCoroutine(LoadLocation());
     }
-    IEnumerator LoadTown()
+    IEnumerator LoadLocation()
     {
         string spawnPointName = GetSpawnPointName();
         AsyncOperation operation = SceneManager.LoadSceneAsync(locationData.sceneName);

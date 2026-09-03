@@ -40,7 +40,7 @@ void Awake()
     }
     void UpdateGoldText()
     {
-        if (goldText != null && Wallet.instance != null) goldText.text = $"{Wallet.instance.currentGold} Gold";
+        if (goldText != null && WalletManager.instance != null) goldText.text = $"{WalletManager.instance.currentGold} Gold";
     }
     List<MenuOption> MainShopMenu()
     {
@@ -72,7 +72,7 @@ void Awake()
     }
     void ChooseBuy(Baggable template, int price)
     {
-        if(Wallet.instance == null || Wallet.instance.currentGold < price)
+        if(WalletManager.instance == null || WalletManager.instance.currentGold < price)
         {
             if(feedbackText != null) feedbackText.text = "Not enough gold";
             return;
@@ -84,14 +84,14 @@ void Awake()
      List<MenuOption> SellMenu()
     {
         List<MenuOption> options = new List<MenuOption>();
-        foreach (Item item in InventoryManager.Instance.items.OfType<Item>().Where(i => i.itemType == Item.ItemType.Consumable))
+        foreach (Item item in InventoryManager.instance.items.OfType<Item>().Where(i => i.itemType == Item.ItemType.Consumable))
         {
             Item captured = item;
             MenuOption option = new MenuOption($"{captured.itemName} - {captured.sellPrice}g", () => Sell(captured, captured.sellPrice));
             option.description = captured.description;
             options.Add(option);
         }
-        foreach (Equipment equipment in InventoryManager.Instance.items.OfType<Equipment>())
+        foreach (Equipment equipment in InventoryManager.instance.items.OfType<Equipment>())
         {
             Equipment captured = equipment;
             MenuOption option = new MenuOption($"{captured.equipmentName} - {captured.sellPrice}g", () => Sell(captured,captured.sellPrice));
@@ -103,8 +103,8 @@ void Awake()
     void Sell(Baggable owned, int price)
     {
         if(owned is Item ownedItem && ownedItem.itemType == Item.ItemType.KeyItem) return;
-        InventoryManager.Instance.LoseItem(owned);
-        Wallet.instance.AddGold(price);
+        InventoryManager.instance.LoseItem(owned);
+        WalletManager.instance.AddGold(price);
         if(feedbackText != null) feedbackText.text = $"Sold{owned.DisplayName}!";
         UpdateGoldText();
         screenHistory.Pop();
@@ -146,7 +146,7 @@ void Awake()
     }
     void EvictAndRetry(ActiveStats character, Baggable itemToEvict)
     {
-        if(InventoryManager.Instance != null) InventoryManager.Instance.RemovePersonalInventory(itemToEvict, character);
+        if(InventoryManager.instance != null) InventoryManager.instance.RemovePersonalInventory(itemToEvict, character);
        FinalizeToPersonal(character);
     }
     Baggable CreatePurchaseInstance()
@@ -158,8 +158,8 @@ void Awake()
     {
         if(!SpendPendingGold()) return;
         Baggable purchased = CreatePurchaseInstance();
-        if(purchased is Item item) InventoryManager.Instance.PickupItem(item);
-        else if(purchased is Equipment equipment) InventoryManager.Instance.PickupEquipment(equipment);
+        if(purchased is Item item) InventoryManager.instance.PickupItem(item);
+        else if(purchased is Equipment equipment) InventoryManager.instance.PickupItem(equipment);
         ShowBoughtFeedback(purchased.DisplayName);
         ReturnToFreshBuyMenu();
     }
@@ -173,7 +173,7 @@ void Awake()
     }
     bool SpendPendingGold()
     {
-        if(Wallet.instance == null || !Wallet.instance.SpendGold(pendingPrice))
+        if(WalletManager.instance == null || !WalletManager.instance.SpendGold(pendingPrice))
         {
             if(feedbackText != null) feedbackText.text = "Not enough gold";
             ReturnToFreshBuyMenu();

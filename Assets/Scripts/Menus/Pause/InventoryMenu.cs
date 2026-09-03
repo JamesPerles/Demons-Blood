@@ -90,17 +90,17 @@ int selectedItemCount;
     List<(Baggable item, int count)> BuildGroupedList()
     {
         List<(Baggable, int)> result = new List<(Baggable, int)>();
-        if(InventoryManager.Instance == null) return result;
+        if(InventoryManager.instance == null) return result;
         if(activeCategory == Category.Equipment)
         {
-            foreach(Equipment equipment in InventoryManager.Instance.items.OfType<Equipment>())
+            foreach(Equipment equipment in InventoryManager.instance.items.OfType<Equipment>())
             result.Add((equipment, 1));
             return result;
         }
         Item.ItemType wantedType = activeCategory == Category.Consumables ? Item.ItemType.Consumable : Item.ItemType.KeyItem;
         Dictionary<Item, int> counts = new Dictionary<Item, int>();
         List<Item> order = new List<Item>();
-        foreach(Item item in InventoryManager.Instance.items.OfType<Item>())
+        foreach(Item item in InventoryManager.instance.items.OfType<Item>())
         {
             if(item.itemType != wantedType) continue;
             if(!counts.ContainsKey(item)) {counts[item] = 0; order.Add(item); }
@@ -231,7 +231,7 @@ int selectedItemCount;
     void DiscardSelected()
     {
         if(selectedItem == null) return;
-        InventoryManager.Instance.LoseItem(selectedItem);
+        InventoryManager.instance.LoseItem(selectedItem);
         if(itemFeedbackText != null) itemFeedbackText.text = $"Discarded {selectedItem.DisplayName}";
         RebuildCards(0);
     }
@@ -266,19 +266,19 @@ int selectedItemCount;
                 if(item.effects != null)
                 foreach(Effect effect in item.effects)
                 if(effect != null) StartCoroutine(effect.Apply(target, target));
-                InventoryManager.Instance.LoseItem(item);
+                InventoryManager.instance.LoseItem(item);
                 if(itemFeedbackText != null) itemFeedbackText.text = $"Used {item.itemName} on {target.currentName}.";
             }
             else if(selectedItem is Equipment equipment)
             {
-                InventoryManager.Instance.AddPersonalInventory(equipment, target);
+                InventoryManager.instance.AddPersonalInventory(equipment, target);
                 target.Equip(equipment);
                 if(itemFeedbackText != null) itemFeedbackText.text = $"Equipped {equipment.equipmentName} on {target.currentName}.";
             }
         }
         else if(mode == Mode.ChooseSendTarget)
         {
-            bool moved = InventoryManager.Instance.AddPersonalInventory(selectedItem, target);
+            bool moved = InventoryManager.instance.AddPersonalInventory(selectedItem, target);
             if(itemFeedbackText != null)
             itemFeedbackText.text = moved ? $"Sent {selectedItem.DisplayName} to {target.currentName}." : $"{target.currentName}'s bag is full.";
         }

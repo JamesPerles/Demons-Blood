@@ -3,15 +3,15 @@ using TMPro;
 using UnityEngine;
 public class InventoryManager : MonoBehaviour
 {
-    public static InventoryManager Instance;
+    public static InventoryManager instance;
     public Transform itemContent;
     public GameObject inventoryItem;
     public List<Baggable> items = new List<Baggable>();
     void Awake()
     {
-        if (Instance == null)
+        if (instance == null)
         {
-            Instance = this;
+            instance = this;
             DontDestroyOnLoad(gameObject);
             Debug.Log("Inventory Manager exists across scenes");
         }
@@ -21,14 +21,10 @@ public class InventoryManager : MonoBehaviour
             Debug.Log("Destroy extra Inventories");
         }
     }
-    public void PickupItem(Item item)
+    public void PickupItem(Baggable item)
     {
         items.Add(item);
         if(QuestManager.instance != null) QuestManager.instance.ReportItemObtained(item);
-    }
-    public void PickupEquipment(Equipment item)
-    {
-        items.Add(item);
     }
     public void LoseItem(Baggable item)
     {

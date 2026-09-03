@@ -161,7 +161,7 @@ public class CommandMenu : SubMenu
     List<MenuOption> ItemMenu()
     {
         List<MenuOption> options = new List<MenuOption>();
-        foreach (Item item in InventoryManager.Instance.items.OfType<Item>().Where(i => i.itemType == Item.ItemType.Consumable))
+        foreach (Item item in InventoryManager.instance.items.OfType<Item>().Where(i => i.itemType == Item.ItemType.Consumable))
         {
             Item captured = item;
             MenuOption option = new MenuOption(item.itemName, null);

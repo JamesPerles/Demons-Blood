@@ -1,6 +1,6 @@
 using UnityEngine;
 public enum Stat {HP, MP, Strength, Magic, Defense, Wisdom, Tech, Affinity, Speed, Luck, Accuracy, Evasion, Precision, Foresight, Critical, Dodge}
-public static class StatStageUtility
+public static class StatStage
 {
     public const int MaxStage = 4;
     public const int MinStage = -4;
