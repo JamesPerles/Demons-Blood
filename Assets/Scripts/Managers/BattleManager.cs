@@ -14,7 +14,7 @@ public class BattleManager : MonoBehaviour
     List<ActiveStats> players = new List<ActiveStats>();
     List<EnemyAI> enemies = new List<EnemyAI>();
     List<ICombatant> turnOrder = new List<ICombatant>();
-    public PartyStatusUI partyStatusUI;
+    public PartyStatus partyStatusUI;
     bool battleStarted = false;
     bool battleInProgress = false;
     HashSet<ICombatant> reportedDead = new HashSet<ICombatant>();
@@ -551,14 +551,14 @@ void Start()
             turnOrder.Sort((first, second) => GetSpeed(second).CompareTo(GetSpeed(first)));
         }
         int EnemyLevel()
-    {
+        {
         int totalLevel = 0;
         foreach(EnemyAI enemy in enemies)
         {
             totalLevel += enemy.currentLevel;
         }
         return totalLevel / enemies.Count;
-    }
+        }
         int GetSpeed(ICombatant combatant)
         {
             return combatant.finalSpeed + Random.Range(-5, 5);
@@ -591,7 +591,7 @@ void Start()
                 SceneManager.LoadScene(RandomEncounter.previousSceneName);
             }
         }
-        void PartyDefeat()
+    void PartyDefeat()
     {
         if(FlagManager.instance != null) FlagManager.instance.SetFlag("PartyDefeated", true);
         switch(deathHandling)
@@ -619,7 +619,7 @@ void Start()
         {
             player.Heal(player.finalHP);
             player.RestoreMP(player.finalMP);
-            //also should cure all statuses imo
+            player.ClearStatus();
         }
       if(string.IsNullOrEmpty(lastTown))
         {

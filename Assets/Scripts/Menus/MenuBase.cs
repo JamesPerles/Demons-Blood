@@ -111,8 +111,8 @@ protected void SetDisplayActive(bool active)
             if(targetGraphic != null)
             targetGraphic.color = option.enabled ? button.colors.normalColor : button.colors.disabledColor;
         }
-        var relay = entry.GetComponent<MenuEntrySelect>();
-        if(relay == null) relay = entry.AddComponent<MenuEntrySelect>();
+        var relay = entry.GetComponent<MenuSelect>();
+        if(relay == null) relay = entry.AddComponent<MenuSelect>();
         relay.owner = this;
         return entry;
     }
@@ -127,8 +127,8 @@ protected void SetDisplayActive(bool active)
     {
         entryOptionMap[entry] = option;
         if(!spawnedEntries.Contains(entry)) spawnedEntries.Add(entry);
-        MenuEntrySelect relay = entry.GetComponent<MenuEntrySelect>();
-        if(relay == null) relay = entry.AddComponent<MenuEntrySelect>();
+        MenuSelect relay = entry.GetComponent<MenuSelect>();
+        if(relay == null) relay = entry.AddComponent<MenuSelect>();
         relay.owner = this;
     }
     protected void EmptyMenu(float fontSize)

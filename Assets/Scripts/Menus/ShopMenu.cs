@@ -29,7 +29,7 @@ void Awake()
         if(feedbackText != null) feedbackText.text = "";
         UpdateGoldText();
         screenHistory.Clear();
-        OpenScreen(MainShopMenu());
+        OpenScreen(ShopOptionsMenu());
     }
     public override void Close()
     {
@@ -42,7 +42,7 @@ void Awake()
     {
         if (goldText != null && WalletManager.instance != null) goldText.text = $"{WalletManager.instance.currentGold} Gold";
     }
-    List<MenuOption> MainShopMenu()
+    List<MenuOption> ShopOptionsMenu()
     {
         return new List<MenuOption>
         {
@@ -57,20 +57,20 @@ void Awake()
         foreach (Item item in currentShop.itemsForSale)
         {
             Item captured = item;
-            MenuOption option =  new MenuOption($"{captured.itemName} - {captured.buyPrice}g",() => ChooseBuy(captured, captured.buyPrice));
+            MenuOption option =  new MenuOption($"{captured.itemName} - {captured.buyPrice}g",() => Buy(captured, captured.buyPrice));
             option.description = captured.description;
             options.Add(option);      
         }
         foreach (Equipment equipment in currentShop.equipmentForSale)
         {
             Equipment captured = equipment;
-            MenuOption option = new MenuOption($"{captured.equipmentName} - {captured.buyPrice}g",() => ChooseBuy(captured, captured.buyPrice));
-            option.description = BuildEquipmentDescription(captured);
+            MenuOption option = new MenuOption($"{captured.equipmentName} - {captured.buyPrice}g",() => Buy(captured, captured.buyPrice));
+            option.description = EquipmentDescription(captured);
             options.Add(option);
         }
         return options;
     }
-    void ChooseBuy(Baggable template, int price)
+    void Buy(Baggable template, int price)
     {
         if(WalletManager.instance == null || WalletManager.instance.currentGold < price)
         {
@@ -95,7 +95,7 @@ void Awake()
         {
             Equipment captured = equipment;
             MenuOption option = new MenuOption($"{captured.equipmentName} - {captured.sellPrice}g", () => Sell(captured,captured.sellPrice));
-            option.description = BuildEquipmentDescription(captured);
+            option.description = EquipmentDescription(captured);
             options.Add(option);
         }
         return options;
@@ -113,7 +113,7 @@ void Awake()
     List<MenuOption> DestinationMenu()
     {
         List<MenuOption> options = new List<MenuOption>();
-        options.Add(new MenuOption("Party Inventory", ConfirmPartyDestination));
+        options.Add(new MenuOption("Party Inventory", ConfirmDestination));
         if(PlayerParty.instance != null)
         {
             foreach(GameObject characterObject in PlayerParty.instance.playableCharacters)
@@ -123,60 +123,60 @@ void Awake()
                 ActiveStats captured = character;
                 bool full = !captured.personalInventory.CanAdd();
                 string label = full ? $"{captured.currentName} (Full)" : $"{captured.currentName} ({captured.personalInventory.FreeSlots} free)";
-           options.Add(new MenuOption(label, () => ChooseCharacterDestination(captured)));
+           options.Add(new MenuOption(label, () => ChooseDestination(captured)));
             }
         }
         return options;
     }
-    void ChooseCharacterDestination(ActiveStats character)
+    void ChooseDestination(ActiveStats character)
     {
-        if(character.personalInventory.CanAdd()) FinalizeToPersonal(character);
-        else OpenScreen(EvictMenu(character), $"{character.currentName}'s Inventory (Full)");
+        if(character.personalInventory.CanAdd()) ToPersonal(character);
+        else OpenScreen(RemoveMenu(character), $"{character.currentName}'s Inventory (Full)");
     }
-    List<MenuOption> EvictMenu(ActiveStats character)
+    List<MenuOption> RemoveMenu(ActiveStats character)
     {
         List<MenuOption> options = new List<MenuOption>();
         foreach(Baggable carried in character.personalInventory.items)
         {
             Baggable captured = carried;
-            options.Add(new MenuOption(captured.DisplayName, () => EvictAndRetry(character, captured)));
+            options.Add(new MenuOption(captured.DisplayName, () => RemoveAndRetry(character, captured)));
         }
         if(options.Count == 0) options.Add(new MenuOption("Nothing to send back", () => { }) { enabled = false});
         return options;
     }
-    void EvictAndRetry(ActiveStats character, Baggable itemToEvict)
+    void RemoveAndRetry(ActiveStats character, Baggable itemToRemove)
     {
-        if(InventoryManager.instance != null) InventoryManager.instance.RemovePersonalInventory(itemToEvict, character);
-       FinalizeToPersonal(character);
+        if(InventoryManager.instance != null) InventoryManager.instance.RemovePersonalInventory(itemToRemove, character);
+        ToPersonal(character);
     }
-    Baggable CreatePurchaseInstance()
+    Baggable Purchase()
     {
         if(pendingPurchase is Equipment equipmentTemplate) return Instantiate(equipmentTemplate);
         return pendingPurchase;
     }
-    void ConfirmPartyDestination()
+    void ConfirmDestination()
     {
-        if(!SpendPendingGold()) return;
-        Baggable purchased = CreatePurchaseInstance();
+        if(!SpendGold()) return;
+        Baggable purchased = Purchase();
         if(purchased is Item item) InventoryManager.instance.PickupItem(item);
         else if(purchased is Equipment equipment) InventoryManager.instance.PickupItem(equipment);
         ShowBoughtFeedback(purchased.DisplayName);
-        ReturnToFreshBuyMenu();
+        ReturnToBuyMenu();
     }
-    void FinalizeToPersonal(ActiveStats character)
+    void ToPersonal(ActiveStats character)
     {
-      if(!SpendPendingGold()) return;
-      Baggable purchased = CreatePurchaseInstance();
+      if(!SpendGold()) return;
+      Baggable purchased = Purchase();
       character.personalInventory.AddItem(purchased);
       ShowBoughtFeedback(purchased.DisplayName);
-      ReturnToFreshBuyMenu();
+      ReturnToBuyMenu();
     }
-    bool SpendPendingGold()
+    bool SpendGold()
     {
         if(WalletManager.instance == null || !WalletManager.instance.SpendGold(pendingPrice))
         {
             if(feedbackText != null) feedbackText.text = "Not enough gold";
-            ReturnToFreshBuyMenu();
+            ReturnToBuyMenu();
             return false;
         }
         UpdateGoldText();
@@ -186,34 +186,34 @@ void Awake()
     {
         if(feedbackText != null) feedbackText.text = $"Bought {name}";
     }
-    void ReturnToFreshBuyMenu()
+    void ReturnToBuyMenu()
     {
         while(screenHistory.Count > 1) screenHistory.Pop();
         OpenScreen(BuyMenu());
     }
-    string BuildEquipmentDescription(Equipment equipment)
+    string EquipmentDescription(Equipment equipment)
     {
         List<string> lines = new List<string>();
-        AppendStatLine(lines, "HP", equipment.hp);
-        AppendStatLine(lines, "MP", equipment.mp);
-        AppendStatLine(lines, "STR", equipment.strength);
-        AppendStatLine(lines, "MAG", equipment.magic);
-        AppendStatLine(lines, "DEF", equipment.defense);
-        AppendStatLine(lines, "WIS", equipment.wisdom);
-        AppendStatLine(lines, "TEC", equipment.tech);
-        AppendStatLine(lines, "AFN", equipment.affinity);
-        AppendStatLine(lines, "SPD", equipment.speed);
-        AppendStatLine(lines, "LCK", equipment.luck);
-        AppendStatLine(lines, "ACC", equipment.Accuracy);
-        AppendStatLine(lines, "EVA", equipment.Evasion);
-        AppendStatLine(lines, "PRE", equipment.Precision);
-        AppendStatLine(lines, "FOR", equipment.Foresight);
-        AppendStatLine(lines, "CRT", equipment.Critical);
-        AppendStatLine(lines, "DGE", equipment.Dodge);
+        ShowStatLine(lines, "HP", equipment.hp);
+        ShowStatLine(lines, "MP", equipment.mp);
+        ShowStatLine(lines, "STR", equipment.strength);
+        ShowStatLine(lines, "MAG", equipment.magic);
+        ShowStatLine(lines, "DEF", equipment.defense);
+        ShowStatLine(lines, "WIS", equipment.wisdom);
+        ShowStatLine(lines, "TEC", equipment.tech);
+        ShowStatLine(lines, "AFN", equipment.affinity);
+        ShowStatLine(lines, "SPD", equipment.speed);
+        ShowStatLine(lines, "LCK", equipment.luck);
+        ShowStatLine(lines, "ACC", equipment.Accuracy);
+        ShowStatLine(lines, "EVA", equipment.Evasion);
+        ShowStatLine(lines, "PRE", equipment.Precision);
+        ShowStatLine(lines, "FOR", equipment.Foresight);
+        ShowStatLine(lines, "CRT", equipment.Critical);
+        ShowStatLine(lines, "DGE", equipment.Dodge);
         if(lines.Count == 0) lines.Add("No stat changes");
         return string.Join("\n", lines);
     }
-    void AppendStatLine(List<string> lines, string label, int value)
+    void ShowStatLine(List<string> lines, string label, int value)
     {
         if(value == 0) return;
         Color color = value > 0 ? statIncreaseColor : statDecreaseColor;

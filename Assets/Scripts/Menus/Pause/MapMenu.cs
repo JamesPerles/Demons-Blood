@@ -10,7 +10,6 @@ public PauseMenu host;
 public List<LocationData> allLocations = new List<LocationData>();
 public RectTransform mapContainer;
 public GameObject nodePrefab;
-public TextMeshProUGUI legendText;
 public Color townColor = new Color32(0x63, 0x99, 0x22, 0xFF);
 public Color dungeonColor = new Color32(0xC4, 0x3B, 0x3B, 0xFF);
 public Color landmarkColor = new Color32(0xE0, 0xB0, 0x3A, 0xFF);
@@ -33,20 +32,12 @@ public void OpenTab()
         host.ShowSplitPanel();
         host.SetBreadcrumbSuffix("Map");
         if(host.miniTabGroup != null) host.miniTabGroup.Hide();
-        BuildLegend();
         RebuildNodes();
     }
    public void HideVisuals()
     {
         if(mapContainer != null) mapContainer.gameObject.SetActive(false);
         if(travelButton != null) travelButton.gameObject.SetActive(false);
-    }
-    void BuildLegend()
-    {
-        if(legendText == null) return;
-        legendText.text = 
-        $"<color={colorAccent}>\u25CF</color> current / visited\n" +
-        $"<color={colorMuted}>\u25CF</color> undiscovered";
     }
     void RebuildNodes()
     {
@@ -69,14 +60,14 @@ public void OpenTab()
             RectTransform nodeRect = nodeObj.GetComponent<RectTransform>();
             PositionNodeRelative(nodeRect, location.worldPosition - playerWorldPos);
             nodeRect.SetAsLastSibling();
-            QuestCardView view = nodeObj.GetComponent<QuestCardView>();
-            if(view == null) continue;
-            SetNodeVisual(view, location, current);
-            if(view.button != null)
+            EntryCard card = nodeObj.GetComponent<EntryCard>();
+            if(card == null) continue;
+            SetNodeVisual(card, location, current);
+            if(card.button != null)
             {
-                view.button.onClick.RemoveAllListeners();
+                card.button.onClick.RemoveAllListeners();
                 LocationData capturedTown = location;
-                view.button.onClick.AddListener(() => SelectLocation(capturedTown));
+                card.button.onClick.AddListener(() => SelectLocation(capturedTown));
             }
             if(current) defaultSelection = location;
             else if(defaultSelection == null && location.discovered) defaultSelection = location;
@@ -96,21 +87,21 @@ public void OpenTab()
         RectTransform nodeRect = nodeObj.GetComponent<RectTransform>();
         PositionNodeRelative(nodeRect, Vector2.zero);
         nodeRect.SetAsLastSibling();
-        QuestCardView view = nodeObj.GetComponent<QuestCardView>();
-        if(view == null) return;
-        if(view.borderImage != null) view.borderImage.color = playerMarkerColor;
-        if(view.titleText != null)
+        EntryCard card = nodeObj.GetComponent<EntryCard>();
+        if(card == null) return;
+        if(card.borderImage != null) card.borderImage.color = playerMarkerColor;
+        if(card.titleText != null)
         {
-            view.titleText.text = "You";
-            view.titleText.color = playerMarkerColor;
+            card.titleText.text = "You";
+            card.titleText.color = playerMarkerColor;
         }
-        if(view.backgroundImage != null)
+        if(card.backgroundImage != null)
         {
             Color clear = playerMarkerColor;
             clear.a = 0f;
-            view.backgroundImage.color = clear;
+            card.backgroundImage.color = clear;
         }
-        if(view.button != null) view.button.interactable = false;
+        if(card.button != null) card.button.interactable = false;
     }
     void PositionNodeRelative(RectTransform nodeRect, Vector2 worldOffsetFromPlayer)
     {
@@ -140,20 +131,20 @@ public void OpenTab()
             default: return townColor;
         }
     }
-    void SetNodeVisual(QuestCardView view, LocationData location, bool current)
+    void SetNodeVisual(EntryCard card, LocationData location, bool current)
     {
         bool discovered = location.discovered;
-        if(view.borderImage != null) view.borderImage.color = discovered ? GetTypeColor(location.locationType) : undiscoveredColor;
-        if(view.titleText != null)
+        if(card.borderImage != null) card.borderImage.color = discovered ? GetTypeColor(location.locationType) : undiscoveredColor;
+        if(card.titleText != null)
         {
-            view.titleText.text = discovered ? location.locationName : location.undiscoveredHint;
-            view.titleText.color = discovered ? new Color32(0xF2, 0xF2, 0xF2, 0xFF) : undiscoveredColor;
+            card.titleText.text = discovered ? location.locationName : location.undiscoveredHint;
+            card.titleText.color = discovered ? new Color32(0xF2, 0xF2, 0xF2, 0xFF) : undiscoveredColor;
         }
-        if(view.backgroundImage != null)
+        if(card.backgroundImage != null)
         {
             Color ring = currentRingColor;
             ring.a = current ? 1f : 0f;
-            view.backgroundImage.color = ring;
+            card.backgroundImage.color = ring;
         }
     }
     void SelectLocation(LocationData location)

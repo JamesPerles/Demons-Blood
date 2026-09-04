@@ -154,9 +154,9 @@ RectTransform:
   - {fileID: 437688238}
   m_Father: {fileID: 1960186238}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: -120, y: 377}
+  m_AnchorMin: {x: 0, y: 1}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: -4, y: -128.1}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &60326872
@@ -616,10 +616,10 @@ RectTransform:
   - {fileID: 664182662}
   m_Father: {fileID: 1960186238}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 592.58997, y: 140}
-  m_SizeDelta: {x: 100, y: 100}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 0}
+  m_AnchoredPosition: {x: 592.58997, y: 594.5}
+  m_SizeDelta: {x: -1820, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &328179249
 GameObject:
@@ -693,9 +693,9 @@ RectTransform:
   m_Father: {fileID: 1960186238}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
-  m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 1044, y: 229}
-  m_SizeDelta: {x: 1285, y: 325}
+  m_AnchorMax: {x: 1, y: 1}
+  m_AnchoredPosition: {x: -3.500122, y: -352}
+  m_SizeDelta: {x: -634, y: -756}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &328179255
 MonoBehaviour:
@@ -900,12 +900,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 503674464}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1.33134, y: -3.35978, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: -965.277, y: -552.3757, z: 0}
+  m_LocalScale: {x: 3.963666, y: 3.963666, z: 3.963666}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 1960186238}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &664182661
 GameObject:
@@ -1895,7 +1895,7 @@ MonoBehaviour:
   m_ScaleFactor: 1
   m_ReferenceResolution: {x: 1920, y: 1080}
   m_ScreenMatchMode: 0
-  m_MatchWidthOrHeight: 0.5
+  m_MatchWidthOrHeight: 0
   m_PhysicalUnit: 3
   m_FallbackScreenDPI: 96
   m_DefaultSpriteDPI: 96
@@ -1938,10 +1938,11 @@ RectTransform:
   m_Children:
   - {fileID: 2024913085}
   - {fileID: 318599548}
+  - {fileID: 328179254}
   - {fileID: 1962915312}
   - {fileID: 82436630}
-  - {fileID: 328179254}
   - {fileID: 60326870}
+  - {fileID: 503674466}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -2225,5 +2226,4 @@ SceneRoots:
   - {fileID: 1112435089}
   - {fileID: 810726869}
   - {fileID: 2022169014}
-  - {fileID: 503674466}
   - {fileID: 1497558938}

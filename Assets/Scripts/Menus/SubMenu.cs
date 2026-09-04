@@ -103,11 +103,12 @@ protected void FillMenu(MenuScreen screen)
         EntryHighlight(firstEnabled);
     }
 }
-protected virtual void SelectCommand(MenuOption option)
+    protected virtual void SelectCommand(MenuOption option)
     {
         if(option.getChildren != null) OpenScreen(option.getChildren(), option.label, option.childUsePaging, option.childColumns);
         else option.onSelect();
     }
+    //marked for deletion below
 protected void UpdatePathText(string prefix = "", string suffix = "")
 {
     if(pathText == null) return;

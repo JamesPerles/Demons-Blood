@@ -7,7 +7,6 @@ using System;
 public class ForgeMenu : MonoBehaviour, ICardHighlightHandler, ITabVisualOwner, IPageableTab
 {
 public PauseMenu host;
-public TextMeshProUGUI forgeGoldText;
 public TextMeshProUGUI forgeFeedbackText;
 public GameObject craftCardPrefab;
 public Transform craftCardParent;
@@ -43,7 +42,6 @@ public void OpenTab()
         host.PrepareTabSwitch();
         if(pager == null) pager = new GridCardPager(craftCardPrefab, craftCardParent, host, 3, 3);
         if(forgeFeedbackText != null) forgeFeedbackText.text = "";
-        UpdateForgeGoldText();
         SetupMiniTabs();
     }
     public void HideVisuals()
@@ -85,7 +83,6 @@ public void OpenTab()
         host.SetBreadcrumbSuffix(breadcrumbSuffix);
         host.SetCardHighlightHandler(this);
         host.SetPageableTab(this);
-        UpdateForgeGoldText();
     }
     public void NextPage()
     {
@@ -178,7 +175,7 @@ public void OpenTab()
         CraftRecipe recipe = selectedRecipe;
         if(recipe == null) return;
         if(!HasMaterials(recipe)) { if(forgeFeedbackText != null) forgeFeedbackText.text = "Missing materials"; return;}
-        if(recipe.goldCost > 0 && !TrySpendForge(recipe.goldCost)) return;
+        if(recipe.goldCost > 0 && !SpendForge(recipe.goldCost)) return;
         foreach(MaterialAmount required in recipe.requiredMaterials)
         for(int i = 0; i < required.amount; i++) InventoryManager.instance.LoseItem(required.material);
         string craftedName;
@@ -202,34 +199,29 @@ public void OpenTab()
         for(int i = 0; i < pager.SpawnedCards.Count; i++)
         {
             if(pager.SpawnedCards[i] == null) continue;
-            QuestCardView view = pager.SpawnedCards[i].GetComponent<QuestCardView>();
-            if(view == null) continue;
-            SetCardVisual(view, pager.SpawnedCards[i] == entry);
+            EntryCard card = pager.SpawnedCards[i].GetComponent<EntryCard>();
+            if(card == null) continue;
+            SetCardVisual(card, pager.SpawnedCards[i] == entry);
         }
     }
-    void SetCardVisual(QuestCardView view, bool selected)
+    void SetCardVisual(EntryCard card, bool selected)
     {
-        if(view.borderImage != null) view.borderImage.color = selected ? cardBorderSelected : cardBorderDefault;
-        if(view.backgroundImage != null)
+        if(card.borderImage != null) card.borderImage.color = selected ? cardBorderSelected : cardBorderDefault;
+        if(card.backgroundImage != null)
         {
             Color bg = cardBackgroundSelected;
             bg.a = selected ? 1f : 0f;
-            view.backgroundImage.color = bg;
+            card.backgroundImage.color = bg;
         }
-        if(view.titleText != null) view.titleText.color = selected ? cardTitleSelected : cardTitleDefault;
+        if(card.titleText != null) card.titleText.color = selected ? cardTitleSelected : cardTitleDefault;
     }
-     void UpdateForgeGoldText()
-    {
-        if(forgeGoldText != null && WalletManager.instance != null) forgeGoldText.text = $"{WalletManager.instance.currentGold} Gold"; 
-    }
-    bool TrySpendForge(int cost)
+    bool SpendForge(int cost)
     {
         if(WalletManager.instance == null || !WalletManager.instance.SpendGold(cost))
         {
             if(forgeFeedbackText != null) forgeFeedbackText.text = "Not enough gold.";
             return false;
         }
-        UpdateForgeGoldText();
         return true;
     }
     void ShowEnhanceTab()
@@ -306,7 +298,7 @@ public void OpenTab()
     void EnhanceWeapon(Equipment original, ActiveStats owner = null)
     {
         int cost = EnhanceCost(original.enhancementLevel);
-        if (!TrySpendForge(cost)) return;
+        if (!SpendForge(cost)) return;
         Equipment enhanced = Instantiate(original);
         enhanced.baseAssetName = string.IsNullOrEmpty(original.baseAssetName) ? original.name : original.baseAssetName;
         enhanced.strength += enhanceStrengthGain;
@@ -390,7 +382,7 @@ public void OpenTab()
     void AddElement(Element element)
     {
         Equipment original = selectedWeaponForElement;
-        if(!TrySpendForge(addElementCost)) return;
+        if(!SpendForge(addElementCost)) return;
         Equipment enhanced = Instantiate(original);
         enhanced.baseAssetName = string.IsNullOrEmpty(original.baseAssetName) ? original.name : original.baseAssetName;
         enhanced.element = element;

@@ -54,18 +54,18 @@ public void OpenSettings()
     void AddCategoryCard(string title, string subtitle)
     {
         GameObject cardObj = Instantiate(categoryCardPrefab, categoryCardParent);
-        QuestCardView view = cardObj.GetComponent<QuestCardView>();
+        EntryCard card = cardObj.GetComponent<EntryCard>();
         spawnedCards.Add(cardObj);
-        if(view == null) return;
-        if(view.titleText != null) view.titleText.text = title;
-        if(view.subText != null) view.subText.text = subtitle;
+        if(card == null) return;
+        if(card.titleText != null) card.titleText.text = title;
+        if(card.subText != null) card.subText.text = subtitle;
         MenuOption option = new MenuOption(title, () => { });
         host.RegisterEntry(cardObj, option);
-        if(view.button != null)
+        if(card.button != null)
         {
-            view.button.onClick.RemoveAllListeners();
+            card.button.onClick.RemoveAllListeners();
             GameObject capturedCard = cardObj;
-            view.button.onClick.AddListener(() => host.EntryHighlight(capturedCard));
+            card.button.onClick.AddListener(() => host.EntryHighlight(capturedCard));
         } 
     }
     public void OnCardHighlighted(GameObject entry)
@@ -73,22 +73,22 @@ public void OpenSettings()
         int index = spawnedCards.IndexOf(entry);
         for(int i = 0; i < spawnedCards.Count; i++)
         {
-            QuestCardView view = spawnedCards[i].GetComponent<QuestCardView>();
-            if(view == null) continue;
-            SetCardVisual(view, spawnedCards[i] == entry);
+            EntryCard card = spawnedCards[i].GetComponent<EntryCard>();
+            if(card == null) continue;
+            SetCardVisual(card, spawnedCards[i] == entry);
         }
         if(index >= 0) SelectCategory((Category)index);
     }
-    void SetCardVisual(QuestCardView view, bool selected)
+    void SetCardVisual(EntryCard card, bool selected)
     {
-        if(view.borderImage != null) view.borderImage.color = selected ? cardBorderSelected : cardBorderDefault;
-        if(view.backgroundImage != null)
+        if(card.borderImage != null) card.borderImage.color = selected ? cardBorderSelected : cardBorderDefault;
+        if(card.backgroundImage != null)
         {
             Color bg = cardBackgroundSelected;
             bg.a = selected ? 1f : 0f;
-            view.backgroundImage.color = bg;
+            card.backgroundImage.color = bg;
         }
-        if(view.titleText != null) view.titleText.color = selected ? cardTitleSelected : cardTitleDefault;
+        if(card.titleText != null) card.titleText.color = selected ? cardTitleSelected : cardTitleDefault;
     }
     void SelectCategory(Category category)
     {

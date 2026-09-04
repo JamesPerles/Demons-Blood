@@ -56,10 +56,10 @@ void Awake()
             elapsed += Time.deltaTime;
             yield return null;
         }
-        Coroutine fade = StartCoroutine(DisappearAndFadeOut(entry));
+        Coroutine fade = StartCoroutine(MessageFade(entry));
     activeFades.Add(fade);
     }
-    IEnumerator DisappearAndFadeOut(GameObject entry)
+    IEnumerator MessageFade(GameObject entry)
     {
         if(entry == null) yield break;
         RectTransform rect = entry.GetComponent<RectTransform>();

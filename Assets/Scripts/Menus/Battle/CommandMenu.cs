@@ -44,10 +44,10 @@ public class CommandMenu : SubMenu
             else if (!actionSelected) undoRequested = true;
         }
         if (Input.GetKeyDown(KeyCode.Space) && screenHistory.Count > 0) NextPage();
-        if(Input.GetKeyDown(KeyCode.RightArrow)) TryEdgePage(1);
-        if(Input.GetKeyDown(KeyCode.LeftArrow)) TryEdgePage(-1);   
+        if(Input.GetKeyDown(KeyCode.RightArrow)) EdgePage(1);
+        if(Input.GetKeyDown(KeyCode.LeftArrow)) EdgePage(-1);   
     }
-    void TryEdgePage(int direction)
+    void EdgePage(int direction)
     {
         if(isTargeting) return;
         if(screenHistory.Count == 0) return;

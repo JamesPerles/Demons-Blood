@@ -49,7 +49,6 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.3.3f1\Editor\Data\Tools\BuildPipeline\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Scripts\Menus\Pause\PartyMenu.cs" />
     <Compile Include="Assets\Scripts\Player\IInteractable.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Items\Baggable.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\ShaderPropAnimator.cs" />
@@ -63,6 +62,7 @@
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\VertexShakeB.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_TextSelector_B.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\BondData.cs" />
+    <Compile Include="Assets\Scripts\Menus\MenuTheme.cs" />
     <Compile Include="Assets\Scripts\Menus\Pause\InventoryMenu.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_DigitValidator.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\ObjectSpin.cs" />
@@ -81,6 +81,7 @@
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\TextMeshSpawner.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Stats\StatStage.cs" />
     <Compile Include="Assets\Scripts\Menus\Battle\BattleDialogueBox.cs" />
+    <Compile Include="Assets\Scripts\Menus\EntryCard.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Items\Chest.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\TextConsoleSimulator.cs" />
     <Compile Include="Assets\Scripts\Managers\FlagManager.cs" />
@@ -90,25 +91,23 @@
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\TMPro_InstructionOverlay.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Shops\ShopStats.cs" />
     <Compile Include="Assets\Scripts\Player\Interactor.cs" />
-    <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\CameraController.cs" />
     <Compile Include="Assets\Scripts\Menus\Ui\ICardHighlightHandler.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\VertexJitter.cs" />
-    <Compile Include="Assets\Scripts\Menus\QuestCardView.cs" />
+    <Compile Include="Assets\Scripts\Menus\PartyStatus.cs" />
+    <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\CameraController.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\Benchmark01.cs" />
-    <Compile Include="Assets\Scripts\Menus\RosterController.cs" />
+    <Compile Include="Assets\Scripts\Menus\PartyController.cs" />
     <Compile Include="Assets\Scripts\Menus\Ui\UiText.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_TextSelector_A.cs" />
-    <Compile Include="Assets\Scripts\Menus\PartyRosterSlotView.cs" />
     <Compile Include="Assets\Scripts\Player\PersonalInventory.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Forge\AlchemyRecipe.cs" />
-    <Compile Include="Assets\Scripts\Menus\PartyMemberSlotView.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_UiFrameRateCounter.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\SimpleScript.cs" />
     <Compile Include="Assets\Scripts\Menus\Ui\TabGroup.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Stats\PlayerStats.cs" />
-    <Compile Include="Assets\Scripts\ScriptableObjects\Shops\ShopNPC.cs" />
     <Compile Include="Assets\Scripts\Menus\Battle\CombatantViewer.cs" />
     <Compile Include="Assets\Scripts\Managers\QuestManager.cs" />
+    <Compile Include="Assets\Scripts\ScriptableObjects\Shops\ShopNPC.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\Benchmark01_UGUI.cs" />
     <Compile Include="Assets\Scripts\Battle Scripts\Random Encounters.cs" />
     <Compile Include="Assets\Scripts\Menus\Pause\SettingsMenu.cs" />
@@ -118,15 +117,17 @@
     <Compile Include="Assets\Scripts\ScriptableObjects\Forge\MaterialAmount.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Items\Equipment.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Learnables\Learnable.cs" />
-    <Compile Include="Assets\Scripts\Menus\Ui\IPageableTab.cs" />
     <Compile Include="Assets\Scripts\Menus\Ui\SettingRowView.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Forge\CraftRecipe.cs" />
+    <Compile Include="Assets\Scripts\Menus\Ui\IPageableTab.cs" />
     <Compile Include="Assets\Scripts\Menus\LoadMainMenu.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Flags\FlagSetter.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Items\Item.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_FrameRateCounter.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Learnables\Fusion.cs" />
+    <Compile Include="Assets\Scripts\Menus\PartyCombatView.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_PhoneNumberValidator.cs" />
+    <Compile Include="Assets\Scripts\Menus\Ui\MenuSelect.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\SkewTextExample.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Areas\LocationData.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Learnables\Effect.cs" />
@@ -137,13 +138,11 @@
     <Compile Include="Assets\Scripts\Player\PlayerMovement.cs" />
     <Compile Include="Assets\Scripts\Menus\MenuBase.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_TextInfoDebugTool.cs" />
-    <Compile Include="Assets\Scripts\Menus\MenuPanelTheme.cs" />
     <Compile Include="Assets\Scripts\Menus\Pause\ForgeMenu.cs" />
     <Compile Include="Assets\Scripts\Battle Scripts\EncounterTable.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Element.cs" />
     <Compile Include="Assets\Scripts\Managers\BestiaryManager.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Stats\EnemyStats.cs" />
-    <Compile Include="Assets\Scripts\Menus\PartyStatusUI.cs" />
     <Compile Include="Assets\Scripts\Battle Scripts\ICombatant.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\NPCs\NPC.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\VertexShakeA.cs" />
@@ -160,13 +159,14 @@
     <Compile Include="Assets\Scripts\Menus\Pause\PauseMenu.cs" />
     <Compile Include="Assets\Scripts\Menus\Pause\MiscellaneousMenu.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\DropdownSample.cs" />
-    <Compile Include="Assets\Scripts\Battle Scripts\HitFlicker.cs" />
     <Compile Include="Assets\Scripts\Menus\Pause\QuestMenu.cs" />
+    <Compile Include="Assets\Scripts\Battle Scripts\HitFlicker.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\WarpTextExample.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\Benchmark02.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\TeleType.cs" />
-    <Compile Include="Assets\Scripts\Menus\Ui\MenuEntrySelect.cs" />
     <Compile Include="Assets\Scripts\Menus\SubMenu.cs" />
+    <Compile Include="Assets\Scripts\Menus\Pause\PartyMenu.cs" />
+    <Compile Include="Assets\Scripts\Menus\PartyMenuView.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Areas\LocationEntrance.cs" />
   </ItemGroup>
   <ItemGroup>

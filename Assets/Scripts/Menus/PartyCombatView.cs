@@ -16,7 +16,7 @@ public Image transformFill;
 public TextMeshProUGUI transformText;
 public GameObject divider;
 }
-public class PartyMemberSlotView : MonoBehaviour
+public class PartyCombatView : MonoBehaviour
     {
         public PartyMemberSlot slot;
     }

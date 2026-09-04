@@ -36,7 +36,7 @@ public class GridCardPager
     List<CardGridSpec> allSpecs = new List<CardGridSpec>();
     List<CardGridSpec> currentPageSpecs = new List<CardGridSpec>();
     int currentPage;
-    public GridCardPager(GameObject cardPrefab, Transform grid, PauseMenu host, int columns = 3, int rows = 3, float rowSpacing = 8f)
+    public GridCardPager(GameObject cardPrefab, Transform grid, PauseMenu host, int columns = 3, int rows = 3, float rowSpacing = 100f)
     {
         this.cardPrefab = cardPrefab;
         this.grid = grid;
@@ -107,6 +107,8 @@ public class GridCardPager
             rowLayout.childAlignment = TextAnchor.UpperLeft;
             rowLayout.childForceExpandWidth = false;
             rowLayout.childForceExpandHeight = false;
+            rowLayout.childScaleWidth = true;
+            rowLayout.childScaleHeight = true;
             rowLayout.childControlWidth = false;
             rowLayout.childControlHeight = false;
             currentRow = rowObj.transform;
@@ -121,32 +123,32 @@ public class GridCardPager
         Transform row = GetRow();
         GameObject cardObj = Object.Instantiate(cardPrefab, row);
         spawnedCards.Add(cardObj);
-        QuestCardView view = cardObj.GetComponent<QuestCardView>();
-        if(view == null) return;
-        if(view.titleText != null) 
+        EntryCard card = cardObj.GetComponent<EntryCard>();
+        if(card == null) return;
+        if(card.titleText != null) 
         {
-            view.titleText.text = spec.title;
-            view.titleText.color = defaultTitleColor;
+            card.titleText.text = spec.title;
+            card.titleText.color = defaultTitleColor;
         }
-        if(view.subText != null) view.subText.text = spec.subText;
-        if(view.borderImage != null) view.borderImage.color = defaultBorderColor;
-        if(view.backgroundImage != null)
+        if(card.subText != null) card.subText.text = spec.subText;
+        if(card.borderImage != null) card.borderImage.color = defaultBorderColor;
+        if(card.backgroundImage != null)
         {
             Color bg = defaultBackgroundColor;
             bg.a = 0f;
-            view.backgroundImage.color = bg;
+            card.backgroundImage.color = bg;
         }
         MenuOption option = new MenuOption(spec.title, () => { }) { description = spec.detail };
         if(host != null) host.RegisterEntry(cardObj, option);
-        if(view.button != null)
+        if(card.button != null)
         {
-            view.button.interactable = spec.enabled;
-            view.button.onClick.RemoveAllListeners();
+            card.button.interactable = spec.enabled;
+            card.button.onClick.RemoveAllListeners();
             if(spec.enabled)
             {
                 GameObject capturedCard = cardObj;
                 System.Action onSelect = spec.onSelect;
-                view.button.onClick.AddListener(() =>
+                card.button.onClick.AddListener(() =>
                 {
                     host?.EntryHighlight(capturedCard);
                     onSelect?.Invoke();

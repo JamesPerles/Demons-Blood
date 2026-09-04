@@ -4,7 +4,6 @@ using UnityEngine;
 public class InventoryManager : MonoBehaviour
 {
     public static InventoryManager instance;
-    public Transform itemContent;
     public GameObject inventoryItem;
     public List<Baggable> items = new List<Baggable>();
     void Awake()
@@ -30,16 +29,6 @@ public class InventoryManager : MonoBehaviour
     {
         bool removed = items.Remove(item);
         if (!removed) Debug.LogWarning($"Tried to remove {item.DisplayName} but is not in inventory");
-    }
-    public void ListItems()
-    {
-        foreach (Transform item in itemContent) Destroy(item.gameObject);
-        foreach (var item in items)
-        {
-            GameObject obj = Instantiate(inventoryItem, itemContent);
-            var label = obj.GetComponentInChildren<TextMeshProUGUI>();
-            if (label != null) label.text = item.DisplayName;
-        }
     }
     public bool AddPersonalInventory(Baggable item, ActiveStats target)
     {

@@ -2,7 +2,7 @@ using UnityEngine;
 using TMPro;
 using System.Collections.Generic;
 using UnityEngine.UI;
-public class PartyStatusUI : MonoBehaviour
+public class PartyStatus : MonoBehaviour
     {
         public GameObject slotPrefab;
         public Transform slotParent;
@@ -31,7 +31,7 @@ public class PartyStatusUI : MonoBehaviour
                 ActiveStats member = livingRoster[i];
                 GameObject spawned = spawnedSlots[i];
                 spawned.transform.SetSiblingIndex(i);
-                PartyMemberSlotView view = spawned.GetComponent<PartyMemberSlotView>();
+                PartyCombatView view = spawned.GetComponent<PartyCombatView>();
                 if(view == null || view.slot == null) continue;
                 PartyMemberSlot slot = view.slot;
                 bool isDead = member.currentHP <= 0;
@@ -54,7 +54,7 @@ public class PartyStatusUI : MonoBehaviour
             LayoutRebuilder.ForceRebuildLayoutImmediate(borderRect);
         }
         }
-void SetBar(Image fill, TextMeshProUGUI label, string prefix, int current, int max)
+    void SetBar(Image fill, TextMeshProUGUI label, string prefix, int current, int max)
     {
         if(fill != null) fill.fillAmount = max > 0 ? Mathf.Clamp01((float) current / max) : 0f;
         if(label != null) label.text = $"{prefix}: {current}/{max}";

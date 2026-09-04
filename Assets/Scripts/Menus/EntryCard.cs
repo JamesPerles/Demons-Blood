@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-public class QuestCardView : MonoBehaviour
+public class EntryCard : MonoBehaviour
 {
 public Image borderImage;
 public Image backgroundImage;

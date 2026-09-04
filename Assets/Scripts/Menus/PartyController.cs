@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
-public class RosterController : MonoBehaviour, ICardHighlightHandler
+public class PartyController : MonoBehaviour, ICardHighlightHandler
 {
     public GameObject slotPrefab;
     public Transform slotParent;
@@ -43,7 +43,7 @@ public class RosterController : MonoBehaviour, ICardHighlightHandler
             GameObject spawned = Instantiate(slotPrefab, slotParent);
             spawnedSlots.Add(spawned);
             orderedCharacters.Add(characterObject);
-            PartyRosterSlotView view = spawned.GetComponent<PartyRosterSlotView>();
+            PartyMenuView view = spawned.GetComponent<PartyMenuView>();
             if(view == null) return spawned;
             bool isDead = stats.currentHP <= 0;
             bool isPickedUp = pickedUpCharacter ==characterObject;
@@ -71,7 +71,7 @@ public class RosterController : MonoBehaviour, ICardHighlightHandler
         SetCardVisual(view, isPickedUp);
         return spawned;
     }
-public void FocusCharacter(GameObject character)
+    public void SelectedCharacter(GameObject character)
     {
         if(character == null) return;
         int existingIndex = orderedCharacters.IndexOf(character);
@@ -98,7 +98,7 @@ public void FocusCharacter(GameObject character)
         }
         if(spawnedSlots.Count == 0) return;
         spawnedSlots[0].transform.SetSiblingIndex(0);
-        PartyRosterSlotView view = spawnedSlots[0].GetComponent<PartyRosterSlotView>();
+        PartyMenuView view = spawnedSlots[0].GetComponent<PartyMenuView>();
         if(view == null) return;
         SetCardVisual(view, true);
         if(view.button != null) view.button.interactable = false;
@@ -108,7 +108,7 @@ public void FocusCharacter(GameObject character)
         if(rosterScrollRect == null && slotParent != null) rosterScrollRect = slotParent.GetComponentInParent<ScrollRect>();
         if(rosterScrollRect != null) rosterScrollRect.verticalNormalizedPosition = 1f;
     }
-void HandleConfirm(GameObject character)
+    void HandleConfirm(GameObject character)
     {
         if(pickedUpCharacter != null)
         {
@@ -137,13 +137,13 @@ void HandleConfirm(GameObject character)
         for(int i = 0; i < spawnedSlots.Count; i++)
         {
             if(spawnedSlots[i] == null) continue;
-            PartyRosterSlotView view = spawnedSlots[i].GetComponent<PartyRosterSlotView>();
+            PartyMenuView view = spawnedSlots[i].GetComponent<PartyMenuView>();
             if(view == null) continue;
             bool isPickedUp = i < orderedCharacters.Count && orderedCharacters [i] == pickedUpCharacter;
             SetCardVisual(view, spawnedSlots[i] == entry || isPickedUp);
     }
     }
-    void SetCardVisual(PartyRosterSlotView view, bool selected)
+    void SetCardVisual(PartyMenuView view, bool selected)
     {
         if(view.borderImage != null) view.borderImage.color = selected ? cardBorderSelected : cardBorderDefault;
         if(view.backgroundImage != null)

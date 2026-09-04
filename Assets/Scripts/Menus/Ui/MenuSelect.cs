@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-public class MenuEntrySelect : MonoBehaviour, IPointerEnterHandler, ISelectHandler
+public class MenuSelect : MonoBehaviour, IPointerEnterHandler, ISelectHandler
 {
 public MenuBase owner;
 public void OnPointerEnter(PointerEventData eventData)

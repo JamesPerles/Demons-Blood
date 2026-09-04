@@ -291,20 +291,20 @@ int selectedItemCount;
         for(int i = 0; i < pager.SpawnedCards.Count; i++)
         {
             if(pager.SpawnedCards[i] == null) continue;
-            QuestCardView view = pager.SpawnedCards[i].GetComponent<QuestCardView>();
-            if(view == null) continue;
-            SetCardVisual(view, pager.SpawnedCards[i] == entry);
+            EntryCard card = pager.SpawnedCards[i].GetComponent<EntryCard>();
+            if(card == null) continue;
+            SetCardVisual(card, pager.SpawnedCards[i] == card);
         }
     }
-    void SetCardVisual(QuestCardView view, bool selected)
+    void SetCardVisual(EntryCard card, bool selected)
     {
-        if(view.borderImage != null) view.borderImage.color = selected ? cardBorderSelected : cardBorderDefault;
-        if(view.backgroundImage != null)
+        if(card.borderImage != null) card.borderImage.color = selected ? cardBorderSelected : cardBorderDefault;
+        if(card.backgroundImage != null)
         {
             Color bg = cardBackgroundSelected;
             bg.a = selected ? 1f : 0f;
-            view.backgroundImage.color = bg;
+            card.backgroundImage.color = bg;
         }
-        if(view.titleText != null) view.titleText.color = selected ? cardTitleSelected : cardTitleDefault;
+        if(card.titleText != null) card.titleText.color = selected ? cardTitleSelected : cardTitleDefault;
     }
 }

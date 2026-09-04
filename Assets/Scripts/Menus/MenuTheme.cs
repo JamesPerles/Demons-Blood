@@ -1,6 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
-public class MenuPanelTheme : MonoBehaviour
+public class MenuTheme : MonoBehaviour
 {
 public Image borderImage;
 public RectTransform fillRect;

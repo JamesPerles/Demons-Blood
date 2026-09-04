@@ -7,7 +7,7 @@ using UnityEngine.UI;
 public class PartyMenu : MonoBehaviour, ITabVisualOwner, ICardHighlightHandler, IPageableTab
 {
 public PauseMenu host;
-public RosterController rosterController;
+public PartyController partyController;
 public KeyCode rosterSwapKey = KeyCode.Tab;
 public TextMeshProUGUI characterHeaderText;
 public TextMeshProUGUI coreStatsText;
@@ -25,7 +25,7 @@ public Button changeEquipmentButton;
 public TextMeshProUGUI changeEquipmentButtonLabel;
 public Transform contentGrid;
 public Transform equipmentGrid;
-public int statColumnOffsetPx = 140;
+public int statColumnOffsetPx = 200;
 public TextMeshProUGUI bondBonusText;
 const string colorMuted = "#8A8580";
 const string colorBody = "#C9C2C2";
@@ -80,11 +80,11 @@ public void OpenTab()
         host.ClearMenuEntries();
         host.ClearScreenHistory();
         if(host.pageText != null) host.pageText.text = "";
-        if(rosterController != null)
+        if(partyController != null)
         {
-            rosterController.Init(host);
-            host.SetCardHighlightHandler(rosterController);
-            rosterController.Refresh(OpenCharacterDetail);
+            partyController.Init(host);
+            host.SetCardHighlightHandler(partyController);
+            partyController.Refresh(OpenCharacterDetail);
         }
         host.SetBreadcrumbSuffix("Party");
     }
@@ -96,7 +96,7 @@ public void OpenTab()
         selectedCharacterObject = characterObject;
         inCharacterDetail = true;
         inAbilitiesTab = false;
-        if(rosterController != null) rosterController.FocusCharacter(characterObject);
+        if(partyController != null) partyController.SelectedCharacter(characterObject);
         SetupCharacterTabs();
     }
     public void ExitCharacterDetail()
@@ -135,15 +135,15 @@ public void OpenTab()
             ExitCharacterDetail();
             return;
         }
-        if(rosterController != null && rosterController.HasPickedUp) {rosterController.CancelSwap(); return;}
+        if(partyController != null && partyController.HasPickedUp) {partyController.CancelSwap(); return;}
         host.Close();
     }
     public void HandleTabInput()
     {
         if(!inCharacterDetail)
         {
-            if(rosterController != null && Input.GetKeyDown(rosterSwapKey))
-            rosterController.ToggleSwapOnFocused(EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null);
+            if(partyController != null && Input.GetKeyDown(rosterSwapKey))
+            partyController.ToggleSwapOnFocused(EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null);
             return;
         }
     }
@@ -173,27 +173,27 @@ public void OpenTab()
         if(equipmentCardPrefab == null || contentGrid == null) return;
         GameObject cardObj = Instantiate(equipmentCardPrefab, contentGrid);
         spawnedContentCards.Add(cardObj);
-        QuestCardView view = cardObj.GetComponent<QuestCardView>();
-        if(view == null) return;
-        if(view.titleText != null) view.titleText.text = title;
-        if(view.subText != null) view.subText.text = subText;
+        EntryCard card = cardObj.GetComponent<EntryCard>();
+        if(card == null) return;
+        if(card.titleText != null) card.titleText.text = title;
+        if(card.subText != null) card.subText.text = subText;
         MenuOption option = new MenuOption(title, () => { }) { description = detail };
         host.RegisterEntry(cardObj, option);
-        if(view.button != null)
+        if(card.button != null)
         {
-            view.button.interactable = enabled;
-            view.button.onClick.RemoveAllListeners();
+            card.button.interactable = enabled;
+            card.button.onClick.RemoveAllListeners();
             GameObject capturedCard = cardObj;
             if(enabled)
             {
-                view.button.onClick.AddListener(() =>
+                card.button.onClick.AddListener(() =>
                 {
                     host.EntryHighlight(capturedCard);
                     onSelect?.Invoke();
                 });
             }
         }
-        SetCardVisual(view, false);
+        SetCardVisual(card, false);
     }
     void ClearContentCards()
     {
@@ -226,21 +226,21 @@ public void OpenTab()
         for(int i = 0; i < list.Count; i++)
         {
             if(list[i] == null) continue;
-            QuestCardView view = list[i].GetComponent<QuestCardView>();
-            if(view == null) continue;
-            SetCardVisual(view, list[i] == entry);
+            EntryCard card = list[i].GetComponent<EntryCard>();
+            if(card == null) continue;
+            SetCardVisual(card, list[i] == entry);
         }
     }
-    void SetCardVisual(QuestCardView view, bool selected)
+    void SetCardVisual(EntryCard card, bool selected)
     {
-        if(view.borderImage != null) view.borderImage.color = selected ? cardBorderSelected : cardBorderDefault;
-        if(view.backgroundImage != null)
+        if(card.borderImage != null) card.borderImage.color = selected ? cardBorderSelected : cardBorderDefault;
+        if(card.backgroundImage != null)
         {
             Color bg = cardBackgroundSelected;
             bg.a = selected ? 1f : 0f;
-            view.backgroundImage.color = bg;
+            card.backgroundImage.color = bg;
         }
-        if(view.titleText != null) view.titleText.color = selected ? cardTitleSelected : cardTitleDefault;
+        if(card.titleText != null) card.titleText.color = selected ? cardTitleSelected : cardTitleDefault;
     }
     string BuildTwoColumnLines(List<string> items, int columnOffsetPx)
     {
@@ -262,7 +262,7 @@ public void OpenTab()
         viewingEquipmentDetail = false;
         inEquipmentPicker = false;
         if(host.microTabGroup != null) host.microTabGroup.Hide();
-        if(rosterController != null) rosterController.FocusCharacter(selectedCharacterObject);
+        if(partyController != null) partyController.SelectedCharacter(selectedCharacterObject);
         host.ShowRosterPanel(true);
         UpdateStatsExtraPanel();
         SetStatsTextVisible(true);
@@ -286,7 +286,7 @@ void UpdateStatsExtraPanel()
             List<string> coreItems = new List<string>
             {
             $"STR: {character.finalStrength}", $"MAG: {character.finalMagic}", $"DEF: {character.finalDefense}", 
-            $"WIS: {character.finalWisdom}", "TEC: {character.finalTech}", $"AFF: {character.finalAffinity}",
+            $"WIS: {character.finalWisdom}", $"TEC: {character.finalTech}", $"AFF: {character.finalAffinity}",
             $"SPD: {character.finalSpeed}", $"LUCK: {character.finalLuck}"
             };
             coreStatsText.text = BuildTwoColumnLines(coreItems, statColumnOffsetPx) + $"\n\nMagic Affinity: {character.currentMagicAffinity}";
@@ -436,7 +436,7 @@ void AfterEquipmentChange(Equipment.EquipmentType slotType)
         navStack.Clear();
         EnsurePagers();
         if(host.microTabGroup != null) host.microTabGroup.Hide();
-        if(rosterController != null) rosterController.FocusCharacter(selectedCharacterObject);
+        if(partyController != null) partyController.SelectedCharacter(selectedCharacterObject);
         host.ShowRosterPanel(false);
         SetStatsTextVisible(false);
         if(bondBonusText != null) bondBonusText.gameObject.SetActive(false);
@@ -587,7 +587,7 @@ void SpendPoint()
     {
         inAbilitiesTab = false;
         navStack.Clear();
-        if(rosterController != null) rosterController.FocusCharacter(selectedCharacterObject);
+        if(partyController != null) partyController.SelectedCharacter(selectedCharacterObject);
         if(host.microTabGroup != null) host.microTabGroup.Hide();
         host.ShowRosterPanel(false);
         SetStatsTextVisible(false);
@@ -660,7 +660,7 @@ void SpendPoint()
     {
         inAbilitiesTab = false;
         navStack.Clear();
-        if(rosterController != null) rosterController.FocusCharacter(selectedCharacterObject);
+        if(partyController != null) partyController.SelectedCharacter(selectedCharacterObject);
         if(host.microTabGroup != null) host.microTabGroup.Hide();
         host.ShowRosterPanel(false);
         SetStatsTextVisible(false);
@@ -750,7 +750,7 @@ void SpendPoint()
         inAbilitiesTab = false;
         navStack.Clear();
         ClearAllTabCards();
-        if(rosterController != null) rosterController.FocusCharacter(selectedCharacterObject);
+        if(partyController != null) partyController.SelectedCharacter(selectedCharacterObject);
         if(host.microTabGroup != null) host.microTabGroup.Hide();
         host.ShowInfoPanel(true);
         host.ClearPageableTab();
