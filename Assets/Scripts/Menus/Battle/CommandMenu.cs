@@ -327,12 +327,21 @@ public class CommandMenu : SubMenu
         ApplyTargetGridSizing(allyTargetGrid);
         ApplyTargetGridSizing(enemyTargetGrid);
         GameObject firstSpawned = null;
+        if(allyOptions.Count > 0)
+        {
+            GameObject allyHeader = SpawnHeader("Party", allyTargetGrid);
+            if(allyHeader != null) spawnedTargets.Add(allyHeader);
+        }
         foreach(MenuOption target in allyOptions)
         {
             GameObject entry = BuildEntry(target, allyTargetGrid, targetFontSize, (opt) => opt.onSelect());
             targetOptionMap[entry] = target;
             spawnedTargets.Add(entry);
-            if(firstSpawned == null) firstSpawned = entry;
+        }
+        if(enemyOptions.Count > 0)
+        {
+            GameObject enemyHeader = SpawnHeader("Enemy", enemyTargetGrid);
+            if(enemyHeader != null) spawnedTargets.Add(enemyHeader);
         }
         foreach(MenuOption target in enemyOptions)
         {
@@ -341,13 +350,36 @@ public class CommandMenu : SubMenu
             spawnedTargets.Add(entry);
             if(firstSpawned == null) firstSpawned = entry;
         }
+        if(firstSpawned == null)
+        {
+            foreach(GameObject entry in spawnedTargets)
+            {
+                if(targetOptionMap.ContainsKey(entry)) { firstSpawned = entry; break; }
+            }
+        }
         UpdatePathText(BreadcrumbPrefix(), BreadcrumbSuffix());
         if(firstSpawned != null)
         {
         EventSystem.current?.SetSelectedGameObject(null);
         EventSystem.current?.SetSelectedGameObject(spawnedTargets[0]);
-        MoveCursor(spawnedTargets[0]);
+        MoveCursor(firstSpawned);
         }
+    }
+    GameObject SpawnHeader(string label, Transform parent)
+    {
+        if(entryPrefab == null || parent == null) return null;
+        GameObject header = Instantiate(entryPrefab, parent);
+        TextMeshProUGUI text = header.GetComponentInChildren<TextMeshProUGUI>();
+        if(text != null)
+        {
+            text.text = label;
+            text.enableAutoSizing = true;
+            text.fontSizeMax = targetFontSize;
+            text.fontSizeMin = Mathf.Min(minAutoFontSize, targetFontSize);
+        }
+        Button button = header.GetComponent<Button>();
+        if(button != null) button.interactable = false;
+        return header;
     }
     void EndTargeting()
     {

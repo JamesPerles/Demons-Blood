@@ -10,7 +10,6 @@ public float battleTextSpeed = 40f;
 public Color uiTextColor = Color.white;
 public event System.Action<Color> OnTextColorChanged;
 public void SetTextColor(Color c) {uiTextColor = c; OnTextColorChanged?.Invoke(c);}
-public Color pauseMenuPanelColor = new Color(0.05f, 0.08f, 0.2f, 0.9f);
 public event System.Action<float> OnMusicVolumeChanged;
 public event System.Action<float> OnSfxVolumeChanged;
 public void SetMusicVolume(float volume) {musicVolume = volume; OnMusicVolumeChanged?.Invoke(volume);}
@@ -27,7 +26,7 @@ void Awake()
         if(instance == null) {instance = this; DontDestroyOnLoad(gameObject); }
         else Destroy(gameObject);
     }
-    public void SettingsSave(SettingsSaveData data)
+    public void LoadSettings(SettingsSaveData data)
     {
         if(data == null) return;
         SetMusicVolume (data.musicVolume);
@@ -36,6 +35,5 @@ void Awake()
         battleTextSpeed = data.battleTextSpeed;
         battleSpeedMultiplier = data.battleSpeedMultiplier;
         SetTextColor(data.textColor);
-        pauseMenuPanelColor = data.pauseMenuPanelColor;
     }
 }

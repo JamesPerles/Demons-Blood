@@ -1,7 +1,7 @@
 using UnityEngine;
 using TMPro;
 [RequireComponent(typeof(TextMeshProUGUI))]
-public class UiText : MonoBehaviour
+public class UIText : MonoBehaviour
 {
 TextMeshProUGUI text;
 void Awake()

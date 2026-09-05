@@ -1,6 +1,7 @@
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.SceneManagement;
 public class PauseMenu : SubMenu
 {
 public static PauseMenu instance;
@@ -10,13 +11,11 @@ public bool pauseTimeScale = true;
 public bool isOpen {get; private set;} = false;
 public TabGroup topTabGroup;
 public TabGroup miniTabGroup;
-public TabGroup microTabGroup;
 public KeyCode nextTopTabKey = KeyCode.E;
 public KeyCode previousTopTabKey = KeyCode.LeftAlt;
 public GameObject rosterPanel;
-public GameObject listPanel;
-public GameObject infoPanel;
-public GameObject statsExtraPanel;
+public GameObject detailPanel;
+public GameObject statsPanel;
 public PartyMenu partyController;
 public InventoryMenu inventoryController;
 public QuestMenu questController;
@@ -29,8 +28,25 @@ ICardHighlightHandler activeCardHandler;
 IPageableTab activePageableTab;
 void Awake()
     {
-        if(instance == null) instance = this; else Destroy(gameObject);
+        if(instance == null) 
+        {instance = this;
+        DontDestroyOnLoad(transform.root.gameObject);
+        SceneManager.sceneLoaded += OnSceneLoaded;
      }
+     else if(instance != this)
+        {
+            Destroy(transform.root.gameObject);
+            return;
+        }
+    }
+        void OnDestroy()
+        {
+            if(instance == this) SceneManager.sceneLoaded -= OnSceneLoaded;
+        }
+        void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            if(scene.name == "BattleScene" && isOpen) Close();
+        }
      void Start()
     {
         SetDisplayActive(false);
@@ -74,7 +90,6 @@ void Awake()
         activeCardHandler = null;
         if(partyController != null) partyController.ResetState();
     }
-    protected override string BreadcrumbPrefix() => "Pause";
     void UpdateWallet()
     {
         if (walletText != null && WalletManager.instance != null)
@@ -83,34 +98,24 @@ void Awake()
 public void ShowRosterPanel(bool showStatsExtra = false)
     {
         if(rosterPanel != null) rosterPanel.SetActive(true);
-        if(listPanel != null) listPanel.SetActive(false);
-        if(infoPanel != null) infoPanel.SetActive(false);
-        if(statsExtraPanel != null) statsExtraPanel.SetActive(showStatsExtra);
+        if(detailPanel != null) detailPanel.SetActive(false);
+        if(statsPanel != null) statsPanel.SetActive(showStatsExtra);
     }
-    public void ShowListPanel()
+    public void ShowDetailPanel()
     {
         if(rosterPanel != null) rosterPanel.SetActive(false);
-        if(listPanel != null) listPanel.SetActive(true);
-        if(infoPanel != null) infoPanel.SetActive(false);
-        if(statsExtraPanel != null) statsExtraPanel.SetActive(false);
-    }
-    public void ShowInfoPanel(bool showRoster = false)
-    {
-        if(rosterPanel != null) rosterPanel.SetActive(showRoster);
-        if(listPanel != null) listPanel.SetActive(false);
-        if(infoPanel != null) infoPanel.SetActive(true);
-        if(statsExtraPanel != null) statsExtraPanel.SetActive(false);
+        if(detailPanel != null) detailPanel.SetActive(true);
+        if(statsPanel != null) statsPanel.SetActive(false);
     }
     public void ShowSplitPanel()
     {
         if(rosterPanel != null) rosterPanel.SetActive(false);
-        if(listPanel != null) listPanel.SetActive(true);
-        if(infoPanel != null) infoPanel.SetActive(true);
-        if(statsExtraPanel != null) statsExtraPanel.SetActive(false);
+        if(detailPanel != null) detailPanel.SetActive(true);
+        if(statsPanel != null) statsPanel.SetActive(false);
     }
-    public void SetStatsExtraPanelActive(bool active)
+    public void SetStatsPanelActive(bool active)
     {
-        if(statsExtraPanel != null) statsExtraPanel.SetActive(active);
+        if(statsPanel != null) statsPanel.SetActive(active);
     }
     public void SetCardHighlightHandler(ICardHighlightHandler handler) => activeCardHandler = handler;
     public void ClearCardHighlightHandler() => activeCardHandler = null;
@@ -127,12 +132,12 @@ public void ShowRosterPanel(bool showStatsExtra = false)
         ClearScreenHistory();
         ClearCardHighlightHandler();
         ClearPageableTab();
-        (partyController as ITabVisualOwner)?.HideVisuals();
-        (questController as ITabVisualOwner)?.HideVisuals();
-        (mapController as ITabVisualOwner)?.HideVisuals();
-        (miscController as ITabVisualOwner)?.HideVisuals();
-        (inventoryController as ITabVisualOwner)?.HideVisuals();
-        (forgeController as ITabVisualOwner)?.HideVisuals();
+        (partyController as ITabHider)?.HideVisuals();
+        (questController as ITabHider)?.HideVisuals();
+        (mapController as ITabHider)?.HideVisuals();
+        (miscController as ITabHider)?.HideVisuals();
+        (inventoryController as ITabHider)?.HideVisuals();
+        (forgeController as ITabHider)?.HideVisuals();
     }
     void SetupTopTabs()
     {

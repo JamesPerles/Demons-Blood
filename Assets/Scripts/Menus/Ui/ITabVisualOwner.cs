@@ -1,4 +1,4 @@
-public interface ITabVisualOwner
+public interface ITabHider
 {
 void HideVisuals();
 }

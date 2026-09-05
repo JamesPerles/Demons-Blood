@@ -79,7 +79,7 @@ void Awake()
         }
         pendingPurchase = template;
         pendingPrice = price;
-        OpenScreen(DestinationMenu(), $"Buy{template.DisplayName}");
+        OpenScreen(DestinationMenu(), $"Buy {template.DisplayName}");
     }
      List<MenuOption> SellMenu()
     {
@@ -105,7 +105,7 @@ void Awake()
         if(owned is Item ownedItem && ownedItem.itemType == Item.ItemType.KeyItem) return;
         InventoryManager.instance.LoseItem(owned);
         WalletManager.instance.AddGold(price);
-        if(feedbackText != null) feedbackText.text = $"Sold{owned.DisplayName}!";
+        if(feedbackText != null) feedbackText.text = $"Sold {owned.DisplayName}!";
         UpdateGoldText();
         screenHistory.Pop();
         OpenScreen(SellMenu());

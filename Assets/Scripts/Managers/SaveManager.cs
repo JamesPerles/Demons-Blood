@@ -76,8 +76,7 @@ public class SaveManager : MonoBehaviour
                 dialogueTextSpeed =SettingsManager.instance.dialogueTextSpeed,
                 battleTextSpeed = SettingsManager.instance.battleTextSpeed,
                 battleSpeedMultiplier = SettingsManager.instance.battleSpeedMultiplier,
-                textColor = SettingsManager.instance.uiTextColor,
-                pauseMenuPanelColor = SettingsManager.instance.pauseMenuPanelColor
+                textColor = SettingsManager.instance.uiTextColor
             };
         }
         data.sceneName = SceneManager.GetActiveScene().name;
@@ -223,8 +222,8 @@ public class SaveManager : MonoBehaviour
             if(quest != null) QuestManager.instance.failedQuests.Add(quest);
         }
         BestiaryManager.instance.LoadDiscovered(data.discoveredEnemies);
-        if(SettingsManager.instance != null) SettingsManager.instance.SettingsSave(data.settings);
-        AsyncOperation operation = SceneManager.LoadSceneAsync(data.sceneName);//what is async??/
+        if(SettingsManager.instance != null) SettingsManager.instance.LoadSettings(data.settings);
+        AsyncOperation operation = SceneManager.LoadSceneAsync(data.sceneName);
         while (!operation.isDone) yield return null;
         GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
         if(playerObj != null)

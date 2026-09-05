@@ -53,6 +53,7 @@
     <Compile Include="Assets\Scripts\ScriptableObjects\Items\Baggable.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\ShaderPropAnimator.cs" />
     <Compile Include="Assets\Scripts\Player\PlayerParty.cs" />
+    <Compile Include="Assets\Scripts\Menus\Ui\UIText.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Effects\Restore.cs" />
     <Compile Include="Assets\Scripts\Battle Scripts\EnemyAI.cs" />
     <Compile Include="Assets\Scripts\Managers\AudioManager.cs" />
@@ -97,7 +98,6 @@
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\CameraController.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\Benchmark01.cs" />
     <Compile Include="Assets\Scripts\Menus\PartyController.cs" />
-    <Compile Include="Assets\Scripts\Menus\Ui\UiText.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_TextSelector_A.cs" />
     <Compile Include="Assets\Scripts\Player\PersonalInventory.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Forge\AlchemyRecipe.cs" />
@@ -126,8 +126,8 @@
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_FrameRateCounter.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Learnables\Fusion.cs" />
     <Compile Include="Assets\Scripts\Menus\PartyCombatView.cs" />
-    <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_PhoneNumberValidator.cs" />
     <Compile Include="Assets\Scripts\Menus\Ui\MenuSelect.cs" />
+    <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_PhoneNumberValidator.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\SkewTextExample.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Areas\LocationData.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Learnables\Effect.cs" />

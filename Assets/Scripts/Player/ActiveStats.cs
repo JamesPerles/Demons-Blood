@@ -503,7 +503,7 @@ public void Unequip(Equipment.EquipmentType slotType)
     {
         isTransformed = false;
         currentMP = 0;
-        transformMultiplier = 1f /1.2f;
+        transformMultiplier = 1f /1f;
         RecalculateStats();
     }
     public void ResetTransformStat()

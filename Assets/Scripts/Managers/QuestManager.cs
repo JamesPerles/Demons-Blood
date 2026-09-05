@@ -25,7 +25,7 @@ void Awake()
         if(activeQuests.Exists(progress => progress.quest == quest)) return false;
         if(completedQuests.Contains(quest)) return false;
         if(failedQuests.Contains(quest)) return false;
-        foreach(Quest prereq in quest.prerequesite)
+        foreach(Quest prereq in quest.prerequisite)
         if(!completedQuests.Contains(prereq)) return false;
         if(!string.IsNullOrEmpty(quest.unlockFlagKey) && !FlagManager.instance.GetFlag(quest.unlockFlagKey)) return false;
         return true;
@@ -220,7 +220,7 @@ void Awake()
          GrantRewards(quest.goldReward, quest.expReward, quest.itemRewards, quest.equipmentRewards);
          GrantRewards(completedProgress.pendingOptionalGold, completedProgress.pendingOptionalExp, completedProgress.pendingOptionalItems, completedProgress.pendingOptionalEquipment);
 }
-        void GrantRewards(int gold, int exp, List<Item> items, List<Equipment> equipment, string source = "")
+        void GrantRewards(int gold, int exp, List<Item> items, List<Equipment> equipment)
     {
         if(gold > 0 && WalletManager.instance != null) WalletManager.instance.AddGold(gold);
         if(exp > 0 && PlayerParty.instance != null)

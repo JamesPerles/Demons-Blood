@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
-public class InventoryMenu : MonoBehaviour, ICardHighlightHandler, ITabVisualOwner, IPageableTab
+public class InventoryMenu : MonoBehaviour, ICardHighlightHandler, ITabHider, IPageableTab
 {
 public PauseMenu host;
  public TextMeshProUGUI itemFeedbackText;
@@ -60,8 +60,6 @@ int selectedItemCount;
         mode = Mode.Category;
         if(itemCardParent != null) itemCardParent.gameObject.SetActive(true);
         host.ShowSplitPanel();
-        string suffix = category == Category.Consumables ? "Inventory > Items" : category == Category.Equipment ? "Inventory > Equipment" : "Inventory > Key Items";
-        host.SetBreadcrumbSuffix(suffix);
         host.SetCardHighlightHandler(this);
         host.SetPageableTab(this);
         WireActionButtons();
@@ -145,9 +143,7 @@ int selectedItemCount;
         string extra = "";
         if(baggable is Item item)
         {
-            subtitle = item.itemType == Item.ItemType.Consumable
-            ? $"consumable {dot} owned x{count}"
-            : $"key item {dot} owned x{count}";
+            subtitle = item.itemType == Item.ItemType.Consumable ? "consumable" : "key item";
             description = item.description;
             if(item.effects != null && item.effects.Count > 0)
             {

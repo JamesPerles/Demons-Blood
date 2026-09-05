@@ -1,7 +1,7 @@
 using UnityEngine;
 using TMPro;
 using System.Collections.Generic;
-public class MiscellaneousMenu : MonoBehaviour, ICardHighlightHandler, ITabVisualOwner, IPageableTab
+public class MiscellaneousMenu : MonoBehaviour, ICardHighlightHandler, ITabHider, IPageableTab
 {
     public PauseMenu host;
     public GameObject bestiaryCardPrefab;
@@ -58,7 +58,6 @@ public class MiscellaneousMenu : MonoBehaviour, ICardHighlightHandler, ITabVisua
         if(saveSlotCardParent != null) saveSlotCardParent.gameObject.SetActive(false);
         if(settingsController != null) settingsController.HideVisuals();
         host.ShowSplitPanel();
-        host.SetBreadcrumbSuffix("Misc > Bestiary");
         host.SetCardHighlightHandler(this);
         host.SetPageableTab(this);
         RebuildBestiaryCards();
@@ -76,7 +75,6 @@ public class MiscellaneousMenu : MonoBehaviour, ICardHighlightHandler, ITabVisua
        if(saveSlotCardParent != null) saveSlotCardParent.gameObject.SetActive(true);
        if(settingsController != null) settingsController.HideVisuals();
        host.ShowSplitPanel();
-       host.SetBreadcrumbSuffix("Misc > Save");
        host.SetCardHighlightHandler(this);
        activePager = savePager;
        host.SetPageableTab(this);
@@ -88,7 +86,6 @@ public class MiscellaneousMenu : MonoBehaviour, ICardHighlightHandler, ITabVisua
        if(saveSlotCardParent != null) saveSlotCardParent.gameObject.SetActive(true);
        if(settingsController != null) settingsController.HideVisuals();
        host.ShowSplitPanel();
-       host.SetBreadcrumbSuffix("Misc > Load");
        host.SetCardHighlightHandler(this);
        activePager = savePager;
        host.SetPageableTab(this);

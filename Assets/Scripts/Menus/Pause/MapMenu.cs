@@ -3,8 +3,7 @@ using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using TMPro;
 using System.Collections.Generic;
-using UnityEditor.Experimental.GraphView;
-public class MapMenu : MonoBehaviour, ITabVisualOwner
+public class MapMenu : MonoBehaviour, ITabHider
 {
 public PauseMenu host;
 public List<LocationData> allLocations = new List<LocationData>();
@@ -30,7 +29,6 @@ public void OpenTab()
         host.PrepareTabSwitch();
         if(mapContainer != null) mapContainer.gameObject.SetActive(true);
         host.ShowSplitPanel();
-        host.SetBreadcrumbSuffix("Map");
         if(host.miniTabGroup != null) host.miniTabGroup.Hide();
         RebuildNodes();
     }

@@ -47,7 +47,6 @@ public void OpenTab()
 void ShowQuestList(bool mainQuests)
     {
         showingCompleted = false;
-        host.SetBreadcrumbSuffix(mainQuests ? "Quests > Main" : "Quests > Side");
         currentActiveList.Clear();
         if(QuestManager.instance != null)
         foreach(QuestProgress progress in QuestManager.instance.activeQuests)
@@ -57,7 +56,6 @@ void ShowQuestList(bool mainQuests)
     void ShowCompletedList()
     {
         showingCompleted = true;
-        host.SetBreadcrumbSuffix("Quests > Completed");
         currentCompletedList.Clear();
         if(QuestManager.instance != null) currentCompletedList.AddRange(QuestManager.instance.completedQuests);
         RebuildCards();

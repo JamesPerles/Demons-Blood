@@ -289,6 +289,15 @@ void Start()
             float multiplier = elementChart.GetMultiplier(moveElement, defender.currentMagicAffinity);
             damage = Mathf.Max(1, Mathf.RoundToInt(damage * multiplier));
         }
+        Equipment attackerWeapon = attacker is ActiveStats attackingPlayer ? attackingPlayer.weaponSlot
+        :attacker is EnemyAI attackingEnemy ? attackingEnemy.weaponSlot
+        : null;
+       // if(attackerWeapon != null && attackerWeapon.bonusRace != EnemyStats.Race.Unknown
+        //&& defender is EnemyAI targetEnemy && targetEnemy.enemyStats != null
+       // && targetEnemy.enemyStats.race == attackerWeapon.bonusRace)
+        {
+           // damage = Mathf.Max(1, Mathf.RoundToInt(damage * attackerWeapon.bonusRaceMultiplier));
+        }
         return damage;
     }
     IEnumerator ResolveAttack(ICombatant attacker, ICombatant defender, DamageType type, int bonusDamage, string actionName, List<Effect> effects, Element moveElement)
@@ -395,7 +404,7 @@ void Start()
                     int runChance = 0;
                     int roll = Random.Range(0, 100);
                     runChance += currentPlayer.finalSpeed;
-                   if (currentPlayer.currentLevel < averageLevel) runChance /= 2;
+                   if (player.currentLevel < averageLevel) runChance /= 2;
                    if (roll <= runChance)
                     {
                         battleEscaped = true;

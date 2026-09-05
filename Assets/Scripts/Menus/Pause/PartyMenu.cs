@@ -4,7 +4,7 @@ using TMPro;
 using UnityEngine.EventSystems;
 using System.Collections.Generic;
 using UnityEngine.UI;
-public class PartyMenu : MonoBehaviour, ITabVisualOwner, ICardHighlightHandler, IPageableTab
+public class PartyMenu : MonoBehaviour, ITabHider, ICardHighlightHandler, IPageableTab
 {
 public PauseMenu host;
 public PartyController partyController;
@@ -40,7 +40,6 @@ Equipment.EquipmentType viewingSlotType;
 int selectedTreeIndex; 
 int selectedSkillSlotIndex;
 Baggable selectedPersonalItem;
-ActiveStats selectedBondPartner;
 bool viewingEquipmentDetail;
 bool inEquipmentPicker;
 List<GameObject> spawnedContentCards = new List<GameObject>();
@@ -57,7 +56,6 @@ public void ResetState()
         inAbilitiesTab = false;
         HideVisuals();
        if(host.miniTabGroup != null) host.miniTabGroup.Hide();
-       if(host.microTabGroup != null) host.microTabGroup.Hide();
     }
     public void HideVisuals()
     {
@@ -68,6 +66,7 @@ public void ResetState()
         if(equipmentDetailText != null) equipmentDetailText.gameObject.SetActive(false);
         if(changeEquipmentButton != null) changeEquipmentButton.gameObject.SetActive(false);
         if(bondBonusText != null) bondBonusText.gameObject.SetActive(false);
+        if(infoText != null) infoText.gameObject.SetActive(false);
     }
 public void OpenTab()
     {
@@ -75,7 +74,6 @@ public void OpenTab()
         inCharacterDetail = false;
         navStack.Clear();
         if(host.miniTabGroup != null) host.miniTabGroup.Hide();
-        if(host.microTabGroup != null) host.microTabGroup.Hide();
         host.ShowRosterPanel();
         host.ClearMenuEntries();
         host.ClearScreenHistory();
@@ -86,7 +84,6 @@ public void OpenTab()
             host.SetCardHighlightHandler(partyController);
             partyController.Refresh(OpenCharacterDetail);
         }
-        host.SetBreadcrumbSuffix("Party");
     }
     void OpenCharacterDetail(GameObject characterObject)
     {
@@ -106,7 +103,6 @@ public void OpenTab()
         navStack.Clear();
         ClearAllTabCards();
         if(host.miniTabGroup != null) host.miniTabGroup.Hide();
-        if(host.microTabGroup != null) host.microTabGroup.Hide();
         OpenTab();
     }
     void SetupCharacterTabs()
@@ -261,7 +257,6 @@ public void OpenTab()
         navStack.Clear();
         viewingEquipmentDetail = false;
         inEquipmentPicker = false;
-        if(host.microTabGroup != null) host.microTabGroup.Hide();
         if(partyController != null) partyController.SelectedCharacter(selectedCharacterObject);
         host.ShowRosterPanel(true);
         UpdateStatsExtraPanel();
@@ -269,6 +264,7 @@ public void OpenTab()
         if(equipmentDetailText != null) equipmentDetailText.gameObject.SetActive(false);
         if(changeEquipmentButton != null) changeEquipmentButton.gameObject.SetActive(false);
         if(bondBonusText != null) bondBonusText.gameObject.SetActive(false);
+        if(infoText != null) infoText.gameObject.SetActive(false);
         host.SetCardHighlightHandler(this);
         host.SetPageableTab(this);
         ClearAllTabCards();
@@ -435,11 +431,11 @@ void AfterEquipmentChange(Equipment.EquipmentType slotType)
         inAbilitiesTab = true;
         navStack.Clear();
         EnsurePagers();
-        if(host.microTabGroup != null) host.microTabGroup.Hide();
         if(partyController != null) partyController.SelectedCharacter(selectedCharacterObject);
         host.ShowRosterPanel(false);
         SetStatsTextVisible(false);
         if(bondBonusText != null) bondBonusText.gameObject.SetActive(false);
+        if(infoText != null) infoText.gameObject.SetActive(false);
         host.SetCardHighlightHandler(this);
         host.SetPageableTab(this);
         ClearAllTabCards();
@@ -588,9 +584,9 @@ void SpendPoint()
         inAbilitiesTab = false;
         navStack.Clear();
         if(partyController != null) partyController.SelectedCharacter(selectedCharacterObject);
-        if(host.microTabGroup != null) host.microTabGroup.Hide();
         host.ShowRosterPanel(false);
         SetStatsTextVisible(false);
+        if(infoText != null) infoText.gameObject.SetActive(false);
         host.SetCardHighlightHandler(this);
         host.ClearPageableTab();
         ClearAllTabCards();
@@ -661,10 +657,10 @@ void SpendPoint()
         inAbilitiesTab = false;
         navStack.Clear();
         if(partyController != null) partyController.SelectedCharacter(selectedCharacterObject);
-        if(host.microTabGroup != null) host.microTabGroup.Hide();
         host.ShowRosterPanel(false);
         SetStatsTextVisible(false);
         if(bondBonusText != null) bondBonusText.gameObject.SetActive(false);
+        if(infoText != null) infoText.gameObject.SetActive(false);
         host.SetCardHighlightHandler(this);
         host.ClearPageableTab();
         ClearAllTabCards();
@@ -751,12 +747,15 @@ void SpendPoint()
         navStack.Clear();
         ClearAllTabCards();
         if(partyController != null) partyController.SelectedCharacter(selectedCharacterObject);
-        if(host.microTabGroup != null) host.microTabGroup.Hide();
-        host.ShowInfoPanel(true);
+        host.ShowRosterPanel(true);
+        if(equipmentDetailText != null) equipmentDetailText.gameObject.SetActive(false);
+        if(changeEquipmentButton != null) changeEquipmentButton.gameObject.SetActive(false);
+        if(bondBonusText != null) changeEquipmentButton.gameObject.SetActive(false);
         host.ClearPageableTab();
-        host.SetBreadcrumbSuffix($"{selectedCharacter.currentName} > Bio");
         if(infoText != null)
         {
+            SetStatsTextVisible(false);
+            infoText.gameObject.SetActive(true);
             PlayerStats stats = selectedCharacter.playerStats;
             string likes = stats.likes != null && stats.likes.Count > 0 ? string.Join(", ", stats.likes) : "-";
             string dislikes = stats.dislikes != null && stats.dislikes.Count > 0 ? string.Join(", ", stats.dislikes) : "-";

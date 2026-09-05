@@ -21145,7 +21145,7 @@
         "Assets/Scripts/Menus/Ui/SettingRowView.cs",
         "Assets/Scripts/Menus/Ui/TabButtonView.cs",
         "Assets/Scripts/Menus/Ui/TabGroup.cs",
-        "Assets/Scripts/Menus/Ui/UiText.cs",
+        "Assets/Scripts/Menus/Ui/UIText.cs",
         "Assets/Scripts/Player/ActiveStats.cs",
         "Assets/Scripts/Player/IInteractable.cs",
         "Assets/Scripts/Player/Interactor.cs",

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using System;
-public class ForgeMenu : MonoBehaviour, ICardHighlightHandler, ITabVisualOwner, IPageableTab
+public class ForgeMenu : MonoBehaviour, ICardHighlightHandler, ITabHider, IPageableTab
 {
 public PauseMenu host;
 public TextMeshProUGUI forgeFeedbackText;
@@ -76,11 +76,10 @@ public void OpenTab()
     {
         if(craftActionButton != null) craftActionButton.gameObject.SetActive(false);
     }
-    void OpenCardTab(string breadcrumbSuffix)
+    void OpenCardTab()
     {
         if(craftCardParent != null) craftCardParent.gameObject.SetActive(true);
         host.ShowSplitPanel();
-        host.SetBreadcrumbSuffix(breadcrumbSuffix);
         host.SetCardHighlightHandler(this);
         host.SetPageableTab(this);
     }
@@ -96,7 +95,6 @@ public void OpenTab()
     }
     void ShowCraftTab()
     {
-        OpenCardTab("Forge > Craft");
         RebuildCraftCards();
     }
     void RebuildCraftCards()
@@ -226,7 +224,6 @@ public void OpenTab()
     }
     void ShowEnhanceTab()
     {
-        OpenCardTab("Forge > Enhance");
         RebuildEnhanceCards();
     }
     void RebuildEnhanceCards()
@@ -325,7 +322,6 @@ public void OpenTab()
     }
     void ShowElementTab()
     {
-        OpenCardTab("Forge > Element");
         elementStage2 = false;
         RebuildElementCards();
     }
@@ -395,7 +391,6 @@ public void OpenTab()
     }
     void ShowSmeltTab()
     {
-        OpenCardTab("Forge > Smelt");
         RebuildSmeltCards();
     }
     void RebuildSmeltCards()
@@ -441,7 +436,6 @@ public void OpenTab()
     }
     void ShowAlchemyTab()
     {
-        OpenCardTab("Forge > Alchemy");
         alchemyStage2 = false;
         RebuildAlchemyCards();
     }

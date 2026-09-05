@@ -43,7 +43,7 @@ public class PlayerParty: MonoBehaviour
             foreach (GameObject characterObject in playableCharacters)
             {
             ActiveStats character = characterObject.GetComponent<ActiveStats>();
-            if(character != null) Debug.Log(character.currentName + "is in the party with" + character.currentHP + "HP!");
+            if(character != null) Debug.Log(character.currentName + "...is in the party with" + character.currentHP + "...HP!");
             else Debug.LogError(characterObject.name + " CharacterStats is null!!!");
             }
         }

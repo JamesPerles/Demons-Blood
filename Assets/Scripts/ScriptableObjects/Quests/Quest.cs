@@ -45,7 +45,7 @@ public class Quest : ScriptableObject
     public bool isMainQuest;
     public string questGiver;
     public List<QuestStage> stages = new List<QuestStage>();
-    public List<Quest> prerequesite = new List<Quest>();
+    public List<Quest> prerequisite = new List<Quest>();
     public string unlockFlagKey;
     public string failFlagKey;
     public bool requiresTurnIn;

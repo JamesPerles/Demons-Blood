@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
-public class SettingsMenu : MonoBehaviour, ICardHighlightHandler, ITabVisualOwner
+public class SettingsMenu : MonoBehaviour, ICardHighlightHandler, ITabHider
 {
 public PauseMenu host;
 public GameObject categoryCardPrefab;
@@ -14,7 +14,6 @@ public Color cardBorderSelected = new Color32(0xD8, 0x5A, 0x30, 0xFF);
 public Color cardBackgroundSelected = new Color32(0x24, 0x10, 0x10, 0xFF);
 public Color cardTitleDefault = new Color32(0xC9, 0xC2, 0xC2, 0xFF);
 public Color cardTitleSelected = new Color32(0xF2, 0xF2, 0xF2, 0xFF);
-
 public Transform speedGroup;
 public Transform soundsGroup;
 public Transform menusGroup;
@@ -29,7 +28,6 @@ public void OpenSettings()
     {
         if(categoryCardParent != null) categoryCardParent.gameObject.SetActive(true);
         host.ShowSplitPanel();
-        host.SetBreadcrumbSuffix("Misc > Settings");
         host.SetCardHighlightHandler(this);
         if(host.detailText != null) host.detailText.gameObject.SetActive(false);
         BuildCategoryCards();
