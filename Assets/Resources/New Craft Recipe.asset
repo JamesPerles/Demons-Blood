@@ -15,6 +15,6 @@ MonoBehaviour:
   result: {fileID: 11400000, guid: 2eb72906ca6a70143b202895f6cabf4b, type: 2}
   itemResult: {fileID: 11400000, guid: 169b3c88d6848da4d9653aef5487390b, type: 2}
   requiredMaterials:
-  - material: {fileID: 11400000, guid: f0c2f8034a5aaa244b371adab6620f9d, type: 2}
+  - material: {fileID: 11400000, guid: cae803583c5ca11458384494709bfa4c, type: 2}
     amount: 1
   goldCost: 0

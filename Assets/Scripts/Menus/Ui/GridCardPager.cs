@@ -28,7 +28,7 @@ public class GridCardPager
     public Color defaultTitleColor = new Color32(0xC9, 0xC2, 0xC2, 0xFF);
     readonly GameObject cardPrefab;
     readonly Transform grid;
-    readonly PauseMenu host;
+    readonly MenuBase host;
     List<GameObject> spawnedCards = new List<GameObject>();
     List<Transform> spawnedRows = new List<Transform>();
     Transform currentRow;
@@ -36,7 +36,7 @@ public class GridCardPager
     List<CardGridSpec> allSpecs = new List<CardGridSpec>();
     List<CardGridSpec> currentPageSpecs = new List<CardGridSpec>();
     int currentPage;
-    public GridCardPager(GameObject cardPrefab, Transform grid, PauseMenu host, int columns = 3, int rows = 3, float rowSpacing = 100f)
+    public GridCardPager(GameObject cardPrefab, Transform grid, MenuBase host, int columns = 3, int rows = 3, float rowSpacing = 100f)
     {
         this.cardPrefab = cardPrefab;
         this.grid = grid;
@@ -74,7 +74,12 @@ public class GridCardPager
     }
     public void Clear()
     {
-        foreach(GameObject card in spawnedCards) if(card != null) Object.Destroy(card);
+        foreach(GameObject card in spawnedCards) 
+        {
+            if(card == null) continue;
+            host?.RemoveEntry(card);
+            Object.Destroy(card);
+        }
         spawnedCards.Clear();
         foreach(Transform row in spawnedRows) if(row != null) Object.Destroy(row.gameObject);
         spawnedRows.Clear();
@@ -168,8 +173,8 @@ public class GridCardPager
         {
             RectTransform childRect = row.GetChild(i) as RectTransform;
             if(childRect == null) continue;
-            totalWidth += childRect.rect.width;
-            maxHeight = Mathf.Max(maxHeight, childRect.rect.height);
+            totalWidth += childRect.rect.width * childRect.localScale.x;
+            maxHeight = Mathf.Max(maxHeight, childRect.rect.height * childRect.localScale.y);
         }
         if(childCount > 1) totalWidth += rowSpacing * (childCount - 1);
         rowRect.sizeDelta = new Vector2(totalWidth, maxHeight);

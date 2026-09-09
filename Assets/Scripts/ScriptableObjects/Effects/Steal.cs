@@ -3,30 +3,31 @@ using System.Collections.Generic;
 using UnityEngine;
 public class Steal : Effect
 {
-    [Range(0, 100)] public int stealChance = 50;
     public override IEnumerator Apply(object caster, object target)
     {
         ActiveStats casterStats = caster as ActiveStats;
         EnemyAI enemyTarget = target as EnemyAI;
         if(casterStats == null || enemyTarget == null)  yield break;
-        List<EnemyStats.StealDrop> stealable = enemyTarget.enemyStats.stealTable.FindAll(drop => drop.item != null);
+        List<EnemyStats.StealDrop> stealable = enemyTarget.currentStealTable.FindAll(drop => drop.item != null);
         if(stealable.Count == 0)
     {
         yield return BattleTextBox.instance.ShowMessage($"{casterStats.currentName} found nothing to steal on the enemy");
         yield break;
     } 
-    int roll = Random.Range(0,100);
-    if (roll < stealChance)
+    List<EnemyStats.StealDrop> successful = new List<EnemyStats.StealDrop>();
+    foreach(EnemyStats.StealDrop drop in stealable)
+    if(Random.Range(0, 100) < drop.stealChance) successful.Add(drop);
+    if (successful.Count == 0)
     {
-        EnemyStats.StealDrop stolen = stealable[Random.Range(0, stealable.Count)];
+        yield return BattleTextBox.instance.ShowMessage($"{casterStats.currentName} failed to steal ");
+        yield break;
+    }
+        EnemyStats.StealDrop stolen = successful[0];
+        foreach(EnemyStats.StealDrop drop in successful)
+        if(drop.stealChance < stolen.stealChance) stolen = drop;
         InventoryManager.instance.PickupItem(stolen.item);
-        enemyTarget.enemyStats.stealTable.Remove(stolen);
+        enemyTarget.currentStealTable.Remove(stolen);
         yield return BattleTextBox.instance.ShowMessage
         ($"{casterStats.currentName} stole {stolen.item.itemName} from {enemyTarget.currentName}!");
     }
-    else
-{
-    yield return BattleTextBox.instance.ShowMessage($"{casterStats.currentName} failed to steal ");
-    }
-        } 
-        }
+} 

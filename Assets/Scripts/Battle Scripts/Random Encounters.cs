@@ -43,6 +43,7 @@ public class RandomEncounter : MonoBehaviour
     }
     void Update()
     {
+        if (currentEncounterTable == null) return;
         Vector2Int currentTile = Vector2Int.RoundToInt(transform.position);
         if(currentTile != lastTile)
         {
@@ -53,11 +54,10 @@ public class RandomEncounter : MonoBehaviour
     }
     void StartEncounter()
     {
-       if(currentEncounterTable != null)
-        {
-            EncounterGroup selectedEncounter = currentEncounterTable.GetRandomEncounter();
-            BattleManager.SelectedEncounter = selectedEncounter;
-        } 
+        if(currentEncounterTable == null) return;
+        EncounterGroup selectedEncounter = currentEncounterTable.GetRandomEncounter();
+        if(selectedEncounter == null) return;
+        BattleManager.SelectedEncounter = selectedEncounter;
         RollEncounterType();
         previousSceneName = SceneManager.GetActiveScene().name;
         playerMovement.enabled = false;

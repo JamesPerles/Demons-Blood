@@ -17,7 +17,7 @@ public float disappearDuration = 0.5f;
 List<Coroutine> activeFades = new List<Coroutine>();
 void Awake()
     {
-        if(instance == null) instance = this; else Destroy(gameObject);
+    if(instance == null) instance = this; else Destroy(gameObject);
     if(contentParent != null)
         {
             RectMask2D mask = contentParent.GetComponent<RectMask2D>();
@@ -26,8 +26,14 @@ void Awake()
     }
     public IEnumerator ShowMessage(string message)
     {
+        if(messagePrefab == null || contentParent == null)
+        {
+            Debug.LogError("BattleTextBox: messagePrefab or contentParent not assigned");
+            yield break;
+        }
         if (boxPanel != null) boxPanel.SetActive(true);
         GameObject entry = Instantiate(messagePrefab, contentParent);
+        entry.SetActive(true);
         RectTransform rect = entry.GetComponent<RectTransform>();
         if(rect != null)
         {
@@ -37,7 +43,13 @@ void Awake()
             rect.anchoredPosition = Vector2.zero;
         }
         TextMeshProUGUI text = entry.GetComponent<TextMeshProUGUI>();
-        if(text == null) text = entry.GetComponentInChildren<TextMeshProUGUI>();
+        if(text == null) text = entry.GetComponentInChildren<TextMeshProUGUI>(true);
+        if(text == null)
+        {
+            Debug.LogError($"BattleTextBox: message has no text cant display \"{message}\"");
+            Destroy(entry);
+            yield break;
+        }
         text.text = "";
         float perSecond = SettingsManager.instance != null ? SettingsManager.instance.battleTextSpeed : charactersPerSecond;
         for(int i = 0; i < message.Length; i++)
@@ -64,7 +76,8 @@ void Awake()
         if(entry == null) yield break;
         RectTransform rect = entry.GetComponent<RectTransform>();
         TextMeshProUGUI text = entry.GetComponent<TextMeshProUGUI>();
-        if(text == null) text = entry.GetComponentInChildren<TextMeshProUGUI>();
+        if(text == null) text = entry.GetComponentInChildren<TextMeshProUGUI>(true);
+        if(rect == null || text == null) { if(entry != null) Destroy(entry); yield break; }
         Vector2 startPos = rect.anchoredPosition;
         Vector2 endPos = startPos + Vector2.up * disappearDistance;
         Color startColor = text.color;

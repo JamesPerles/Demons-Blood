@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 public class ActiveStats : MonoBehaviour, ICombatant
@@ -68,17 +69,16 @@ public class ActiveStats : MonoBehaviour, ICombatant
     public bool transformedThisBattle {get; private set;} = false;
     int transformTurnsRemaining;
     public bool transformReady => !transformedThisBattle && !isTransformed && transformGauge >= transformGaugeMax;
-    Dictionary<Stat, int> statStages = new Dictionary<Stat, int>();
-    public int GetStatStage(Stat stat) => statStages.TryGetValue(stat, out int value) ? value : 0;
+    StatCalculator statCalculator = new StatCalculator();
+    public int GetStatStage(Stat stat) => statCalculator.GetStatStage(stat);
     public void ChangeStatStage(Stat stat, int amount)
     {
-        int current = GetStatStage(stat);
-        statStages[stat] = Mathf.Clamp(current + amount, StatStage.MinStage, StatStage.MaxStage);
+        statCalculator.ChangeStatStage(stat, amount);
         RecalculateStats();
     }
     public void ResetStatStages()
     {
-        statStages.Clear();
+        statCalculator.ResetStatStages();
         RecalculateStats();
     }
     public List<Skill> equippedSkills
@@ -145,7 +145,13 @@ public class ActiveStats : MonoBehaviour, ICombatant
     public BondRank GetBondRank(PlayerStats partner)
     {
         BondProgress progress = GetBondProgress(partner);
-        return progress != null ? BondSettings.GetRank(progress.points) : BondRank.None;
+        BondData data = playerStats.bonds.Find(bond => bond.partner == partner);
+        if(progress == null || data == null) return BondRank.None;
+        BondRank highest = BondRank.None;
+        for(int i = 0; i < data.conversations.Count && i < progress.conversationsViewed.Count; i++)
+        if(progress.conversationsViewed[i] && data.conversations[i].requiredRank > highest)
+        highest = data.conversations[i].requiredRank;
+        return highest;
     }
     public void AddBondPoints(PlayerStats partner)
     {
@@ -170,28 +176,8 @@ public class ActiveStats : MonoBehaviour, ICombatant
         if (shieldSlot != null && shieldSlot.equipmentType != Equipment.EquipmentType.Shield) shieldSlot = null;
         if (accessorySlot != null && accessorySlot.equipmentType != Equipment.EquipmentType.Accessory) accessorySlot = null;
         RecalculateStats();
-    } 
-    void ApplyEquipmentSlot(Equipment equipment)
-    {
-        if(equipment == null) return;
-        finalHP += equipment.hp;
-        finalMP += equipment.mp;
-        finalStrength += equipment.strength;
-        finalMagic += equipment.magic;
-        finalDefense += equipment.defense;
-        finalWisdom += equipment.wisdom;
-        finalTech += equipment.tech;
-        finalAffinity += equipment.affinity;
-        finalSpeed += equipment.speed;
-        finalLuck += equipment.luck;
-        Accuracy += equipment.Accuracy;
-        Evasion += equipment.Evasion;
-        Precision += equipment.Precision;
-        Foresight += equipment.Foresight;
-        Critical += equipment.Critical;
-        Dodge += equipment.Dodge;
     }
-    void ApplyBondBonuses()
+    void ApplyBondBonuses(StatCalculatorResult result)
     {
         if(currentBondPartners == null) return;
         foreach(ActiveStats partner in currentBondPartners)
@@ -203,10 +189,11 @@ public class ActiveStats : MonoBehaviour, ICombatant
             if(rank == BondRank.None) continue;
             BondRankBonus rankBonus = data.rankBonuses.Find(rb => rb.rank == rank);
             if (rankBonus == null) continue;
-            foreach(StatBonus bonus in rankBonus.bonuses) ApplyStatBonus(bonus);
+            foreach(StatBonus bonus in rankBonus.bonuses) ApplyStatBonus(result, bonus);
         }
     }
-    void ApplyStatBonus(StatBonus bonus)
+    public void RefreshBondBonus() => RecalculateStats();
+    void ApplyStatBonus(StatCalculatorResult result, StatBonus bonus)
     {
         switch (bonus.stat)
         {
@@ -230,64 +217,33 @@ public class ActiveStats : MonoBehaviour, ICombatant
     }
     void RecalculateStats()
     {
-        finalHP = maxHP;
-        finalMP = maxMP;
-        finalStrength = currentStrength;
-        finalMagic = currentMagic;
-        finalDefense = currentDefense;
-        finalWisdom = currentWisdom;
-        finalTech = currentTech;
-        finalAffinity = currentAffinity;
-        finalSpeed = currentSpeed;
-        finalLuck = currentLuck;
-        ApplyEquipmentSlot(weaponSlot);
-        ApplyEquipmentSlot(headSlot);
-        ApplyEquipmentSlot(bodySlot);
-        ApplyEquipmentSlot(shieldSlot);
-        ApplyEquipmentSlot(accessorySlot);
-        ApplyBondBonuses();
-        finalHP = Mathf.RoundToInt(finalHP * StatStage.Multiplier(GetStatStage(Stat.HP)));
-       finalMP = Mathf.RoundToInt(finalMP * StatStage.Multiplier(GetStatStage(Stat.MP)));
-       finalStrength = Mathf.RoundToInt(finalStrength * StatStage.Multiplier(GetStatStage(Stat.Strength)));
-       finalMagic = Mathf.RoundToInt(finalMagic * StatStage.Multiplier(GetStatStage(Stat.Magic)));
-       finalDefense = Mathf.RoundToInt(finalDefense * StatStage.Multiplier(GetStatStage(Stat.Defense)));
-       finalWisdom = Mathf.RoundToInt(finalWisdom * StatStage.Multiplier(GetStatStage(Stat.Wisdom)));
-       finalTech = Mathf.RoundToInt(finalTech * StatStage.Multiplier(GetStatStage(Stat.Tech)));
-       finalAffinity = Mathf.RoundToInt(finalAffinity * StatStage.Multiplier(GetStatStage(Stat.Affinity)));
-       finalSpeed = Mathf.RoundToInt(finalSpeed * StatStage.Multiplier(GetStatStage(Stat.Speed)));
-       finalLuck = Mathf.RoundToInt(finalLuck * StatStage.Multiplier(GetStatStage(Stat.Luck)));
-       finalHP = Mathf.RoundToInt(finalHP * transformMultiplier);
-       finalMP = Mathf.RoundToInt(finalMP * transformMultiplier);
-       finalStrength = Mathf.RoundToInt(finalStrength * transformMultiplier);
-       finalMagic = Mathf.RoundToInt(finalMagic * transformMultiplier);
-       finalDefense = Mathf.RoundToInt(finalDefense * transformMultiplier);
-       finalWisdom = Mathf.RoundToInt(finalWisdom * transformMultiplier);
-       finalTech = Mathf.RoundToInt(finalTech * transformMultiplier);
-        finalAffinity = Mathf.RoundToInt(finalAffinity * transformMultiplier);
-        finalSpeed = Mathf.RoundToInt(finalSpeed * transformMultiplier);
-        finalLuck = Mathf.RoundToInt(finalLuck * transformMultiplier);
-        Accuracy = finalTech + (finalLuck / 3) + (finalSpeed / 2);
-        Precision = finalAffinity + (finalLuck / 3) + (finalSpeed / 2);
-        Evasion = (finalLuck / 2) + (finalSpeed / 2) + (finalTech / 2) + (finalDefense / 5) + (finalStrength / 5);
-        Foresight = (finalLuck / 2) + (finalSpeed / 2) + (finalWisdom / 2) + (finalAffinity / 3) + (finalMagic / 4);
-        Critical = (finalTech / 3) + (finalAffinity / 3) + (finalLuck / 2);
-        Dodge = (Evasion / 2) + (finalLuck / 2);
+        StatCalculatorResult result = statCalculator.Recalculate(maxHP, maxMP, currentStrength, currentMagic,
+        currentDefense, currentWisdom, currentTech, currentAffinity, currentSpeed, currentLuck,
+        new[] {weaponSlot, headSlot, bodySlot, shieldSlot, accessorySlot }, transformMultiplier, ApplyBondBonuses);
+        finalHP = result.finalHP; finalMP = result.finalMP;
+        finalStrength = result.finalStrength; finalMagic = result.finalMagic; finalDefense = result.finalDefense;
+        finalWisdom = result.finalWisdom; finalTech = result.finalTech; finalAffinity = result.finalAffinity;
+        finalSpeed = result.finalSpeed; finalLuck = result.finalLuck;
+        Accuracy = result.accuracy; Precision = result.precision; Evasion = result.evasion;
+        Foresight = result.foresight; Critical = result.critical; Dodge = result.dodge;
         if(currentHP > finalHP) currentHP = finalHP;
         if(currentMP > finalMP) currentMP = finalMP;
         UpdateUI();
     }
-    void ApplyStatGrowth()
+    List<string> ApplyStatGrowth()
     {
-        if (Random.Range(0, 100) < playerStats.hpGrowth) maxHP += 1;
-        if (Random.Range(0, 100) < playerStats.mpGrowth) maxMP += 1;
-        if (Random.Range(0, 100) < playerStats.strengthGrowth) currentStrength += 1;
-        if (Random.Range(0, 100) < playerStats.magicGrowth) currentMagic += 1;
-        if (Random.Range(0, 100) < playerStats.defenseGrowth) currentDefense += 1;
-        if (Random.Range(0, 100) < playerStats.wisdomGrowth) currentWisdom += 1;
-        if (Random.Range(0, 100) < playerStats.techGrowth) currentTech += 1;
-        if (Random.Range(0, 100) < playerStats.affinityGrowth) currentAffinity += 1;
-        if (Random.Range(0, 100) < playerStats.speedGrowth) currentSpeed += 1;
-        if (Random.Range(0, 100) < playerStats.luckGrowth) currentLuck += 1;
+        List<string> statsGained = new List<string>();
+        if (Random.Range(0, 100) < playerStats.hpGrowth) { maxHP += 1; statsGained.Add("HP"); }
+        if (Random.Range(0, 100) < playerStats.mpGrowth) { maxMP += 1; statsGained.Add("MP"); }
+        if (Random.Range(0, 100) < playerStats.strengthGrowth) { currentStrength += 1; statsGained.Add("Strength"); }
+        if (Random.Range(0, 100) < playerStats.magicGrowth) { currentMagic += 1; statsGained.Add("Magic"); }
+        if (Random.Range(0, 100) < playerStats.defenseGrowth) { currentDefense += 1; statsGained.Add("Defense"); } 
+        if (Random.Range(0, 100) < playerStats.wisdomGrowth) { currentWisdom += 1; statsGained.Add("Wisdom"); } 
+        if (Random.Range(0, 100) < playerStats.techGrowth) { currentTech += 1; statsGained.Add("Tech"); }
+        if (Random.Range(0, 100) < playerStats.affinityGrowth) { currentAffinity += 1; statsGained.Add("Affinity"); }
+        if (Random.Range(0, 100) < playerStats.speedGrowth) { currentSpeed += 1; statsGained.Add("Speed"); }
+        if (Random.Range(0, 100) < playerStats.luckGrowth) { currentLuck += 1; statsGained.Add("Luck"); }
+        return statsGained;
     }
      public Equipment Equip(Equipment newEquipment)
 {
@@ -420,13 +376,45 @@ public void Unequip(Equipment.EquipmentType slotType)
     }
     void LevelUp()
     {
+        List<string> statsGained = ApplyLevelUp();
+        UpdateUI();
+        ShowLevelUp(statsGained);
+    }
+    List<string> ApplyLevelUp()
+    {
         int previousLevel = currentLevel;
         currentExperience -= currentExpToNextLevel;
         currentLevel++;
         currentExpToNextLevel = Mathf.RoundToInt(currentExpToNextLevel * 1.2f);
-        ApplyStatGrowth();
+        List<string> statsGained = ApplyStatGrowth();
         skillPoints += 5;
         CheckLearnSet(previousLevel, currentLevel);
+        return statsGained;
+    }
+    void ShowLevelUp(List<string> statsGained)
+    {
+        if(BattleTextBox.instance == null) return;
+        StartCoroutine(ShowLevelUpRoutine(statsGained));
+    }
+    IEnumerator ShowLevelUpRoutine(List<string> statsGained)
+    {
+        yield return StartCoroutine(BattleTextBox.instance.ShowMessage($"{currentName} leveled up! Now level {currentLevel}."));
+        if(statsGained.Count > 0)
+        {
+        string statsMessage = $"{currentName} gained:\n" + string.Join("\n", statsGained);
+        yield return StartCoroutine(BattleTextBox.instance.ShowMessage(statsMessage));
+        }
+    }
+    public IEnumerator GainExperienceRoutine(int amount)
+    {
+        currentExperience += amount;
+        totalExperience += amount;
+        while(currentExperience >= currentExpToNextLevel)
+        {
+            List<string> statsGained = ApplyLevelUp();
+            UpdateUI();
+            yield return StartCoroutine(ShowLevelUpRoutine(statsGained));
+        }
         UpdateUI();
     }
     public void Defend()

@@ -40,14 +40,15 @@ MonoBehaviour:
   targetHPThreshold: 30
   minGoldReward: 10
   maxGoldReward: 35
-  minExpReward: 10
-  maxExpReward: 25
+  minExpReward: 1000
+  maxExpReward: 1005
   transformHPThreshold: 0
   bossTransformMultiplier: 1.3
   magicAffinity: 2
   immunities: []
   enemyID: 1
   dexEntry: A shadow monster that is made of pure darkness
+  race: 3
   specialAttacks: []
   basicAttackWeight: 50
   lootTable:

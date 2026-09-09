@@ -15,6 +15,7 @@ public class SaveManager : MonoBehaviour
     const string FusionsFolder = "Fusions";
     const string QuestsFolder = "Quests";
     const string PlayerStatsFolder = "PartyMembers";
+    const string LocationsFolder = "Locations";
     string SavePath(int slot) => Path.Combine(Application.persistentDataPath, $"save_slot{slot}.json");
     [System.Serializable]
     public class SaveSlotSummary
@@ -67,6 +68,9 @@ public class SaveManager : MonoBehaviour
         foreach(var quest in QuestManager.instance.failedQuests)
         data.failedQuests.Add(quest.name);
         data.discoveredEnemies = BestiaryManager.instance.GetDiscoveredIDs();
+        data.discoveredLocations = new List<string>();
+        foreach(LocationData location in Resources.LoadAll<LocationData>(LocationsFolder))
+        if(location != null && location.discovered) data.discoveredLocations.Add(location.name);
         if(SettingsManager.instance != null)
         {
             data.settings = new SettingsSaveData
@@ -117,7 +121,7 @@ public class SaveManager : MonoBehaviour
         charac.currentExpToNextLevel = character.currentExpToNextLevel;
         charac.currentLevel = character.currentLevel;
         charac.personalItemNames = new List<string>();
-        charac.personalEquipment = new List<PersonalEquipmentSaveData>();
+        charac.personalEquipment = new List<EquipmentSaveData>();
         foreach(Baggable carried in character.personalInventory.items)
         {
             if(carried is Equipment equipment)
@@ -128,7 +132,7 @@ public class SaveManager : MonoBehaviour
                 else if(character.bodySlot == equipment) equippedSlot = (int) Equipment.EquipmentType.Body;
                 else if(character.shieldSlot == equipment) equippedSlot = (int) Equipment.EquipmentType.Shield;
                 else if(character.accessorySlot == equipment) equippedSlot = (int) Equipment.EquipmentType.Accessory;
-                charac.personalEquipment.Add(new PersonalEquipmentSaveData
+                charac.personalEquipment.Add(new EquipmentSaveData
                 {
                     baseAssetName = string.IsNullOrEmpty(equipment.baseAssetName) ? equipment.name : equipment.baseAssetName,
                     equipmentName = equipment.equipmentName,
@@ -162,7 +166,7 @@ public class SaveManager : MonoBehaviour
     }
     public void LoadGame(int slot = 0)
     {
-        if(!SaveExists()) {Debug.LogWarning("No save found."); return;}
+        if(!SaveExists(slot)) {Debug.LogWarning("No save found."); return;}
         string json = File.ReadAllText(SavePath(slot));
         SaveData data = JsonUtility.FromJson<SaveData>(json);
         StartCoroutine(LoadingGame(data));
@@ -222,6 +226,9 @@ public class SaveManager : MonoBehaviour
             if(quest != null) QuestManager.instance.failedQuests.Add(quest);
         }
         BestiaryManager.instance.LoadDiscovered(data.discoveredEnemies);
+        foreach(LocationData location in Resources.LoadAll<LocationData>(LocationsFolder))
+        if(location != null) location.discovered = 
+        data.discoveredLocations != null && data.discoveredLocations.Contains(location.name);
         if(SettingsManager.instance != null) SettingsManager.instance.LoadSettings(data.settings);
         AsyncOperation operation = SceneManager.LoadSceneAsync(data.sceneName);
         while (!operation.isDone) yield return null;
@@ -258,19 +265,6 @@ public class SaveManager : MonoBehaviour
         instance.element = data.element;
         return instance;
     }
-    Equipment LoadPersonalEquipment(PersonalEquipmentSaveData data)
-    {
-        if(data == null || string.IsNullOrEmpty(data.baseAssetName)) return null;
-        Equipment baseAsset = Resources.Load<Equipment>($"{EquipmentFolder}/{data.baseAssetName}");
-        if(baseAsset == null) {Debug.LogWarning($" Could not find Equipment '{data.baseAssetName}' in Resources/{EquipmentFolder}"); return null;}
-        Equipment instance = Instantiate(baseAsset);
-        instance.baseAssetName = data.baseAssetName;
-        instance.equipmentName = data.equipmentName;
-        instance.strength = data.strength;
-        instance.enhancementLevel = data.enhancementLevel;
-        instance.element = data.element;
-        return instance;
-    }
     void LoadCharacter(ActiveStats character, CharacterSaveData charsave)
     {
         character.currentHP = charsave.currentHP;
@@ -291,9 +285,9 @@ public class SaveManager : MonoBehaviour
             if(item != null) character.personalInventory.AddItem(item);
             else Debug.LogWarning($"Could not find Item '{itemName}' in Resources/{ItemsFolder} for {charsave.character}'s personal inventory");
         }
-        foreach(PersonalEquipmentSaveData equipData in charsave.personalEquipment)
+        foreach(EquipmentSaveData equipData in charsave.personalEquipment)
         {
-            Equipment loaded = LoadPersonalEquipment(equipData);
+            Equipment loaded = LoadEquipment(equipData);
             if(loaded == null) continue;
             character.personalInventory.AddItem(loaded);
             if(equipData.equippedSlot == (int)Equipment.EquipmentType.Weapon) character.weaponSlot = loaded;

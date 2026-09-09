@@ -11,7 +11,7 @@ public class EncounterTable : MonoBehaviour
     public EncounterGroup [] encounters;
     public EncounterGroup GetRandomEncounter()
     {
-        if (encounters.Length == 0) Debug.LogError("Encounter Table Empty!");
+        if (encounters.Length == 0) { Debug.LogError("Encounter Table Empty!"); return null; }
         EncounterGroup encounter = encounters[Random.Range(0, encounters.Length)];
         return encounter;
     }

@@ -27,7 +27,7 @@ bool showingCompleted = false;
 public void OpenTab()
     {
         host.PrepareTabSwitch();
-        if(pager == null) pager = new GridCardPager(questCardPrefab, questCardParent, host, 3, 3);
+        if(pager == null) pager = new GridCardPager(questCardPrefab, questCardParent, host, 2, 3);
         host.ShowSplitPanel();
         host.SetCardHighlightHandler(this);
         host.SetPageableTab(this);
@@ -36,6 +36,7 @@ public void OpenTab()
     void SetupMiniTabs()
     {
         if(host.miniTabGroup == null) return;
+        host.miniTabGroup.Show();
         List<TabDefinition> tabs = new List<TabDefinition>
         {
             new TabDefinition("Main", () => ShowQuestList(true)),

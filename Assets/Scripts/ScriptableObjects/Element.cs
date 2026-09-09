@@ -19,14 +19,6 @@ public class ElementChart : ScriptableObject
     public List<ElementMatchup> matchups = new List<ElementMatchup>();
     public float GetMultiplier(Element attacker, Element defender)
     {
-        bool attackerIsLightOrDark = attacker == Element.Light || attacker == Element.Dark;
-        bool defenderIsLightOrDark = defender == Element.Light || defender == Element.Dark;
-            if(attackerIsLightOrDark)
-            {
-                if(attacker == defender) return 0.5f;
-                if(defenderIsLightOrDark) return 2f;
-                return 1.5f;
-            }
             ElementMatchup match = matchups.Find(entry => entry.attacker == attacker && entry.defenders.Contains(defender));
             return match != null ? match.multiplier : 1f;
         }

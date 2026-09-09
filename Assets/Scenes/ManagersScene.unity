@@ -194,6 +194,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ActiveStats
   currentExperience: 0
   currentExpToNextLevel: 0
+  totalExperience: 0
   currentLevel: 0
   playerStats: {fileID: 11400000, guid: f80f8fdb8e4d2544e9933c1d68b0720d, type: 2}
   weaponSlot: {fileID: 0}
@@ -201,6 +202,8 @@ MonoBehaviour:
   bodySlot: {fileID: 0}
   shieldSlot: {fileID: 0}
   accessorySlot: {fileID: 0}
+  personalInventory:
+    items: []
   learnedSpells: []
   learnedArts: []
   learnedFusions: []
@@ -218,9 +221,9 @@ MonoBehaviour:
   transformMultiplier: 1
   transformGauge: 0
   transformGaugeMax: 100
-  gaugeGainPerTurn: 5
-  gagueGainPerDamageDealt: 0.5
-  gaugeGainPerDamageTaken: 0.5
+  gaugePerTurn: 5
+  gaguePerDamageDealt: 0.5
+  gaugePerDamageTaken: 0.5
 --- !u!4 &222865102
 Transform:
   m_ObjectHideFlags: 0
@@ -267,6 +270,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ActiveStats
   currentExperience: 0
   currentExpToNextLevel: 0
+  totalExperience: 0
   currentLevel: 0
   playerStats: {fileID: 11400000, guid: b778334758a8ad0499e785f93e29cce6, type: 2}
   weaponSlot: {fileID: 0}
@@ -274,6 +278,8 @@ MonoBehaviour:
   bodySlot: {fileID: 0}
   shieldSlot: {fileID: 0}
   accessorySlot: {fileID: 0}
+  personalInventory:
+    items: []
   learnedSpells: []
   learnedArts: []
   learnedFusions: []
@@ -291,9 +297,9 @@ MonoBehaviour:
   transformMultiplier: 1
   transformGauge: 0
   transformGaugeMax: 100
-  gaugeGainPerTurn: 5
-  gagueGainPerDamageDealt: 0.5
-  gaugeGainPerDamageTaken: 0.5
+  gaugePerTurn: 5
+  gaguePerDamageDealt: 0.5
+  gaugePerDamageTaken: 0.5
 --- !u!4 &336428583
 Transform:
   m_ObjectHideFlags: 0
@@ -340,6 +346,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ActiveStats
   currentExperience: 0
   currentExpToNextLevel: 0
+  totalExperience: 0
   currentLevel: 0
   playerStats: {fileID: 11400000, guid: ae519096602724e4bac231c1adc25d65, type: 2}
   weaponSlot: {fileID: 0}
@@ -347,6 +354,8 @@ MonoBehaviour:
   bodySlot: {fileID: 0}
   shieldSlot: {fileID: 0}
   accessorySlot: {fileID: 0}
+  personalInventory:
+    items: []
   learnedSpells: []
   learnedArts: []
   learnedFusions: []
@@ -364,9 +373,9 @@ MonoBehaviour:
   transformMultiplier: 1
   transformGauge: 0
   transformGaugeMax: 100
-  gaugeGainPerTurn: 5
-  gagueGainPerDamageDealt: 0.5
-  gaugeGainPerDamageTaken: 0.5
+  gaugePerTurn: 5
+  gaguePerDamageDealt: 0.5
+  gaugePerDamageTaken: 0.5
 --- !u!4 &501731899
 Transform:
   m_ObjectHideFlags: 0
@@ -413,6 +422,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ActiveStats
   currentExperience: 0
   currentExpToNextLevel: 0
+  totalExperience: 0
   currentLevel: 0
   playerStats: {fileID: 11400000, guid: d7d3c51a2e6236440a9ffeb3219515d1, type: 2}
   weaponSlot: {fileID: 11400000, guid: 2eb72906ca6a70143b202895f6cabf4b, type: 2}
@@ -420,6 +430,8 @@ MonoBehaviour:
   bodySlot: {fileID: 0}
   shieldSlot: {fileID: 0}
   accessorySlot: {fileID: 0}
+  personalInventory:
+    items: []
   learnedSpells:
   - {fileID: 11400000, guid: d3f41bc77bb29cb4695c1a02df277e39, type: 2}
   learnedArts:
@@ -441,9 +453,9 @@ MonoBehaviour:
   transformMultiplier: 1
   transformGauge: 0
   transformGaugeMax: 100
-  gaugeGainPerTurn: 5
-  gagueGainPerDamageDealt: 0.5
-  gaugeGainPerDamageTaken: 0.5
+  gaugePerTurn: 5
+  gaguePerDamageDealt: 0.5
+  gaugePerDamageTaken: 0.5
 --- !u!4 &522077994
 Transform:
   m_ObjectHideFlags: 0
@@ -490,6 +502,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ActiveStats
   currentExperience: 0
   currentExpToNextLevel: 0
+  totalExperience: 0
   currentLevel: 0
   playerStats: {fileID: 11400000, guid: eada0adb91aa7924d859c583de10ce48, type: 2}
   weaponSlot: {fileID: 0}
@@ -497,6 +510,8 @@ MonoBehaviour:
   bodySlot: {fileID: 0}
   shieldSlot: {fileID: 0}
   accessorySlot: {fileID: 0}
+  personalInventory:
+    items: []
   learnedSpells: []
   learnedArts: []
   learnedFusions: []
@@ -514,9 +529,9 @@ MonoBehaviour:
   transformMultiplier: 1
   transformGauge: 0
   transformGaugeMax: 100
-  gaugeGainPerTurn: 5
-  gagueGainPerDamageDealt: 0.5
-  gaugeGainPerDamageTaken: 0.5
+  gaugePerTurn: 5
+  gaguePerDamageDealt: 0.5
+  gaugePerDamageTaken: 0.5
 --- !u!4 &1019952276
 Transform:
   m_ObjectHideFlags: 0
@@ -563,6 +578,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ActiveStats
   currentExperience: 0
   currentExpToNextLevel: 0
+  totalExperience: 0
   currentLevel: 0
   playerStats: {fileID: 11400000, guid: ccc2d165ed56cab4b8d6f22140bb2269, type: 2}
   weaponSlot: {fileID: 0}
@@ -570,6 +586,8 @@ MonoBehaviour:
   bodySlot: {fileID: 0}
   shieldSlot: {fileID: 0}
   accessorySlot: {fileID: 0}
+  personalInventory:
+    items: []
   learnedSpells: []
   learnedArts: []
   learnedFusions: []
@@ -587,9 +605,9 @@ MonoBehaviour:
   transformMultiplier: 1
   transformGauge: 0
   transformGaugeMax: 100
-  gaugeGainPerTurn: 5
-  gagueGainPerDamageDealt: 0.5
-  gaugeGainPerDamageTaken: 0.5
+  gaugePerTurn: 5
+  gaguePerDamageDealt: 0.5
+  gaugePerDamageTaken: 0.5
 --- !u!4 &1128828554
 Transform:
   m_ObjectHideFlags: 0
@@ -621,6 +639,7 @@ GameObject:
   - component: {fileID: 1534240671}
   - component: {fileID: 1534240670}
   - component: {fileID: 1534240668}
+  - component: {fileID: 1534240677}
   m_Layer: 0
   m_Name: Party
   m_TagString: Untagged
@@ -646,7 +665,9 @@ MonoBehaviour:
   battleTextSpeed: 40
   battleSpeedMultiplier: 1
   uiTextColor: {r: 1, g: 1, b: 1, a: 1}
-  pauseMenuPanelColor: {r: 0.05, g: 0.08, b: 0.2, a: 0.9}
+  menuPanelColor: {r: 0.04, g: 0.04, b: 0.04, a: 0.72}
+  menuBorderColor: {r: 0.42, g: 0.08, b: 0.08, a: 1}
+  menuBorderThickness: 5
 --- !u!114 &1534240670
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -665,7 +686,11 @@ MonoBehaviour:
     objectiveCounts: 
     optionalCounts: 
     optionalClaimed: 
-    chosenObjectiveIndex: 0
+    chosenObjectivePerStage: 
+    pendingOptionalGold: 0
+    pendingOptionalExp: 0
+    pendingOptionalItems: []
+    pendingOptionalEquipment: []
     state: 0
   completedQuests: []
   failedQuests: []
@@ -719,7 +744,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 47fea0d2be257ff44af073961faa75d3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  itemContent: {fileID: 0}
   inventoryItem: {fileID: 4329512853931581497, guid: 4a214cdd7304d1f4a8d2075764013c80, type: 3}
   items:
   - {fileID: 11400000, guid: f0c2f8034a5aaa244b371adab6620f9d, type: 2}
@@ -785,6 +809,18 @@ Transform:
   - {fileID: 336428583}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1534240677
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1534240666}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6afff91c0d389ce43a86bc1bc25dd40b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SaveManager
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

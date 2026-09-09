@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
@@ -360,10 +361,15 @@ public class CommandMenu : SubMenu
         UpdatePathText(BreadcrumbPrefix(), BreadcrumbSuffix());
         if(firstSpawned != null)
         {
-        EventSystem.current?.SetSelectedGameObject(null);
-        EventSystem.current?.SetSelectedGameObject(spawnedTargets[0]);
         MoveCursor(firstSpawned);
+        StartCoroutine(SelectNextFrame(firstSpawned));
         }
+    }
+    IEnumerator SelectNextFrame(GameObject entry)
+    {
+        yield return null;
+        EventSystem.current?.SetSelectedGameObject(null);
+        EventSystem.current?.SetSelectedGameObject(entry);
     }
     GameObject SpawnHeader(string label, Transform parent)
     {

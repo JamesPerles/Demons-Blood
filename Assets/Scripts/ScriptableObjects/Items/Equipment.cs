@@ -29,7 +29,13 @@ public class Equipment : Baggable
     public string baseAssetName;
     public int enhancementLevel = 0;
     public Element element = Element.None;
-    public List<MaterialAmount> smeltYield = new List<MaterialAmount>();
+    [System.Serializable]
+    public class SmeltYield
+    {
+        public Materials material;
+        public int amount = 1;
+    }
+    public List<SmeltYield> smeltYield = new List<SmeltYield>();
     public List<Effect> effects = new List<Effect>();
     public override string DisplayName => equipmentName;
 }

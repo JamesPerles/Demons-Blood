@@ -25,6 +25,7 @@ public Button changeEquipmentButton;
 public TextMeshProUGUI changeEquipmentButtonLabel;
 public Transform contentGrid;
 public Transform equipmentGrid;
+public Transform partyInventoryGrid;
 public int statColumnOffsetPx = 200;
 public TextMeshProUGUI bondBonusText;
 const string colorMuted = "#8A8580";
@@ -47,6 +48,7 @@ Stack<System.Action> navStack = new Stack<System.Action>();
 GridCardPager equipmentPager;
 GridCardPager abilityPager;
 GridCardPager skillTreePager;
+GridCardPager partyInventoryPager;
 GridCardPager activeGridPager;
 List<BondData> bondCardData = new List<BondData>();
 bool inBondPartnerList;
@@ -151,8 +153,9 @@ public void OpenTab()
     void EnsurePagers()
     {
         if(equipmentPager == null) equipmentPager = new GridCardPager(equipmentCardPrefab, equipmentGrid, host, 2, 3);
-        if(abilityPager == null) abilityPager = new GridCardPager(equipmentCardPrefab, contentGrid, host, 3, 3);
+        if(abilityPager == null) abilityPager = new GridCardPager(equipmentCardPrefab, contentGrid, host, 2, 3);
         if(skillTreePager == null) skillTreePager = new GridCardPager(equipmentCardPrefab, contentGrid, host, 2, 3);
+        if(partyInventoryPager == null) partyInventoryPager = new GridCardPager(equipmentCardPrefab, partyInventoryGrid, host, 2, 3);
     }
     public void NextPage()
     {
@@ -204,6 +207,12 @@ public void OpenTab()
         equipmentPager?.Clear();
         abilityPager?.Clear();
         skillTreePager?.Clear();
+        partyInventoryPager?.Clear();
+    }
+    void SwitchGridPager(GridCardPager pager)
+    {
+        if(activeGridPager != null && activeGridPager != pager) activeGridPager.Clear();
+        activeGridPager = pager;
     }
     public void OnCardHighlighted(GameObject entry)
     {
@@ -211,6 +220,7 @@ public void OpenTab()
         if(equipmentPager != null) HighlightInList(equipmentPager.SpawnedCards, entry);
         if(abilityPager != null) HighlightInList(abilityPager.SpawnedCards, entry);
         if(skillTreePager != null) HighlightInList(skillTreePager.SpawnedCards, entry);
+        if(partyInventoryPager != null) HighlightInList(partyInventoryPager.SpawnedCards, entry);
         if(inBondPartnerList)
         {
             int index = spawnedContentCards.IndexOf(entry);
@@ -436,6 +446,8 @@ void AfterEquipmentChange(Equipment.EquipmentType slotType)
         SetStatsTextVisible(false);
         if(bondBonusText != null) bondBonusText.gameObject.SetActive(false);
         if(infoText != null) infoText.gameObject.SetActive(false);
+        if(equipmentDetailText != null) equipmentDetailText.gameObject.SetActive(false);
+        if(changeEquipmentButton != null) changeEquipmentButton.gameObject.SetActive(false);
         host.SetCardHighlightHandler(this);
         host.SetPageableTab(this);
         ClearAllTabCards();
@@ -443,7 +455,7 @@ void AfterEquipmentChange(Equipment.EquipmentType slotType)
     }
     void RebuildAbilityCategoryCards()
     {
-        activeGridPager = abilityPager;
+        SwitchGridPager(abilityPager);
         List<CardGridSpec> specs = new List<CardGridSpec>
         {
             new CardGridSpec("Arts", $"{selectedCharacter.learnedArts.Count}", "", () => {PushNav(RebuildAbilityCategoryCards); RebuildArtsCards(); }),
@@ -456,7 +468,7 @@ void AfterEquipmentChange(Equipment.EquipmentType slotType)
     }
     void RebuildArtsCards()
     {
-        activeGridPager = abilityPager;
+        SwitchGridPager(abilityPager);
         List<CardGridSpec> specs = new List<CardGridSpec>();
         foreach(Art art in selectedCharacter.learnedArts)
         {
@@ -469,7 +481,7 @@ void AfterEquipmentChange(Equipment.EquipmentType slotType)
     }
     void RebuildSpellCards()
     {
-        activeGridPager = abilityPager;
+        SwitchGridPager(abilityPager);
         List<CardGridSpec> specs = new List<CardGridSpec>();
         foreach(Spell spell in selectedCharacter.learnedSpells)
         {
@@ -482,7 +494,7 @@ void AfterEquipmentChange(Equipment.EquipmentType slotType)
     }
     void RebuildFusionCards()
     {
-        activeGridPager = abilityPager;
+        SwitchGridPager(abilityPager);
         List<CardGridSpec> specs = new List<CardGridSpec>();
         foreach(Fusion fusion in selectedCharacter.learnedFusions)
         {
@@ -495,7 +507,7 @@ void AfterEquipmentChange(Equipment.EquipmentType slotType)
     }
     void RebuildSkillSlotCards()
     {
-        activeGridPager = abilityPager;
+        SwitchGridPager(abilityPager);
         List<CardGridSpec> specs = new List<CardGridSpec>();
         for(int i = 0; i < selectedCharacter.skillSlots.Length; i++)
         {
@@ -515,7 +527,7 @@ void AfterEquipmentChange(Equipment.EquipmentType slotType)
     }
     void RebuildSkillPickerCards()
     {
-        activeGridPager = abilityPager;
+        SwitchGridPager(abilityPager);
         List<CardGridSpec> specs = new List<CardGridSpec>();
         Skill current = selectedCharacter.GetSkillSlot(selectedSkillSlotIndex);
         if(current != null) specs.Add(new CardGridSpec("Clear", current.skillName, "", ClearSelectedSkillSlot));
@@ -538,7 +550,7 @@ void AfterEquipmentChange(Equipment.EquipmentType slotType)
     }
     void RebuildSkillTreeCards()
     {
-        activeGridPager = skillTreePager;
+        SwitchGridPager(skillTreePager);
         List<CardGridSpec> specs = new List<CardGridSpec>();
         if(selectedCharacter.playerStats.skillTrees != null)
         {
@@ -560,7 +572,7 @@ void AfterEquipmentChange(Equipment.EquipmentType slotType)
     }
     void RebuildTreeNodeCards()
     {
-        activeGridPager = abilityPager;
+        SwitchGridPager(abilityPager);
         List<CardGridSpec> specs = new List<CardGridSpec>();
         SkillTree tree = selectedCharacter.playerStats.skillTrees.trees[selectedTreeIndex];
         int points = selectedCharacter.GetTreePoints(selectedTreeIndex);
@@ -581,12 +593,13 @@ void SpendPoint()
     }
     void OpenBondMenu()
     {
-        inAbilitiesTab = false;
         navStack.Clear();
         if(partyController != null) partyController.SelectedCharacter(selectedCharacterObject);
         host.ShowRosterPanel(false);
         SetStatsTextVisible(false);
         if(infoText != null) infoText.gameObject.SetActive(false);
+        if(equipmentDetailText != null) equipmentDetailText.gameObject.SetActive(false);
+        if(changeEquipmentButton != null) changeEquipmentButton.gameObject.SetActive(false);
         host.SetCardHighlightHandler(this);
         host.ClearPageableTab();
         ClearAllTabCards();
@@ -627,12 +640,12 @@ void SpendPoint()
         ClearContentCards();
         if(bondBonusText != null) bondBonusText.gameObject.SetActive(false);
         BondProgress progress = selectedCharacter.GetBondProgress(data.partner);
-        BondRank currentRank = selectedCharacter.GetBondRank(data.partner);
+        while(progress.conversationsViewed.Count < data.conversations.Count) progress.conversationsViewed.Add(false);
         for(int i = 0; i < data.conversations.Count; i++)
         {
             BondConversation conversation = data.conversations[i];
             bool viewed = progress.conversationsViewed[i];
-            bool available = !viewed && currentRank >= conversation.requiredRank;
+            bool available = !viewed && progress.points >= BondSettings.RequiredPoints(conversation.requiredRank);
             int capturedIndex = i;
             BondConversation capturedConversation = conversation;
             BondData capturedData = data;
@@ -649,7 +662,9 @@ void SpendPoint()
     void MarkViewed(BondData data, int index)
     {
         BondProgress progress = selectedCharacter.GetBondProgress(data.partner);
-        progress.conversationsViewed[index] = true;
+        while(progress.conversationsViewed.Count < data.conversations.Count) progress.conversationsViewed.Add(false);
+        if(index >= 0 && index < progress.conversationsViewed.Count) progress.conversationsViewed[index] = true;
+        selectedCharacter.RefreshBondBonus();
         RebuildConversationCards(data);
     }
     void OpenInventoryTab()
@@ -662,21 +677,39 @@ void SpendPoint()
         if(bondBonusText != null) bondBonusText.gameObject.SetActive(false);
         if(infoText != null) infoText.gameObject.SetActive(false);
         host.SetCardHighlightHandler(this);
-        host.ClearPageableTab();
+        host.SetPageableTab(this);
         ClearAllTabCards();
         RebuildPersonalInventoryCards();
     }
     void RebuildPersonalInventoryCards()
     {
-        ClearContentCards();
-        SpawnContentCard("Add from Party Inventory", $"{selectedCharacter.personalInventory.FreeSlots} free", "", OpenAddFromPartyInventory);
+        EnsurePagers();
+        SwitchGridPager(equipmentPager);
+        UpdatePersonalInventoryDetail();
+        if(changeEquipmentButton != null)
+        {
+            changeEquipmentButton.gameObject.SetActive(true);
+            changeEquipmentButton.interactable = true;
+            if(changeEquipmentButtonLabel != null) changeEquipmentButtonLabel.text = "Add from Party Inventory";
+            changeEquipmentButton.onClick.RemoveAllListeners();
+            changeEquipmentButton.onClick.AddListener(OpenAddFromPartyInventory);
+        }
+        List<CardGridSpec> specs = new List<CardGridSpec>();
         foreach(Baggable item in selectedCharacter.personalInventory.items)
         {
             Baggable captured = item;
             bool isEquipped = captured is Equipment equipment && IsEquippedAnywhere(equipment);
             string sub = isEquipped ? "Equipped" : "";
-            SpawnContentCard(captured.DisplayName, sub, "", () => OpenPersonalItemActions(captured));
+            specs.Add(new CardGridSpec(captured.DisplayName, sub, "", () => OpenPersonalItemActions(captured)));
         }
+        if(specs.Count == 0) specs.Add(new CardGridSpec("No items.", "", "", () => { }, false));
+        equipmentPager.SetSpecs(specs);
+    }
+    void UpdatePersonalInventoryDetail()
+    {
+        if(equipmentDetailText == null) return;
+        equipmentDetailText.gameObject.SetActive(true);
+        equipmentDetailText.text = $"<size=140%><color=#F2F2F2>Personal Inventory</color></size>\n<size=80%><color={colorMuted}>{selectedCharacter.personalInventory.FreeSlots} free slots</color></size>";
     }
     bool IsEquippedAnywhere(Equipment equipment)
     {
@@ -692,15 +725,24 @@ void SpendPoint()
     }
     void RebuildPersonalItemActionCards(Baggable item)
     {
-        ClearContentCards();
+        SwitchGridPager(abilityPager);
+        if(equipmentDetailText != null)
+        {
+            equipmentDetailText.gameObject.SetActive(true);
+            equipmentDetailText.text = $"<size=140%><color=#F2F2F2>{item.DisplayName}</color></size>";
+        }
+        if(changeEquipmentButton != null) changeEquipmentButton.gameObject.SetActive(false);
+        List<CardGridSpec> specs = new List<CardGridSpec>();
         if(item is Equipment equipment && IsEquippedAnywhere(equipment))
         {
-            SpawnContentCard("Currently Equipped", "unequip from Stats tab first", "", () => { }, false);
+            specs.Add(new CardGridSpec("Currently Equipped", "unequip from Stats tab first", "", () => { }, false));
+            abilityPager.SetSpecs(specs);
             return;
         }
-        SpawnContentCard("Send To Party", "", "", SendSelectedItemToParty);
+        specs.Add(new CardGridSpec("Send To Party", "", "", SendSelectedItemToParty));
         if(item is Item usable && usable.itemType == Item.ItemType.Consumable)
-        SpawnContentCard("Use", "", "", UsePersonalItem);
+        specs.Add(new CardGridSpec("Use", "", "", UsePersonalItem));
+        abilityPager.SetSpecs(specs);
     }
     void SendSelectedItemToParty()
     {
@@ -724,16 +766,22 @@ void SpendPoint()
     }
     void RebuildPartyInventoryPickerCards()
     {
-        ClearContentCards();
+        SwitchGridPager(partyInventoryPager);
+        if(equipmentDetailText != null)
+        {
+            equipmentDetailText.gameObject.SetActive(true);
+            equipmentDetailText.text = $"<size=140%><color=#F2F2F2>Choose an item</color></size>\n<size=80%><color={colorMuted}>from party inventory</color></size>";
+        }
+        if(changeEquipmentButton != null) changeEquipmentButton.gameObject.SetActive(false);
+        List<CardGridSpec> specs = new List<CardGridSpec>();
         if(InventoryManager.instance == null) return;
-        bool any = false;
         foreach(Baggable item in InventoryManager.instance.items)
         {
-            any = true;
             Baggable captured = item;
-            SpawnContentCard(captured.DisplayName, "", "", () => AddItemToSelectedCharacter(captured));
+            specs.Add(new CardGridSpec(captured.DisplayName, "", "", () => AddItemToSelectedCharacter(captured)));
         }
-        if(!any) SpawnContentCard("Party Inventory is empty.", "", "", () => { }, false);
+        if(specs.Count == 0) specs.Add(new CardGridSpec("Party Inventory is empty.", "", "", () => { }, false));
+        partyInventoryPager.SetSpecs(specs);
     }
     void AddItemToSelectedCharacter(Baggable item)
     {
@@ -743,14 +791,13 @@ void SpendPoint()
     }
     void OpenInfoTab()
     {
-        inAbilitiesTab = false;
         navStack.Clear();
         ClearAllTabCards();
         if(partyController != null) partyController.SelectedCharacter(selectedCharacterObject);
         host.ShowRosterPanel(true);
         if(equipmentDetailText != null) equipmentDetailText.gameObject.SetActive(false);
         if(changeEquipmentButton != null) changeEquipmentButton.gameObject.SetActive(false);
-        if(bondBonusText != null) changeEquipmentButton.gameObject.SetActive(false);
+        if(bondBonusText != null) bondBonusText.gameObject.SetActive(false);
         host.ClearPageableTab();
         if(infoText != null)
         {

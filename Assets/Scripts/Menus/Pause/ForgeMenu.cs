@@ -40,8 +40,9 @@ bool elementStage2;
 public void OpenTab()
     {
         host.PrepareTabSwitch();
-        if(pager == null) pager = new GridCardPager(craftCardPrefab, craftCardParent, host, 3, 3);
+        if(pager == null) pager = new GridCardPager(craftCardPrefab, craftCardParent, host, 2, 3);
         if(forgeFeedbackText != null) forgeFeedbackText.text = "";
+        OpenCardTab();
         SetupMiniTabs();
     }
     public void HideVisuals()
@@ -131,13 +132,13 @@ public void OpenTab()
         ? $"weapon/equipment {dot} {BuildEquipmentStatLine(recipe.result)}"
         : "item";
         string materials = "";
-        foreach(MaterialAmount material in recipe.requiredMaterials)
+        foreach(CraftRecipe.MaterialAmount material in recipe.requiredMaterials)
         {
             if(material == null || material.material == null) continue;
             int owned = InventoryManager.instance.items.FindAll(i => i == material.material).Count;
             bool satisfied = owned >= material.amount;
             string color = satisfied ? colorDone : colorMuted;
-            materials += $"{material.material.itemName} <color={color}>{Mathf.Min(owned, material.amount)} / {material.amount}</color>\n";
+            materials += $"{material.material.DisplayName} <color={color}>{Mathf.Min(owned, material.amount)} / {material.amount}</color>\n";
         }
         string result = $"<size=140%><color=#F2F2F2>{resultName}</color></size>\n";
         result += $"<size=80%><color={colorMuted}>{subtitle}</color></size>\n";
@@ -161,7 +162,7 @@ public void OpenTab()
     }
     bool HasMaterials(CraftRecipe recipe)
     {
-        foreach(MaterialAmount required in recipe.requiredMaterials)
+        foreach(CraftRecipe.MaterialAmount required in recipe.requiredMaterials)
         {
             int owned = InventoryManager.instance.items.FindAll(item => item == required.material).Count;
             if(owned < required.amount) return false;
@@ -174,7 +175,7 @@ public void OpenTab()
         if(recipe == null) return;
         if(!HasMaterials(recipe)) { if(forgeFeedbackText != null) forgeFeedbackText.text = "Missing materials"; return;}
         if(recipe.goldCost > 0 && !SpendForge(recipe.goldCost)) return;
-        foreach(MaterialAmount required in recipe.requiredMaterials)
+        foreach(CraftRecipe.MaterialAmount required in recipe.requiredMaterials)
         for(int i = 0; i < required.amount; i++) InventoryManager.instance.LoseItem(required.material);
         string craftedName;
         if(recipe.result != null)
@@ -418,7 +419,9 @@ public void OpenTab()
     }
     string BuildSmeltDetail(Equipment equipment)
     {
-        string yieldText = string.Join(", ", equipment.smeltYield.Select(material => $"{material.amount}x {material.material.itemName}"));
+        string yieldText = string.Join(", ", equipment.smeltYield
+        .Where(material => material != null && material.material != null)
+        .Select(material => $"{material.amount}x {material.material.DisplayName}"));
         string result = $"<size=140%><color=#F2F2F2>{equipment.equipmentName}</color></size>\n";
         result += $"<size=80%><color={colorMuted}>break down for materials</color></size>\n\n";
         result += $"<size=75%><color={colorMuted}>YIELDS</color></size>\n<color={colorBright}>{yieldText}</color>";
@@ -427,8 +430,9 @@ public void OpenTab()
     void SmeltWeapons(Equipment equipment)
     {
         InventoryManager.instance.LoseItem(equipment);
-        foreach (MaterialAmount material in equipment.smeltYield)
+        foreach (Equipment.SmeltYield material in equipment.smeltYield)
         {
+            if(material == null || material.material == null) continue;
             for(int i = 0; i < material.amount; i++) InventoryManager.instance.PickupItem(material.material);
         }
         if(forgeFeedbackText != null) forgeFeedbackText.text = $"Smelted {equipment.equipmentName}.";

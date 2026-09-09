@@ -8,7 +8,7 @@ public class BossAI : EnemyAI
         base.CheckTransform();
         if(isTransformed && !wasTransformed && transformedSpecialAttacks.Count > 0)
         {
-            enemyStats.specialAttacks = transformedSpecialAttacks;
+            currentSpecialAttacks = transformedSpecialAttacks;
         }
     }
 }

@@ -70,6 +70,12 @@ protected void SetDisplayActive(bool active)
         spawnedEntries.Clear();
         entryOptionMap.Clear();
     }
+    public void RemoveEntry(GameObject entry)
+    {
+        if(entry == null) return;
+        entryOptionMap.Remove(entry);
+        spawnedEntries.Remove(entry);
+    }
     protected void ApplyGridSizing(int columns)
     {
         if(grid == null) return;

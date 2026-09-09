@@ -35,15 +35,17 @@ public class BondProgress
 }
 public static class BondSettings
 {
-    public static bool rankLocked = true;
     public const int CRank = 10;
     public const int BRank = 25;
     public const int ARank = 50;
-    public static BondRank GetRank(int points)
+    public static int RequiredPoints(BondRank rank)
     {
-        if(!rankLocked && points >= ARank) return BondRank.A;
-        if(!rankLocked && points >= BRank) return BondRank.B;
-        if(points >= CRank) return BondRank.C;
-        return BondRank.None;
+        switch(rank)
+        {
+            case BondRank.C: return CRank;
+            case BondRank.B: return BRank;
+            case BondRank.A: return ARank;
+            default: return 0;
+        }
     }
 }

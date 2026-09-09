@@ -14,6 +14,7 @@ public class EquipmentSaveData
     public int strength;
     public int enhancementLevel;
     public Element element;
+    public int equippedSlot = -1;
 }
 [System.Serializable]
 public class BondProgressSaveData
@@ -21,16 +22,6 @@ public class BondProgressSaveData
     public string partners;
     public int points;
     public List<bool> conversationsViewed;
-}
-[System.Serializable]
-public class PersonalEquipmentSaveData
-{
-    public string baseAssetName;
-    public string equipmentName;
-    public int strength;
-    public int enhancementLevel;
-    public Element element;
-    public int equippedSlot = -1;
 }
 [System.Serializable]
 public class CharacterSaveData
@@ -42,7 +33,7 @@ public class CharacterSaveData
     public int currentExpToNextLevel;
     public int currentLevel;
     public List<string> personalItemNames = new List<string>();
-    public List<PersonalEquipmentSaveData> personalEquipment = new List<PersonalEquipmentSaveData>();
+    public List<EquipmentSaveData> personalEquipment = new List<EquipmentSaveData>();
     public List<string> learnedSpells;
     public List<string> learnedArts;
     public List<string> learnedFusions;
@@ -72,7 +63,6 @@ public class SettingsSaveData
     public float battleTextSpeed;
     public float battleSpeedMultiplier;
     public Color textColor;
-    public Color pauseMenuPanelColor;
 }
 [System.Serializable]
 public class SaveData
@@ -87,6 +77,7 @@ public class SaveData
  public List<string> completedQuests = new List<string>();
  public List<string> failedQuests = new List<string>();
  public List<int> discoveredEnemies = new List<int>();
+ public List<string> discoveredLocations = new List<string>();
  public SettingsSaveData settings;
  public string sceneName;
  public float playerPosX, playerPosY, playerPosZ;

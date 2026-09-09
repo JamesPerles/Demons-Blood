@@ -30,6 +30,8 @@ public class EnemyAI : MonoBehaviour , ICombatant
     public int currentDefendChance;
     public int currentItemChance;
     public int currentRunChance;
+    public List<EnemyStats.EnemySpecialAttack> currentSpecialAttacks;
+    public List<EnemyStats.StealDrop> currentStealTable;
     public int currentHPThreshold;
     public int currentIncreaseAttackChance;
     public int currentIncreaseDefendChance;
@@ -58,12 +60,11 @@ public class EnemyAI : MonoBehaviour , ICombatant
     public List<ActiveStatusEffect> activeStatuses {get; set;} = new List<ActiveStatusEffect>();
     public float transformMultiplier = 1f;
     public bool isTransformed {get; protected set;} = false;
-    Dictionary<Stat, int> statStages = new Dictionary<Stat, int>();
-    public int GetStatStage(Stat stat) => statStages.TryGetValue(stat, out int value) ? value : 0;
+    StatCalculator statCalculator = new StatCalculator();
+    public int GetStatStage(Stat stat) => statCalculator.GetStatStage(stat);
     public void ChangeStatStage(Stat stat, int amount)
     {
-        int current = GetStatStage(stat);
-        statStages[stat] = Mathf.Clamp(current + amount, StatStage.MinStage, StatStage.MaxStage);
+        statCalculator.ChangeStatStage(stat, amount);
         RecalculateStats();
     }
     void Awake()
@@ -104,77 +105,25 @@ public class EnemyAI : MonoBehaviour , ICombatant
         if (shieldSlot != null && shieldSlot.equipmentType != Equipment.EquipmentType.Shield) shieldSlot = null;
         if (accessorySlot != null && accessorySlot.equipmentType != Equipment.EquipmentType.Accessory) accessorySlot = null;
         RecalculateStats();
-    } 
-    void ApplyEquipmentSlot(Equipment equipment)
-    {
-        if(equipment == null) return;
-        finalHP += equipment.hp;
-        finalMP += equipment.mp;
-        finalStrength += equipment.strength;
-        finalMagic += equipment.magic;
-        finalDefense += equipment.defense;
-        finalWisdom += equipment.wisdom;
-        finalTech += equipment.tech;
-        finalAffinity += equipment.affinity;
-        finalSpeed += equipment.speed;
-        finalLuck += equipment.luck;
-        Accuracy += equipment.Accuracy;
-        Evasion += equipment.Evasion;
-        Precision += equipment.Precision;
-        Foresight += equipment.Foresight;
-        Critical += equipment.Critical;
-        Dodge += equipment.Dodge;
     }
     void RecalculateStats()
     {
-        finalHP = maxHP;
-        finalMP = maxMP;
-        finalStrength = currentStrength;
-        finalMagic = currentMagic;
-        finalDefense = currentDefense;
-        finalWisdom = currentWisdom;
-        finalTech = currentTech;
-        finalAffinity = currentAffinity;
-        finalSpeed = currentSpeed;
-        finalLuck = currentLuck;
-        ApplyEquipmentSlot(weaponSlot);
-        ApplyEquipmentSlot(headSlot);
-        ApplyEquipmentSlot(bodySlot);
-        ApplyEquipmentSlot(shieldSlot);
-        ApplyEquipmentSlot(accessorySlot);
-        finalHP = Mathf.RoundToInt(finalHP * StatStage.Multiplier(GetStatStage(Stat.HP)));
-        finalMP = Mathf.RoundToInt(finalMP * StatStage.Multiplier(GetStatStage(Stat.MP)));
-        finalStrength = Mathf.RoundToInt(finalStrength * StatStage.Multiplier(GetStatStage(Stat.Strength)));
-        finalMagic = Mathf.RoundToInt(finalMagic * StatStage.Multiplier(GetStatStage(Stat.Magic)));
-        finalDefense = Mathf.RoundToInt(finalDefense * StatStage.Multiplier(GetStatStage(Stat.Defense)));
-        finalWisdom = Mathf.RoundToInt(finalWisdom * StatStage.Multiplier(GetStatStage(Stat.Wisdom)));
-        finalTech = Mathf.RoundToInt(finalTech * StatStage.Multiplier(GetStatStage(Stat.Tech)));
-        finalAffinity = Mathf.RoundToInt(finalAffinity * StatStage.Multiplier(GetStatStage(Stat.Affinity)));
-        finalSpeed = Mathf.RoundToInt(finalSpeed * StatStage.Multiplier(GetStatStage(Stat.Speed)));
-        finalLuck = Mathf.RoundToInt(finalLuck * StatStage.Multiplier(GetStatStage(Stat.Luck)));
-        finalHP = Mathf.RoundToInt(finalHP * transformMultiplier);
-        finalMP = Mathf.RoundToInt(finalMP * transformMultiplier);
-        finalStrength = Mathf.RoundToInt(finalStrength * transformMultiplier);
-        finalMagic = Mathf.RoundToInt(finalMagic * transformMultiplier);
-        finalDefense = Mathf.RoundToInt(finalDefense * transformMultiplier);
-        finalWisdom = Mathf.RoundToInt(finalWisdom * transformMultiplier);
-        finalTech = Mathf.RoundToInt(finalTech * transformMultiplier);
-        finalAffinity = Mathf.RoundToInt(finalAffinity * transformMultiplier);
-        finalSpeed = Mathf.RoundToInt(finalSpeed * transformMultiplier);
-        finalLuck = Mathf.RoundToInt(finalLuck * transformMultiplier);
-        Accuracy = finalTech + (finalLuck / 3) + (finalSpeed / 2);
-        Precision = finalAffinity + (finalLuck / 3) + (finalSpeed / 2);
-        Evasion = (finalLuck / 2) + (finalSpeed / 2) + (finalTech / 2) + (finalDefense / 5) + (finalStrength / 5);
-        Foresight = (finalLuck / 2) + (finalSpeed / 2) + (finalWisdom / 2) + (finalAffinity / 3) + (finalMagic / 4);
-        Critical = (finalTech / 3) + (finalAffinity / 3) + (finalLuck / 2);
-        Dodge = (Evasion / 2) + (finalLuck / 2);
+        StatCalculatorResult result = statCalculator.Recalculate(maxHP, maxMP, currentStrength, currentMagic,
+        currentDefense, currentWisdom, currentTech, currentAffinity, currentSpeed, currentLuck,
+        new[] {weaponSlot, headSlot, bodySlot, shieldSlot, accessorySlot }, transformMultiplier);
+        finalHP = result.finalHP; finalMP = result.finalMP;
+        finalStrength = result.finalStrength; finalMagic = result.finalMagic; finalDefense = result.finalDefense;
+        finalWisdom = result.finalWisdom; finalTech = result.finalTech; finalAffinity = result.finalAffinity;
+        finalSpeed = result.finalSpeed; finalLuck = result.finalLuck;
+        Accuracy = result.accuracy; Precision = result.precision; Evasion = result.evasion;
+        Foresight = result.foresight; Critical = result.critical; Dodge = result.dodge;
         if(currentHP > finalHP) currentHP = finalHP;
         if(currentMP > finalMP) currentMP = finalMP;
     }
     public enum EnemyActionType {Attack, Defend, Item, Run}
     public virtual EnemyStats.EnemySpecialAttack ChooseAttackMove()
     {
-        List<EnemyStats.EnemySpecialAttack> usable = enemyStats.specialAttacks.FindAll(learnable => CanAfford(learnable.learnable));
+        List<EnemyStats.EnemySpecialAttack> usable = currentSpecialAttacks.FindAll(learnable => CanAfford(learnable.learnable));
         int totalWeight = enemyStats.basicAttackWeight;
         foreach (var move in usable) totalWeight += move.weight;
         if (totalWeight <= 0) return null;

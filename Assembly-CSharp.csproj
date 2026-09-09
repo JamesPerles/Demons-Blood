@@ -57,6 +57,7 @@
     <Compile Include="Assets\Scripts\ScriptableObjects\Effects\Restore.cs" />
     <Compile Include="Assets\Scripts\Battle Scripts\EnemyAI.cs" />
     <Compile Include="Assets\Scripts\Managers\AudioManager.cs" />
+    <Compile Include="Assets\Scripts\Battle Scripts\StatCalculator.cs" />
     <Compile Include="Assets\Scripts\Menus\Battle\CommandMenu.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Learnables\Skill.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Effects\Steal.cs" />
@@ -88,6 +89,7 @@
     <Compile Include="Assets\Scripts\Managers\FlagManager.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\VertexZoom.cs" />
     <Compile Include="Assets\Scripts\Managers\SettingsManager.cs" />
+    <Compile Include="Assets\Scripts\ScriptableObjects\Items\Materials.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Quests\Quest.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\TMPro_InstructionOverlay.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Shops\ShopStats.cs" />
@@ -112,9 +114,9 @@
     <Compile Include="Assets\Scripts\Battle Scripts\Random Encounters.cs" />
     <Compile Include="Assets\Scripts\Menus\Pause\SettingsMenu.cs" />
     <Compile Include="Assets\Scripts\Menus\ShopMenu.cs" />
+    <Compile Include="Assets\Scripts\ScriptableObjects\Areas\LocationExit.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Learnables\SkillTree.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Effects\StatChangeEffect.cs" />
-    <Compile Include="Assets\Scripts\ScriptableObjects\Forge\MaterialAmount.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Items\Equipment.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Learnables\Learnable.cs" />
     <Compile Include="Assets\Scripts\Menus\Ui\SettingRowView.cs" />
@@ -135,6 +137,8 @@
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_TextEventCheck.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Learnables\Spell.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\TextMeshProFloatingText.cs" />
+    <Compile Include="Assets\Scripts\ScriptableObjects\RaceDamage.cs" />
+    <Compile Include="Assets\Scripts\Menus\TitleScreenMenu.cs" />
     <Compile Include="Assets\Scripts\Player\PlayerMovement.cs" />
     <Compile Include="Assets\Scripts\Menus\MenuBase.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_TextInfoDebugTool.cs" />

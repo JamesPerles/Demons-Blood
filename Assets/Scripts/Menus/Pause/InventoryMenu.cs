@@ -24,7 +24,7 @@ const string colorMuted = "#8A8580";
 const string colorBody = "#C9C2C2";
 const string colorBright = "#E8E4E0";
 const string dot = "\u00B7";
-enum Category { Consumables, Equipment, KeyItems }
+enum Category { Consumables, Equipment, Materials, KeyItems }
 enum Mode { Category, ChooseUseTarget, ChooseSendTarget }
 Category activeCategory = Category.Consumables;
 Mode mode = Mode.Category;
@@ -34,7 +34,7 @@ int selectedItemCount;
     public void OpenTab()
     {
         host.PrepareTabSwitch();
-        if(pager == null) pager = new GridCardPager(itemCardPrefab, itemCardParent, host, 3, 3);
+        if(pager == null) pager = new GridCardPager(itemCardPrefab, itemCardParent, host, 2, 3);
         SetupMiniTabs();
     }
     public void HideVisuals()
@@ -50,7 +50,8 @@ int selectedItemCount;
         {
             new TabDefinition("Items", () => ShowCategory(Category.Consumables)),
             new TabDefinition("Equipment", () => ShowCategory(Category.Equipment)),
-            new TabDefinition("Key Items", () => ShowCategory(Category.KeyItems)), 
+            new TabDefinition("Key Items", () => ShowCategory(Category.KeyItems)),
+              new TabDefinition("Materials", () => ShowCategory(Category.Materials)), 
         };
         host.miniTabGroup.SetTabs(tabs, 0);
     }
@@ -93,6 +94,18 @@ int selectedItemCount;
         {
             foreach(Equipment equipment in InventoryManager.instance.items.OfType<Equipment>())
             result.Add((equipment, 1));
+            return result;
+        }
+        if(activeCategory == Category.Materials)
+        {
+            Dictionary<Materials, int> materialCounts = new Dictionary<Materials, int>();
+            List<Materials> materialOrder = new List<Materials>();
+            foreach(Materials material in InventoryManager.instance.items.OfType<Materials>())
+            {
+                if(!materialCounts.ContainsKey(material)) {materialCounts[material] = 0; materialOrder.Add(material);}
+                materialCounts[material]++;
+            }
+            foreach(Materials material in materialOrder) result.Add((material, materialCounts[material]));
             return result;
         }
         Item.ItemType wantedType = activeCategory == Category.Consumables ? Item.ItemType.Consumable : Item.ItemType.KeyItem;
@@ -158,6 +171,11 @@ int selectedItemCount;
             description = "";
             extra = $"<size=75%><color={colorMuted}>STATS</color></size>\n<color={colorBright}>{BuildEquipmentStatLine(equipment)}</color>\n\n";
         }
+        else if(baggable is Materials material)
+        {
+            subtitle = "material";
+            description = material.description;
+        }
         else
         {
             subtitle = "";
@@ -187,6 +205,7 @@ int selectedItemCount;
         bool hasSelection = selectedItem != null;
         bool isKeyItem = selectedItem is Item i && i.itemType == Item.ItemType.KeyItem;
         bool isEquipment = selectedItem is Equipment;
+        bool isMaterial = selectedItem is Materials;
         SetActionButtonsVisible(hasSelection);
         if(!hasSelection) return;
         if(useButton != null) useButton.interactable = !isKeyItem;
@@ -289,7 +308,7 @@ int selectedItemCount;
             if(pager.SpawnedCards[i] == null) continue;
             EntryCard card = pager.SpawnedCards[i].GetComponent<EntryCard>();
             if(card == null) continue;
-            SetCardVisual(card, pager.SpawnedCards[i] == card);
+            SetCardVisual(card, pager.SpawnedCards[i] == entry);
         }
     }
     void SetCardVisual(EntryCard card, bool selected)
