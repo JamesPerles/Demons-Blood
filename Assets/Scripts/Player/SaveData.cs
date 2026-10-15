@@ -69,7 +69,7 @@ public class SaveData
 {
  public int gold;
  public List<string> inventoryItemNames = new List<string>();
- public List<EquipmentSaveData> invetoryEquipment = new List<EquipmentSaveData>();
+ public List<EquipmentSaveData> inventoryEquipment = new List<EquipmentSaveData>();
  public List<string> playablePartyOrder = new List<string>();
  public List<CharacterSaveData> characters = new List<CharacterSaveData>();
  public List<FlagEntry> flags = new List<FlagEntry>();

@@ -4,6 +4,7 @@ public class LoadMainMenu : MonoBehaviour
 {
     void Awake()
     {
-        SceneManager.LoadScene("Main Menu");
+        if(SceneFader.instance != null) SceneFader.instance.LoadScene("Main Menu");
+       else SceneManager.LoadScene("Main Menu");
     }
 }

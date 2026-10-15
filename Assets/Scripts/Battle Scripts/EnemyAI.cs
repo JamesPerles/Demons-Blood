@@ -52,6 +52,7 @@ public class EnemyAI : MonoBehaviour , ICombatant
     public Equipment bodySlot;
     public Equipment shieldSlot;
     public Equipment accessorySlot;
+    public PersonalInventory personalInventory = new PersonalInventory();
     public List<Spell> learnedSpells = new List<Spell>();
     public List<Art> learnedArts = new List<Art>();
     public List<Fusion> learnedFusions = new List<Fusion>();
@@ -94,6 +95,8 @@ public class EnemyAI : MonoBehaviour , ICombatant
         currentIncreaseRunChance = enemyStats.increaseRunChance;
         currentMagicAffinity = enemyStats.magicAffinity;
         statusImmunities  = new List<StatusEffect>(enemyStats.immunities);
+        currentSpecialAttacks = new List<EnemyStats.EnemySpecialAttack>(enemyStats.specialAttacks);
+        currentStealTable = new List<EnemyStats.StealDrop>(enemyStats.stealTable);
         RecalculateStats();
     }
     public bool IsImmuneToStatus(StatusEffect status) => status != null && statusImmunities.Contains(status);

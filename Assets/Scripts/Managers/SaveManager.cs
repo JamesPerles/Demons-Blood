@@ -40,9 +40,9 @@ public class SaveManager : MonoBehaviour
         data.inventoryItemNames = new List<string>();
         foreach(Item item in InventoryManager.instance.items.OfType<Item>())
         if(item != null) data.inventoryItemNames.Add(item.name);
-        data.invetoryEquipment = new List<EquipmentSaveData>();
+        data.inventoryEquipment = new List<EquipmentSaveData>();
         foreach(Equipment equipment in InventoryManager.instance.items.OfType<Equipment>())
-        data.invetoryEquipment.Add(SaveEquipment(equipment));
+        data.inventoryEquipment.Add(SaveEquipment(equipment));
         data.playablePartyOrder = new List<string>();
         data.characters = new List<CharacterSaveData>();
         foreach(GameObject characterObject in PlayerParty.instance.playableCharacters)
@@ -181,7 +181,7 @@ public class SaveManager : MonoBehaviour
             if(item != null) InventoryManager.instance.PickupItem(item);
             else Debug.LogWarning($"Could not find Item '{itemName}' in Resources/{ItemsFolder}");
         }
-        foreach(EquipmentSaveData equip in data.invetoryEquipment)
+        foreach(EquipmentSaveData equip in data.inventoryEquipment)
         {
             Equipment loaded = LoadEquipment(equip);
             if(loaded != null) InventoryManager.instance.PickupItem(loaded);
@@ -191,6 +191,11 @@ public class SaveManager : MonoBehaviour
         {
             GameObject found = FindCharacter(id);
             if(found != null) reordered.Add(found);
+        }
+        if(PlayerParty.instance != null)
+        {
+            foreach(GameObject currentCharacter in PlayerParty.instance.playableCharacters)
+            if(currentCharacter != null && !reordered.Contains(currentCharacter)) reordered.Add(currentCharacter);
         }
         if (reordered.Count > 0) PlayerParty.instance.SetOrder(reordered.ToArray());
         foreach(CharacterSaveData charac in data.characters)
@@ -230,18 +235,22 @@ public class SaveManager : MonoBehaviour
         if(location != null) location.discovered = 
         data.discoveredLocations != null && data.discoveredLocations.Contains(location.name);
         if(SettingsManager.instance != null) SettingsManager.instance.LoadSettings(data.settings);
-        AsyncOperation operation = SceneManager.LoadSceneAsync(data.sceneName);
-        while (!operation.isDone) yield return null;
-        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
-        if(playerObj != null)
-            {
-                playerObj.transform.position = new Vector3(data.playerPosX, data.playerPosY, data.playerPosZ);
-            }
-            else
-            {
-                Debug.LogWarning("Could not find Player");
-            }
+        Vector3 savedPlayerPos = new Vector3(data.playerPosX, data.playerPosY, data.playerPosZ);
+        if(SceneFader.instance != null) SceneFader.instance.LoadScene(data.sceneName, () => LoadedPlayerLocation(savedPlayerPos));
+        else yield return StartCoroutine(LoadSceneFallback(data.sceneName, savedPlayerPos));
         Debug.Log("Game Loaded");
+    }
+    void LoadedPlayerLocation(Vector3 savedPlayerPos)
+    {
+        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+        if(playerObj != null) playerObj.transform.position = savedPlayerPos;
+        else Debug.LogWarning("Could not find Player");
+    }
+    IEnumerator LoadSceneFallback(string sceneName, Vector3 savedPlayerPos)
+    {
+         AsyncOperation operation = SceneManager.LoadSceneAsync(sceneName);
+        while (!operation.isDone) yield return null;
+        LoadedPlayerLocation(savedPlayerPos);
     }
     GameObject FindCharacter(string playerStatsName)
     {

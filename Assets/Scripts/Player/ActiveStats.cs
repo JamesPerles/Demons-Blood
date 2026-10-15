@@ -197,22 +197,22 @@ public class ActiveStats : MonoBehaviour, ICombatant
     {
         switch (bonus.stat)
         {
-            case Stat.HP: finalHP += bonus.amount; break;
-            case Stat.MP: finalMP += bonus.amount; break;
-            case Stat.Strength: finalStrength += bonus.amount; break;
-            case Stat.Magic: finalMagic += bonus.amount; break;
-            case Stat.Defense: finalDefense += bonus.amount; break;
-            case Stat.Wisdom: finalWisdom += bonus.amount; break;
-            case Stat.Tech: finalTech += bonus.amount; break;
-            case Stat.Affinity: finalAffinity += bonus.amount; break;
-            case Stat.Speed: finalSpeed += bonus.amount; break;
-            case Stat.Luck: finalLuck += bonus.amount; break;
-            case Stat.Accuracy: Accuracy += bonus.amount; break;
-            case Stat.Evasion: Evasion += bonus.amount; break;
-            case Stat.Precision: Precision += bonus.amount; break;
-            case Stat.Foresight: Foresight += bonus.amount; break;
-            case Stat.Critical: Critical += bonus.amount; break;
-            case Stat.Dodge: Dodge += bonus.amount; break;
+            case Stat.HP: result.finalHP += bonus.amount; break;
+            case Stat.MP: result.finalMP += bonus.amount; break;
+            case Stat.Strength: result.finalStrength += bonus.amount; break;
+            case Stat.Magic: result.finalMagic += bonus.amount; break;
+            case Stat.Defense: result.finalDefense += bonus.amount; break;
+            case Stat.Wisdom: result.finalWisdom += bonus.amount; break;
+            case Stat.Tech: result.finalTech += bonus.amount; break;
+            case Stat.Affinity: result.finalAffinity += bonus.amount; break;
+            case Stat.Speed: result.finalSpeed += bonus.amount; break;
+            case Stat.Luck: result.finalLuck += bonus.amount; break;
+            case Stat.Accuracy: result.accuracy += bonus.amount; break;
+            case Stat.Evasion: result.evasion += bonus.amount; break;
+            case Stat.Precision: result.precision += bonus.amount; break;
+            case Stat.Foresight: result.foresight += bonus.amount; break;
+            case Stat.Critical: result.critical += bonus.amount; break;
+            case Stat.Dodge: result.dodge += bonus.amount; break;
         }
     }
     void RecalculateStats()
@@ -387,6 +387,7 @@ public void Unequip(Equipment.EquipmentType slotType)
         currentLevel++;
         currentExpToNextLevel = Mathf.RoundToInt(currentExpToNextLevel * 1.2f);
         List<string> statsGained = ApplyStatGrowth();
+        RecalculateStats();
         skillPoints += 5;
         CheckLearnSet(previousLevel, currentLevel);
         return statsGained;
@@ -491,7 +492,7 @@ public void Unequip(Equipment.EquipmentType slotType)
     {
         isTransformed = false;
         currentMP = 0;
-        transformMultiplier = 1f /1f;
+        transformMultiplier = 1f;
         RecalculateStats();
     }
     public void ResetTransformStat()

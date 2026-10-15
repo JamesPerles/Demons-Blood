@@ -6,7 +6,6 @@ using TMPro;
 public class InventoryMenu : MonoBehaviour, ICardHighlightHandler, ITabHider, IPageableTab
 {
 public PauseMenu host;
- public TextMeshProUGUI itemFeedbackText;
  public GameObject itemCardPrefab;
  public Transform itemCardParent;
  public Button useButton;
@@ -30,7 +29,6 @@ Category activeCategory = Category.Consumables;
 Mode mode = Mode.Category;
 GridCardPager pager;
 Baggable selectedItem;
-int selectedItemCount;
     public void OpenTab()
     {
         host.PrepareTabSwitch();
@@ -123,7 +121,7 @@ int selectedItemCount;
     void RebuildCards(int page)
     {
         if(pager == null || itemCardPrefab == null || itemCardParent == null) return;
-        if(mode != Mode.Category) {RebuildTargetCards(); return; }
+        if(mode != Mode.Category) {RebuildTargetCards(page); return; }
         List<(Baggable item, int count)> grouped = BuildGroupedList();
         List<CardGridSpec> specs = new List<CardGridSpec>();
         foreach(var entry in grouped)
@@ -134,9 +132,8 @@ int selectedItemCount;
             specs.Add(new CardGridSpec(entry.item.DisplayName, sub, BuildItemDetail(capturedItem, capturedCount), () =>
             {
                     selectedItem = capturedItem;
-                    selectedItemCount = capturedCount;
                     RefreshActionButtons();
-                }));;
+                }));
         }
         pager.SetSpecs(specs, page);
         if(host.pageText != null && pager.MaxPage == 0) host.pageText.text = "";
@@ -205,7 +202,6 @@ int selectedItemCount;
         bool hasSelection = selectedItem != null;
         bool isKeyItem = selectedItem is Item i && i.itemType == Item.ItemType.KeyItem;
         bool isEquipment = selectedItem is Equipment;
-        bool isMaterial = selectedItem is Materials;
         SetActionButtonsVisible(hasSelection);
         if(!hasSelection) return;
         if(useButton != null) useButton.interactable = !isKeyItem;
@@ -223,12 +219,10 @@ int selectedItemCount;
     }
     public void NextPage()
     {
-        if(mode != Mode.Category) return;
         RebuildCards(pager.CurrentPage + 1 > pager.MaxPage ? 0 : pager.CurrentPage + 1);
     }
     public void PreviousPage()
     {
-        if(mode != Mode.Category) return;
         RebuildCards(pager.CurrentPage - 1 < 0 ? pager.MaxPage : pager.CurrentPage - 1);
     }
     void BeginUseFlow()
@@ -247,10 +241,10 @@ int selectedItemCount;
     {
         if(selectedItem == null) return;
         InventoryManager.instance.LoseItem(selectedItem);
-        if(itemFeedbackText != null) itemFeedbackText.text = $"Discarded {selectedItem.DisplayName}";
+        if(PopupManager.instance != null) PopupManager.instance.Show($"Discarded {selectedItem.DisplayName}");
         RebuildCards(0);
     }
-    void RebuildTargetCards()
+    void RebuildTargetCards(int page = 0)
     {
         List<CardGridSpec> specs = new List<CardGridSpec>();
         specs.Add(new CardGridSpec("Cancel", "", "Return to the item list.", () => {mode = Mode.Category; RebuildCards(0); }));
@@ -264,7 +258,7 @@ int selectedItemCount;
             specs.Add(new CardGridSpec(character.currentName, $"HP {character.currentHP}/{character.finalHP}", $"HP {character.currentHP}/{character.finalHP}", () => ConfirmTarget(capturedCharacter)));
         }
     }
-        pager.SetSpecs(specs);
+        pager.SetSpecs(specs, page);
         if(host.detailText != null)
         host.detailText.text = mode == Mode.ChooseUseTarget
         ? $"<size=140%><color=#F2F2F2>Choose a target</color></size>\n<size=80%><color={colorMuted}>who should receive {selectedItem?.DisplayName}?</color></size>"
@@ -282,20 +276,20 @@ int selectedItemCount;
                 foreach(Effect effect in item.effects)
                 if(effect != null) StartCoroutine(effect.Apply(target, target));
                 InventoryManager.instance.LoseItem(item);
-                if(itemFeedbackText != null) itemFeedbackText.text = $"Used {item.itemName} on {target.currentName}.";
+                if(PopupManager.instance != null) PopupManager.instance.Show($"Used {item.itemName} on {target.currentName}.");
             }
             else if(selectedItem is Equipment equipment)
             {
                 InventoryManager.instance.AddPersonalInventory(equipment, target);
                 target.Equip(equipment);
-                if(itemFeedbackText != null) itemFeedbackText.text = $"Equipped {equipment.equipmentName} on {target.currentName}.";
+                 if(PopupManager.instance != null) PopupManager.instance.Show($"Equipped {equipment.equipmentName} on {target.currentName}.");
             }
         }
         else if(mode == Mode.ChooseSendTarget)
         {
             bool moved = InventoryManager.instance.AddPersonalInventory(selectedItem, target);
-            if(itemFeedbackText != null)
-            itemFeedbackText.text = moved ? $"Sent {selectedItem.DisplayName} to {target.currentName}." : $"{target.currentName}'s bag is full.";
+            if(PopupManager.instance != null)
+            PopupManager.instance.Show(moved ? $"Sent {selectedItem.DisplayName} to {target.currentName}." : $"{target.currentName}'s bag is full.");
         }
         mode = Mode.Category;
         RebuildCards(0);

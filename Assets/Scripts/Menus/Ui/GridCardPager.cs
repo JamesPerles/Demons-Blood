@@ -69,7 +69,7 @@ public class GridCardPager
     public void SelectFirstOnPage()
     {
         if(spawnedCards.Count == 0 || currentPageSpecs.Count == 0) return;
-        host?.EntryHighlight(spawnedCards[0]);
+        host?.FocusEntry(spawnedCards[0]);
         currentPageSpecs[0].onSelect?.Invoke();
     }
     public void Clear()
@@ -96,6 +96,7 @@ public class GridCardPager
         currentPageSpecs = allSpecs.GetRange(start < 0 ? 0 : start, Mathf.Max(0, count));
         if(host != null && host.pageText != null)
         host.pageText.text = MaxPage > 0 ? $"page {currentPage + 1} / {MaxPage + 1}" : "";
+        if(host != null && spawnedCards.Count > 0) host.FocusEntry(spawnedCards[0]);
     }
     Transform GetRow()
     {
@@ -155,7 +156,7 @@ public class GridCardPager
                 System.Action onSelect = spec.onSelect;
                 card.button.onClick.AddListener(() =>
                 {
-                    host?.EntryHighlight(capturedCard);
+                    host?.FocusEntry(capturedCard);
                     onSelect?.Invoke();
                 });
             }

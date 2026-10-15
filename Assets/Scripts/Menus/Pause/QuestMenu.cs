@@ -123,7 +123,7 @@ void ShowQuestList(bool mainQuests)
                 int chosen = progress.GetChosenObjective(progress.currentStage);
                 if(chosen >= 0 && chosen < stage.objectives.Count)
                 {
-                    objectives = $"color={colorDone}>{checkMark}</color> {stage.objectives[chosen].description}\n";
+                    objectives = $"<color={colorDone}>{checkMark}</color> {stage.objectives[chosen].description}\n";
                 }
                 else
                 {
@@ -147,7 +147,7 @@ void ShowQuestList(bool mainQuests)
     }
     string BuildCompletedDetail(Quest quest)
     {
-        string subtitle = (quest.isMainQuest ? "Main Quest" : "Side Quest") + " {dot}; completed";
+        string subtitle = (quest.isMainQuest ? "Main Quest" : "Side Quest") + $" {dot} completed";
         string reward = BuildRewardLine(quest.goldReward, quest.expReward, quest.itemRewards, quest.equipmentRewards);
         return BuildDetailBlock(quest.questName, subtitle, quest.description, "", reward);
     }
@@ -172,7 +172,7 @@ void ShowQuestList(bool mainQuests)
         if(exp > 0) parts.Add($"{exp} exp");
         if(items != null) foreach(Item item in items) if(item != null) parts.Add(item.name);
         if(equipment != null) foreach(Equipment equip in equipment) if(equip != null) parts.Add(equip.name);
-        return parts.Count > 0 ? string.Join($" {dot}; ", parts) : "None";
+        return parts.Count > 0 ? string.Join($" {dot} ", parts) : "None";
     }
         public void OnCardHighlighted(GameObject entry)
     {

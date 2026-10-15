@@ -179,6 +179,8 @@ public void OpenTab()
     void TravelToLocation(LocationData location)
     {
         if(location == null || string.IsNullOrEmpty(location.sceneName)) return;
-        SceneManager.LoadScene(location.sceneName);
+        host.Close();
+        if(SceneFader.instance != null) SceneFader.instance.LoadScene(location.sceneName);
+        else SceneManager.LoadScene(location.sceneName);
     }
 }

@@ -2,6 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 public class LoadMainGame : MenuBase
 {
     public GameObject saveSlotCardPrefab;
@@ -30,7 +31,25 @@ public class LoadMainGame : MenuBase
     }
     void Update()
     {
+        SyncHighlightToSelection();
+        EnsureSelection();
         if(onSaveScreen && Input.GetKeyDown(KeyCode.Backspace)) ShowOptions();
+    }
+    void EnsureSelection()
+    {
+        if(EventSystem.current == null) return;
+        GameObject current = EventSystem.current.currentSelectedGameObject;
+        if(current != null && current.activeInHierarchy) return;
+        bool arrowPressed = Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.DownArrow)
+        || Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.RightArrow);
+        if(!arrowPressed) return;
+        GameObject first = spawnedEntries.Find(entry =>
+        {
+            if(entry == null || !entry.activeInHierarchy) return false;
+            Selectable selectable = GetEntrySelectable(entry);
+            return selectable == null || selectable.IsInteractable();
+        });
+        if(first != null) FocusEntry(first);
     }
     void ShowOptions()
     {
@@ -57,7 +76,8 @@ public class LoadMainGame : MenuBase
             Debug.LogWarning("LoadMainGame: scene not set");
             return;
         }
-        SceneManager.LoadScene(newGameSceneName);
+        if(SceneFader.instance != null) SceneFader.instance.LoadScene(newGameSceneName);
+        else SceneManager.LoadScene(newGameSceneName);
     }
     void OpenSavesScreen()
     {

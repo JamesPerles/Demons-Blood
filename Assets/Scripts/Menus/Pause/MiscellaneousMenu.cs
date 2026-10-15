@@ -59,6 +59,7 @@ public class MiscellaneousMenu : MonoBehaviour, ICardHighlightHandler, ITabHider
         if(settingsController != null) settingsController.HideVisuals();
         host.ShowSplitPanel();
         host.SetCardHighlightHandler(this);
+        activePager = bestiaryPager;
         host.SetPageableTab(this);
         RebuildBestiaryCards();
     }
@@ -168,7 +169,7 @@ public class MiscellaneousMenu : MonoBehaviour, ICardHighlightHandler, ITabHider
         result += $"<size=80%><color={colorMuted}>Lv. {enemy.level}</color></size>\n";
         result += $"<color={colorBody}>{enemy.dexEntry}</color>\n\n";
         result += $"<size=75%><color={colorMuted}>STATS</color></size>\n";
-        result += $"<color={colorBright}>HP {enemy.hp}{dot} MP {enemy.mp} {dot} STR {enemy.strength} {dot} MAG {enemy.magic} {dot} DEF{enemy.defense} {dot} WIS {enemy.wisdom} {dot} TEC {enemy.tech} {dot} AFF {enemy.affinity} {dot} SPD {enemy.speed} {dot} LCK {enemy.luck}</color>";
+        result += $"<color={colorBright}>HP {enemy.hp}{dot} MP {enemy.mp} {dot} STR {enemy.strength} {dot} MAG {enemy.magic} {dot} DEF{enemy.defense} {dot} WIS {enemy.wisdom} {dot} TEC {enemy.tech} {dot} AFF {enemy.affinity} {dot} SPD {enemy.speed} {dot} LCK {enemy.luck}</color>\n\n";
         if(enemy.magicAffinity != Element.None)
         {
             result += $"<size=75%><color={colorMuted}>AFFINITY</color></size>\n";
@@ -191,7 +192,7 @@ public class MiscellaneousMenu : MonoBehaviour, ICardHighlightHandler, ITabHider
             }
             result += "\n";
         }
-        if(enemy.stealTable != null && enemy.lootTable.Count > 0)
+        if(enemy.stealTable != null && enemy.stealTable.Count > 0)
         {
              result += $"<size=75%><color={colorMuted}>STEALABLE</color></size>\n";
              foreach(EnemyStats.StealDrop steal in enemy.stealTable)
@@ -223,16 +224,6 @@ public class MiscellaneousMenu : MonoBehaviour, ICardHighlightHandler, ITabHider
             card.backgroundImage.color = bg;
         }
         if(card.titleText != null) card.titleText.color = selected ? cardTitleSelected : cardTitleDefault;
-    }
-    void SaveGame()
-    {
-        if(SaveManager.instance != null) SaveManager.instance.SaveGame();
-       else Debug.LogWarning("SaveManager missing Saving failed."); 
-    }
-    void LoadGame()
-    {
-        if(SaveManager.instance != null) SaveManager.instance.LoadGame();
-       else Debug.LogWarning("SaveManager missing Loading failed."); 
     }
      void QuitGame()
     {

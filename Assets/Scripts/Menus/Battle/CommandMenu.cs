@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -28,6 +29,7 @@ public class CommandMenu : SubMenu
     Dictionary<GameObject, MenuOption> targetOptionMap = new Dictionary<GameObject, MenuOption>();
     bool isTargeting = false;
     string targetingBreadcrumbSuffix = "";
+    public KeyCode viewKey = KeyCode.V;
     void Awake() 
     {
     if (instance == null) instance = this; else Destroy(gameObject);
@@ -40,13 +42,19 @@ public class CommandMenu : SubMenu
     {
         if(Input.GetKeyDown(KeyCode.Backspace))
         {
+            if(CombatantViewer.instance != null && CombatantViewer.instance.IsOpen) {CombatantViewer.instance.Close(); return; }
             if(isTargeting) EndTargeting();
             else if(screenHistory.Count > 0) PreviousScreen();
             else if (!actionSelected) undoRequested = true;
         }
         if (Input.GetKeyDown(KeyCode.Space) && screenHistory.Count > 0) NextPage();
         if(Input.GetKeyDown(KeyCode.RightArrow)) EdgePage(1);
-        if(Input.GetKeyDown(KeyCode.LeftArrow)) EdgePage(-1);   
+        if(Input.GetKeyDown(KeyCode.LeftArrow)) EdgePage(-1); 
+        if(Input.GetKeyDown(viewKey))
+        {
+            if(CombatantViewer.instance != null && CombatantViewer.instance.IsOpen) CombatantViewer.instance.Close();
+            else if(!isTargeting && !actionSelected) BeginViewing();
+        }  
     }
     void EdgePage(int direction)
     {
@@ -306,6 +314,35 @@ public class CommandMenu : SubMenu
             }));
         }
         StartTargeting(allyOptions, enemyOptions, "Target");
+    }
+    void BeginViewing()
+    {
+        List<ICombatant> allies = new List<ICombatant>();
+        List<ICombatant> enemies = new List<ICombatant>();
+        if(BattleManager.instance != null)
+        {
+            allies.AddRange(BattleManager.instance.GetActivePlayers().Where(player => player.currentHP > 0).Cast<ICombatant>());
+            enemies.AddRange(BattleManager.instance.GetLivingEnemies().Cast<ICombatant>());
+        }
+        List<MenuOption> allyOptions = new List<MenuOption>();
+        foreach(ICombatant combatant in allies)
+        {
+            ICombatant captured = combatant;
+            allyOptions.Add(new MenuOption(captured.currentName, () => { EndTargeting(); OpenCombatantView(captured); }));
+        }
+        List<MenuOption> enemyOptions = new List<MenuOption>();
+        foreach(ICombatant combatant in enemies)
+        {
+            ICombatant captured = combatant;
+            enemyOptions.Add(new MenuOption(captured.currentName, () => { EndTargeting(); OpenCombatantView(captured); }));
+        }
+        StartTargeting(allyOptions, enemyOptions, "View");
+    }
+    void OpenCombatantView(ICombatant combatant)
+    {
+        if(CombatantViewer.instance == null) return;
+        if(combatant is ActiveStats player) CombatantViewer.instance.Open(player);
+        else if(combatant is EnemyAI enemy) CombatantViewer.instance.Open(enemy);
     }
     void ApplyTargetGridSizing(Transform grid)
     {

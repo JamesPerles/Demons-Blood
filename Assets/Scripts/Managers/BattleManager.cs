@@ -74,6 +74,7 @@ void Start()
                     players.Add (activeStats); 
                     activeStats.ResetTransformStat(); 
                     activeStats.ResetStatStages();
+                    activeStats.currentMagicAffinity = activeStats.playerStats.magicAffinity;
                     Debug.Log($"Found player: {activeStats.currentName}");}
                 else Debug.LogError("Player missing ActiveStats");
             }
@@ -130,7 +131,8 @@ void Start()
                 yield return
                 StartCoroutine(BattleTextBox.instance.ShowMessage("Escape Successful"));
                 StopAllCoroutines();
-                SceneManager.LoadScene(RandomEncounter.previousSceneName);
+                if(SceneFader.instance != null) SceneFader.instance.LoadScene(RandomEncounter.previousSceneName);
+                else SceneManager.LoadScene(RandomEncounter.previousSceneName);
             }
             else yield return StartCoroutine(EndBattle());
         }
@@ -384,6 +386,7 @@ void Start()
                         players[swapIndex] = incoming;
                         incoming.ResetTransformStat();
                         incoming.ResetStatStages();
+                        incoming.currentMagicAffinity = incoming.playerStats.magicAffinity;
                         foreach(ActiveStats plyr in players) plyr.SetBondPartners(players);
                         UpdateUI();
                         yield return StartCoroutine(BattleTextBox.instance.ShowMessage($"{player.currentName} swap out for {incoming.currentName}."));
@@ -412,7 +415,7 @@ void Start()
                    ICombatant itemTarget = (target != null && target.currentHP > 0) ? target : player;
                    yield return StartCoroutine
                    (BattleTextBox.instance.ShowMessage($"{player.currentName} uses {item.itemName} on {itemTarget.currentName}!"));
-                   if(item.effects != null) foreach (Effect effect in item.effects) if(effect != null) StartCoroutine(effect.Apply(player, itemTarget));
+                   if(item.effects != null) foreach (Effect effect in item.effects) if(effect != null) yield return StartCoroutine(effect.Apply(player, itemTarget));
                    InventoryManager.instance.LoseItem(item);
                    break;
                     case CommandMenu.PlayerActionType.Art: 
@@ -486,6 +489,25 @@ void Start()
             UpdateUI();
             yield return StartCoroutine(ScaledWait(0.5f));
         } 
+        IEnumerator EnemyUseItem(EnemyAI enemy)
+    {
+        List<Item> consumables = enemy.personalInventory.items.OfType<Item>()
+        .Where(item => item.itemType == Item.ItemType.Consumable).ToList();
+        if(consumables.Count == 0)
+        {
+            List<ActiveStats> livingPlayers = players.FindAll(player => player.currentHP > 0);
+            ActiveStats fallbackTarget = enemy.ChooseTarget(livingPlayers);
+            if(fallbackTarget != null)
+            yield return StartCoroutine(ResolveAttack(enemy, fallbackTarget, DamageType.Physical, 0, "attacks", enemy.weaponSlot, null, Element.None));
+            yield break;
+        }
+        Item chosen = consumables[Random.Range(0, consumables.Count)];
+        yield return StartCoroutine(BattleTextBox.instance.ShowMessage($"{enemy.currentName} uses {chosen.itemName}!"));
+        if(chosen.effects != null)
+        foreach(Effect effect in chosen.effects)
+        if(effect != null) yield return StartCoroutine(effect.Apply(enemy, enemy));
+        enemy.personalInventory.RemoveItem(chosen);
+    }
          IEnumerator EnemyTurn(EnemyAI enemy)
         {
             enemy.ChangeAI();
@@ -588,7 +610,8 @@ void Start()
                yield return StartCoroutine(BattleRewards());
                yield return StartCoroutine(ScaledWait(1.5f));
                 StopAllCoroutines();
-                SceneManager.LoadScene(RandomEncounter.previousSceneName);
+                if(SceneFader.instance != null) SceneFader.instance.LoadScene(RandomEncounter.previousSceneName);
+                else SceneManager.LoadScene(RandomEncounter.previousSceneName);
             }
         }
     void PartyDefeat()
@@ -606,7 +629,8 @@ void Start()
     }
     void DeathScreen()
     {
-        SceneManager.LoadScene(deathSceneName);
+        if(SceneFader.instance != null) SceneFader.instance.LoadScene(deathSceneName);
+        else SceneManager.LoadScene(deathSceneName);
     }
     void ReviveInTown()
     {
@@ -626,6 +650,7 @@ void Start()
             Debug.LogWarning("No town visited.");
             DeathScreen();
         }
+        else if(SceneFader.instance != null) SceneFader.instance.LoadScene(lastTown);
         else SceneManager.LoadScene(lastTown);
     }
     IEnumerator BattleRewards()

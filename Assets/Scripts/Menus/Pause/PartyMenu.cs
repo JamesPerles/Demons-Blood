@@ -33,7 +33,6 @@ const string colorBody = "#C9C2C2";
 const string colorBright = "#E8E4E0";
 const string dot = "\u00B7";
 bool inCharacterDetail;
-bool inAbilitiesTab;
 public bool InCharacterDetail => inCharacterDetail;
 ActiveStats selectedCharacter;
 GameObject selectedCharacterObject;
@@ -55,7 +54,6 @@ bool inBondPartnerList;
 public void ResetState()
     {
         inCharacterDetail = false;
-        inAbilitiesTab = false;
         HideVisuals();
        if(host.miniTabGroup != null) host.miniTabGroup.Hide();
     }
@@ -84,6 +82,7 @@ public void OpenTab()
         {
             partyController.Init(host);
             host.SetCardHighlightHandler(partyController);
+            host.SetPageableTab(partyController);
             partyController.Refresh(OpenCharacterDetail);
         }
     }
@@ -94,14 +93,12 @@ public void OpenTab()
         selectedCharacter = character;
         selectedCharacterObject = characterObject;
         inCharacterDetail = true;
-        inAbilitiesTab = false;
         if(partyController != null) partyController.SelectedCharacter(characterObject);
         SetupCharacterTabs();
     }
     public void ExitCharacterDetail()
     {
         inCharacterDetail = false;
-        inAbilitiesTab = false;
         navStack.Clear();
         ClearAllTabCards();
         if(host.miniTabGroup != null) host.miniTabGroup.Hide();
@@ -141,7 +138,7 @@ public void OpenTab()
         if(!inCharacterDetail)
         {
             if(partyController != null && Input.GetKeyDown(rosterSwapKey))
-            partyController.ToggleSwapOnFocused(EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null);
+            partyController.ToggleSwapOnFocused(host.EntryForSelection(EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null));
             return;
         }
     }
@@ -160,12 +157,10 @@ public void OpenTab()
     public void NextPage()
     {
         activeGridPager?.NextPage();
-        activeGridPager?.SelectFirstOnPage();
     }
     public void PreviousPage()
     {
         activeGridPager?.PreviousPage();
-        activeGridPager?.SelectFirstOnPage();
     }
     void SpawnContentCard(string title, string subText, string detail, System.Action onSelect, bool enabled = true)
     {
@@ -187,7 +182,7 @@ public void OpenTab()
             {
                 card.button.onClick.AddListener(() =>
                 {
-                    host.EntryHighlight(capturedCard);
+                    host.FocusEntry(capturedCard);
                     onSelect?.Invoke();
                 });
             }
@@ -263,7 +258,6 @@ public void OpenTab()
     }
     void OpenStatsTab()
     {
-        inAbilitiesTab = false;
         navStack.Clear();
         viewingEquipmentDetail = false;
         inEquipmentPicker = false;
@@ -438,7 +432,6 @@ void AfterEquipmentChange(Equipment.EquipmentType slotType)
     }
     void AbilitiesTab()
     {
-        inAbilitiesTab = true;
         navStack.Clear();
         EnsurePagers();
         if(partyController != null) partyController.SelectedCharacter(selectedCharacterObject);
@@ -618,6 +611,7 @@ void SpendPoint()
             bondCardData.Add(data);
         }
         if(bondCardData.Count > 0 ) UpdateBondBonusText(bondCardData[0]);
+        if(spawnedContentCards.Count > 0) host.FocusEntry(spawnedContentCards[0]); 
     }
     void UpdateBondBonusText(BondData data)
     {
@@ -669,7 +663,6 @@ void SpendPoint()
     }
     void OpenInventoryTab()
     {
-        inAbilitiesTab = false;
         navStack.Clear();
         if(partyController != null) partyController.SelectedCharacter(selectedCharacterObject);
         host.ShowRosterPanel(false);

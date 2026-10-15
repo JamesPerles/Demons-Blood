@@ -1,4 +1,4 @@
-public interface IPageableTab //what is this for
+public interface IPageableTab
 {
     void NextPage();
     void PreviousPage();

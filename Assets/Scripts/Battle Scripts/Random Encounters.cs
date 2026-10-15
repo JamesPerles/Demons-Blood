@@ -60,10 +60,14 @@ public class RandomEncounter : MonoBehaviour
         BattleManager.SelectedEncounter = selectedEncounter;
         RollEncounterType();
         previousSceneName = SceneManager.GetActiveScene().name;
-        playerMovement.enabled = false;
-        playerSprite.enabled = false;
-        playerCollider.enabled = false;
-        SceneManager.LoadScene("BattleScene");
+        if(SceneFader.instance != null) 
+        SceneFader.instance.LoadScene("BattleScene", () => {playerSprite.enabled = false; playerCollider.enabled = false; }, restoreMovementAfter: false);
+        else
+        {
+            playerSprite.enabled = false;
+            playerCollider.enabled = false;
+            SceneManager.LoadScene("BattleScene");
+        }
         EncounterThreshold();
     }
     void RollEncounterType()

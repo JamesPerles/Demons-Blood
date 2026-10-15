@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 public class MenuOption
 {
     public string label;
@@ -59,6 +60,7 @@ public TextMeshProUGUI detailText;
 public TextMeshProUGUI pageText;
 protected List<GameObject> spawnedEntries = new List<GameObject>();
 protected Dictionary<GameObject, MenuOption> entryOptionMap = new Dictionary<GameObject, MenuOption>();
+protected GameObject highlightedEntry;
 protected void SetDisplayActive(bool active)
     {
         if(menuDisplay != null) menuDisplay.SetActive(active);
@@ -69,6 +71,7 @@ protected void SetDisplayActive(bool active)
         foreach (var entry in spawnedEntries) Destroy(entry);
         spawnedEntries.Clear();
         entryOptionMap.Clear();
+        highlightedEntry = null;
     }
     public void RemoveEntry(GameObject entry)
     {
@@ -136,6 +139,16 @@ protected void SetDisplayActive(bool active)
         MenuSelect relay = entry.GetComponent<MenuSelect>();
         if(relay == null) relay = entry.AddComponent<MenuSelect>();
         relay.owner = this;
+        Selectable selectable = GetEntrySelectable(entry);
+        if(selectable != null && selectable.navigation.mode != Navigation.Mode.Automatic)
+        selectable.navigation = new Navigation { mode = Navigation.Mode.Automatic};
+        if(selectable != null)
+        {
+            ColorBlock colors = selectable.colors;
+            colors.highlightedColor = colors.normalColor;
+            colors.selectedColor = colors.normalColor;
+            selectable.colors = colors;
+        }
     }
     protected void EmptyMenu(float fontSize)
     {
@@ -156,8 +169,42 @@ protected void SetDisplayActive(bool active)
     public virtual void EntryHighlight(GameObject entry)
     {
         if(!entryOptionMap.TryGetValue(entry, out MenuOption option)) return;
+        highlightedEntry = entry;
         if(detailText != null) detailText.text = option.description;
         MoveCursor(entry);
+    }
+    public Selectable GetEntrySelectable(GameObject entry)
+    {
+        if(entry == null) return null;
+        Selectable selectable = entry.GetComponent<Selectable>();
+        if(selectable == null) selectable = entry.GetComponentInChildren<Selectable>();
+        return selectable;
+    }
+    public GameObject EntryForSelection(GameObject selected)
+    {
+        if(selected == null) return null;
+        Transform current = selected.transform;
+        while(current != null)
+        {
+            if(entryOptionMap.ContainsKey(current.gameObject)) return current.gameObject; 
+            current = current.parent;
+        }
+        return null;
+    }
+    public void FocusEntry(GameObject entry)
+    {
+        if(entry == null) return;
+        EventSystem events = EventSystem.current;
+        Selectable selectable = GetEntrySelectable(entry);
+        GameObject toSelect = selectable != null ? selectable.gameObject : entry;
+        if(events != null && events.currentSelectedGameObject != toSelect) events.SetSelectedGameObject(toSelect);
+        if(entry != highlightedEntry) EntryHighlight(entry);
+    }
+    public void SyncHighlightToSelection()
+    {
+        if(EventSystem.current == null) return;
+        GameObject entry = EntryForSelection(EventSystem.current.currentSelectedGameObject);
+        if(entry != null && entry != highlightedEntry) EntryHighlight(entry);
     }
      protected void MoveCursor(GameObject entry)
     {

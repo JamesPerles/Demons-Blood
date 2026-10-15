@@ -25,31 +25,36 @@ public void Interact()
         if(string.IsNullOrEmpty(locationData.sceneName)) return;
         isLoading = true;
         BattleManager.lastTown = locationData.sceneName;
-        StartCoroutine(LoadLocation());
-    }
-    IEnumerator LoadLocation()
-    {
         string spawnPointName = GetSpawnPointName();
-        AsyncOperation operation = SceneManager.LoadSceneAsync(locationData.sceneName);
-        while(!operation.isDone) yield return null;
+        if(SceneFader.instance != null) SceneFader.instance.LoadScene(locationData.sceneName, () => LoadLocation(spawnPointName));
+        else StartCoroutine(LoadLocationFallback(spawnPointName));
+    }
+    void LoadLocation(string spawnPointName)
+    {
         GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
         if(playerObj == null)
         {
             Debug.LogWarning("Could not find object tagged player in town");
-            yield break;
+            return;
         }
         if(string.IsNullOrEmpty(spawnPointName))
         {
             Debug.LogWarning($"TownEntrance for '{locationData.locationName}' has no entrySpawnPointNames set - player left at the scene's default position");
-            yield break;
+            return;
         }
         GameObject spawnPoint = GameObject.Find(spawnPointName);
         if(spawnPoint == null)
         {
             Debug.LogWarning($"Could not find spawn point '{spawnPointName}' in scene '{locationData.sceneName}'.");
-            yield break;
+            return;
         }
         playerObj.transform.position = spawnPoint.transform.position;
+    }
+    IEnumerator LoadLocationFallback(string spawnPointName)
+    {
+        AsyncOperation operation = SceneManager.LoadSceneAsync(locationData.sceneName);
+        while(!operation.isDone) yield return null; 
+        LoadLocation(spawnPointName);
     }
     public string GetSpawnPointName()
     {

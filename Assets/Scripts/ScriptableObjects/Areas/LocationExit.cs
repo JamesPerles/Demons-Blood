@@ -21,17 +21,16 @@ public class LocationExit : MonoBehaviour
         }
         isLeaving = true;
         BattleManager.lastTown = targetScene;
-        StartCoroutine(LoadTargetScene());
+        if(SceneFader.instance != null) SceneFader.instance.LoadScene(targetScene, LoadTargetScene);
+        else StartCoroutine(LoadTargetSceneFallback());
     }
-    IEnumerator LoadTargetScene()
+    void LoadTargetScene()
     {
-        AsyncOperation operation = SceneManager.LoadSceneAsync(targetScene);
-        while(!operation.isDone) yield return null;
         GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
         if(playerObj == null)
         {
             Debug.LogWarning($"Could not find object tagged Player after loading '{targetScene}'.");
-            yield break;
+            return;
         }
         Vector3 spawnPosition = playerObj.transform.position;
         if(!string.IsNullOrEmpty(targetSpawnPoint))
@@ -44,4 +43,10 @@ public class LocationExit : MonoBehaviour
             playerObj.transform.position = spawnPosition + offset;
         }
     }
+        IEnumerator LoadTargetSceneFallback()
+        {
+        AsyncOperation operation = SceneManager.LoadSceneAsync(targetScene);
+        while(!operation.isDone) yield return null;
+        LoadTargetScene();
+        }
 }

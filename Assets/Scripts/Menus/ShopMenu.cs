@@ -7,7 +7,6 @@ public class ShopMenu : SubMenu
 public static ShopMenu instance;
 public TextMeshProUGUI shopNameText;
 public TextMeshProUGUI goldText;
-public TextMeshProUGUI feedbackText;
 ShopStats currentShop;
 public Color statIncreaseColor = new Color(0.30f, 0.69f, 0.31f);
 public Color statDecreaseColor = new Color(0.90f, 0.22f, 0.21f);
@@ -26,7 +25,6 @@ void Awake()
         currentShop = shop;
         SetDisplayActive(true);
         if(shopNameText != null) shopNameText.text = shop.shopName;
-        if(feedbackText != null) feedbackText.text = "";
         UpdateGoldText();
         screenHistory.Clear();
         OpenScreen(ShopOptionsMenu());
@@ -74,7 +72,7 @@ void Awake()
     {
         if(WalletManager.instance == null || WalletManager.instance.currentGold < price)
         {
-            if(feedbackText != null) feedbackText.text = "Not enough gold";
+            if(PopupManager.instance != null) PopupManager.instance.Show("Not enough gold");
             return;
         }
         pendingPurchase = template;
@@ -105,7 +103,7 @@ void Awake()
         if(owned is Item ownedItem && ownedItem.itemType == Item.ItemType.KeyItem) return;
         InventoryManager.instance.LoseItem(owned);
         WalletManager.instance.AddGold(price);
-        if(feedbackText != null) feedbackText.text = $"Sold {owned.DisplayName}!";
+        if(PopupManager.instance != null) PopupManager.instance.Show($"Sold {owned.DisplayName}!");
         UpdateGoldText();
         screenHistory.Pop();
         OpenScreen(SellMenu());
@@ -175,7 +173,7 @@ void Awake()
     {
         if(WalletManager.instance == null || !WalletManager.instance.SpendGold(pendingPrice))
         {
-            if(feedbackText != null) feedbackText.text = "Not enough gold";
+            if(PopupManager.instance != null) PopupManager.instance.Show("Not enough gold");
             ReturnToBuyMenu();
             return false;
         }
@@ -184,7 +182,7 @@ void Awake()
     }
     void ShowBoughtFeedback(string name)
     {
-        if(feedbackText != null) feedbackText.text = $"Bought {name}";
+       if(PopupManager.instance != null) PopupManager.instance.Show($"Bought {name}");
     }
     void ReturnToBuyMenu()
     {

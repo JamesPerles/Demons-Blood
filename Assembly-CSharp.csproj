@@ -43,7 +43,7 @@
     <UnityVersion>6000.3.3f1</UnityVersion>
   </PropertyGroup>
   <ItemGroup>
-    <Analyzer Include="C:\Users\james\.vscode\extensions\visualstudiotoolsforunity.vstuc-1.3.1\Analyzers\Microsoft.Unity.Analyzers.dll" />
+    <Analyzer Include="C:\Users\james\.vscode\extensions\visualstudiotoolsforunity.vstuc-1.3.2\Analyzers\Microsoft.Unity.Analyzers.dll" />
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.3.3f1\Editor\Data\Tools\BuildPipeline\Unity.SourceGenerators\Unity.SourceGenerators.dll" />
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.3.3f1\Editor\Data\Tools\BuildPipeline\Unity.SourceGenerators\Unity.Properties.SourceGenerator.dll" />
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.3.3f1\Editor\Data\Tools\BuildPipeline\Unity.SourceGenerators\Unity.UIToolkit.SourceGenerator.dll" />
@@ -87,6 +87,7 @@
     <Compile Include="Assets\Scripts\ScriptableObjects\Items\Chest.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\TextConsoleSimulator.cs" />
     <Compile Include="Assets\Scripts\Managers\FlagManager.cs" />
+    <Compile Include="Assets\Scripts\PopManager.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\VertexZoom.cs" />
     <Compile Include="Assets\Scripts\Managers\SettingsManager.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Items\Materials.cs" />
@@ -130,6 +131,7 @@
     <Compile Include="Assets\Scripts\Menus\PartyCombatView.cs" />
     <Compile Include="Assets\Scripts\Menus\Ui\MenuSelect.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_PhoneNumberValidator.cs" />
+    <Compile Include="Assets\Scripts\InfoPop.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\SkewTextExample.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Areas\LocationData.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Learnables\Effect.cs" />
@@ -148,6 +150,7 @@
     <Compile Include="Assets\Scripts\Managers\BestiaryManager.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Stats\EnemyStats.cs" />
     <Compile Include="Assets\Scripts\Battle Scripts\ICombatant.cs" />
+    <Compile Include="Assets\Scripts\SceneFader.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\NPCs\NPC.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\VertexShakeA.cs" />
     <Compile Include="Assets\Scripts\Managers\WalletManager.cs" />

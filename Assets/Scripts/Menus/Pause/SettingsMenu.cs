@@ -47,7 +47,7 @@ public void OpenSettings()
         AddCategoryCard("Sounds", "Music & SFX Volume");
         AddCategoryCard("Menus", "Panel and Border Style");
         AddCategoryCard("Text", "UI Text Color");
-        if(spawnedCards.Count > 0) host.EntryHighlight(spawnedCards[0]);
+        if(spawnedCards.Count > 0) host.FocusEntry(spawnedCards[0]);
     }
     void AddCategoryCard(string title, string subtitle)
     {
@@ -63,7 +63,7 @@ public void OpenSettings()
         {
             card.button.onClick.RemoveAllListeners();
             GameObject capturedCard = cardObj;
-            card.button.onClick.AddListener(() => host.EntryHighlight(capturedCard));
+            card.button.onClick.AddListener(() => host.FocusEntry(capturedCard));
         } 
     }
     public void OnCardHighlighted(GameObject entry)

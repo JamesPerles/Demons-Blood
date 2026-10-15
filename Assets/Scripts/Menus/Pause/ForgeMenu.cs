@@ -7,7 +7,6 @@ using System;
 public class ForgeMenu : MonoBehaviour, ICardHighlightHandler, ITabHider, IPageableTab
 {
 public PauseMenu host;
-public TextMeshProUGUI forgeFeedbackText;
 public GameObject craftCardPrefab;
 public Transform craftCardParent;
 public Button craftActionButton;
@@ -41,7 +40,6 @@ public void OpenTab()
     {
         host.PrepareTabSwitch();
         if(pager == null) pager = new GridCardPager(craftCardPrefab, craftCardParent, host, 2, 3);
-        if(forgeFeedbackText != null) forgeFeedbackText.text = "";
         OpenCardTab();
         SetupMiniTabs();
     }
@@ -87,15 +85,16 @@ public void OpenTab()
     public void NextPage()
     {
         pager?.NextPage();
-        pager?.SelectFirstOnPage();
+        if(!alchemyStage2 && !elementStage2) pager?.SelectFirstOnPage();
     }
     public void PreviousPage()
     {
         pager?.PreviousPage();
-        pager?.SelectFirstOnPage();
+        if(!alchemyStage2 && !elementStage2) pager?.SelectFirstOnPage();
     }
     void ShowCraftTab()
     {
+        alchemyStage2 = false; elementStage2 = false;
         RebuildCraftCards();
     }
     void RebuildCraftCards()
@@ -173,7 +172,7 @@ public void OpenTab()
     {
         CraftRecipe recipe = selectedRecipe;
         if(recipe == null) return;
-        if(!HasMaterials(recipe)) { if(forgeFeedbackText != null) forgeFeedbackText.text = "Missing materials"; return;}
+        if(!HasMaterials(recipe)) { if(PopupManager.instance != null) PopupManager.instance.Show("Missing materials"); return;}
         if(recipe.goldCost > 0 && !SpendForge(recipe.goldCost)) return;
         foreach(CraftRecipe.MaterialAmount required in recipe.requiredMaterials)
         for(int i = 0; i < required.amount; i++) InventoryManager.instance.LoseItem(required.material);
@@ -189,7 +188,7 @@ public void OpenTab()
             InventoryManager.instance.PickupItem(recipe.itemResult);
             craftedName = recipe.itemResult.itemName;
         }
-        if(forgeFeedbackText != null) forgeFeedbackText.text = $"Forged {craftedName}";
+         if(PopupManager.instance != null) PopupManager.instance.Show($"Forged {craftedName}");
         RebuildCraftCards();
     }
     public void OnCardHighlighted(GameObject entry)
@@ -218,13 +217,14 @@ public void OpenTab()
     {
         if(WalletManager.instance == null || !WalletManager.instance.SpendGold(cost))
         {
-            if(forgeFeedbackText != null) forgeFeedbackText.text = "Not enough gold.";
+             if(PopupManager.instance != null) PopupManager.instance.Show("Not enough gold.");
             return false;
         }
         return true;
     }
     void ShowEnhanceTab()
     {
+        alchemyStage2 = false; elementStage2 = false;
         RebuildEnhanceCards();
     }
     void RebuildEnhanceCards()
@@ -313,7 +313,7 @@ public void OpenTab()
         InventoryManager.instance.LoseItem(original);
         InventoryManager.instance.PickupItem(enhanced); 
         }
-        if(forgeFeedbackText != null) forgeFeedbackText.text = $"Enhanced to {enhanced.equipmentName}.";
+         if(PopupManager.instance != null) PopupManager.instance.Show($"Enhanced to {enhanced.equipmentName}.");
         RebuildEnhanceCards();
     }
     string StripSuffix(string name)
@@ -386,12 +386,13 @@ public void OpenTab()
         enhanced.equipmentName = $"{original.equipmentName} ({element})";
         InventoryManager.instance.LoseItem(original);
         InventoryManager.instance.PickupItem(enhanced);
-        if(forgeFeedbackText != null) forgeFeedbackText.text = $"{enhanced.equipmentName} imbued with {element}";
+        if(PopupManager.instance != null) PopupManager.instance.Show($"{enhanced.equipmentName} imbued with {element}");
         elementStage2 = false;
         RebuildElementCards();
     }
     void ShowSmeltTab()
     {
+        alchemyStage2 = false; elementStage2 = false;
         RebuildSmeltCards();
     }
     void RebuildSmeltCards()
@@ -435,7 +436,7 @@ public void OpenTab()
             if(material == null || material.material == null) continue;
             for(int i = 0; i < material.amount; i++) InventoryManager.instance.PickupItem(material.material);
         }
-        if(forgeFeedbackText != null) forgeFeedbackText.text = $"Smelted {equipment.equipmentName}.";
+         if(PopupManager.instance != null) PopupManager.instance.Show($"Smelted {equipment.equipmentName}.");
         RebuildSmeltCards();
     }
     void ShowAlchemyTab()
@@ -517,7 +518,7 @@ public void OpenTab()
         (recipe.ingredientA == second && recipe.ingredientB == first)));
         if(matched == null || matched.result == null)
         {
-            if(forgeFeedbackText != null) forgeFeedbackText.text = $"{first.DisplayName} + {second.DisplayName} does nothing.";
+           if(PopupManager.instance != null) PopupManager.instance.Show($"{first.DisplayName} + {second.DisplayName} does nothing.");
             alchemyStage2 = false;
             RebuildAlchemyCards();
             return;
@@ -526,7 +527,7 @@ public void OpenTab()
         InventoryManager.instance.LoseItem(second);
         if(matched.result is Item resultItem) InventoryManager.instance.PickupItem(resultItem);
         else if(matched.result is Equipment resultEquipment) InventoryManager.instance.PickupItem(Instantiate(resultEquipment));
-        if(forgeFeedbackText != null) forgeFeedbackText.text = $"{first.DisplayName} + {second.DisplayName} became {matched.result.DisplayName}.";
+         if(PopupManager.instance != null) PopupManager.instance.Show($"{first.DisplayName} + {second.DisplayName} became {matched.result.DisplayName}.");
     alchemyStage2 = false;
     RebuildAlchemyCards();
     }
