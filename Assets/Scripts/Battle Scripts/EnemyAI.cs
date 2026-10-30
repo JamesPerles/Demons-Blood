@@ -141,9 +141,9 @@ public class EnemyAI : MonoBehaviour , ICombatant
     }
     bool CanAfford(Learnable learnable)
     {
-        if (learnable is Art art) return currentHP >= art.Cost;
+        if (learnable is Art art) return art.canKillUser || currentHP > art.Cost;
         if(learnable is Spell spell) return currentMP >= spell.Cost;
-        if(learnable is Fusion fusion) return currentHP >= fusion.HPCost && currentMP >= fusion.MPCost;
+        if(learnable is Fusion fusion) return (fusion.canKillUser || currentHP > fusion.HPCost) && currentMP >= fusion.MPCost;
         return false;
     }
     public void PayCost(Learnable learnable)
@@ -159,6 +159,7 @@ public class EnemyAI : MonoBehaviour , ICombatant
     public virtual EnemyActionType ChooseAction()
     {
         int totalWeight = currentAttackChance + currentDefendChance + currentItemChance + currentRunChance;
+        if(totalWeight <= 0) return EnemyActionType.Attack;
         int roll = Random.Range(0, totalWeight);
         if (roll < currentAttackChance) return EnemyActionType.Attack;
         roll -= currentAttackChance;
@@ -170,6 +171,7 @@ public class EnemyAI : MonoBehaviour , ICombatant
     } 
        public ActiveStats ChooseTarget(List<ActiveStats> players)
     {
+        if(players == null || players.Count == 0) return null;
         Dictionary<ActiveStats, int> weights = new Dictionary<ActiveStats, int>();
         foreach (ActiveStats player in players)
         {

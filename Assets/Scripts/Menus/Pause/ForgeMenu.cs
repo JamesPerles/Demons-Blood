@@ -211,7 +211,7 @@ public void OpenTab()
             bg.a = selected ? 1f : 0f;
             card.backgroundImage.color = bg;
         }
-        if(card.titleText != null) card.titleText.color = selected ? cardTitleSelected : cardTitleDefault;
+       if(card.titleText != null) card.titleText.color = (SettingsManager.instance != null ? (selected ?SettingsManager.instance.TextSelectedColor : SettingsManager.instance.TextDefaultColor) : (selected ? cardTitleSelected : cardTitleDefault));
     }
     bool SpendForge(int cost)
     {
@@ -287,7 +287,7 @@ public void OpenTab()
             int cost = EnhanceCost(equipment.enhancementLevel);
             result += $"<size=75%><color={colorMuted}>ENHANCEMENT</color></size>\n";
             result += $"<color={colorBright}>+{equipment.enhancementLevel} -> +{equipment.enhancementLevel + 1}</color>\n";
-            result += $"<color={colorBright}>STR {equipment.strength} -> +{equipment.strength + enhanceStrengthGain}</color>\n";
+            result += $"<color={colorBright}>STR {equipment.strength} -> {equipment.strength + enhanceStrengthGain}</color>\n";
             result += $"<size=80%><color={colorMuted}>cost: {cost} gold</color></size>";
         }
         return result;

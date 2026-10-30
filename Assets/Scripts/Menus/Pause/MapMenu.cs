@@ -50,7 +50,7 @@ public void OpenTab()
         foreach(LocationData location in allLocations)
         {
             if(location == null) continue;
-            bool current = !string.IsNullOrEmpty(location.sceneName) && location.sceneName == BattleManager.lastTown;
+            bool current = !string.IsNullOrEmpty(location.sceneName) && location.sceneName == SceneManager.GetActiveScene().name;
             float distance = Vector2.Distance(location.worldPosition, playerWorldPos);
             if(!current && distance > mapViewRadius) continue;
             GameObject nodeObj = Instantiate(nodePrefab, mapContainer);
@@ -68,7 +68,7 @@ public void OpenTab()
                 card.button.onClick.AddListener(() => SelectLocation(capturedTown));
             }
             if(current) defaultSelection = location;
-            else if(defaultSelection == null && location.discovered) defaultSelection = location;
+            else if(defaultSelection == null && location.IsDiscovered) defaultSelection = location;
         }
         if(defaultSelection != null) SelectLocation(defaultSelection);
         else
@@ -131,7 +131,7 @@ public void OpenTab()
     }
     void SetNodeVisual(EntryCard card, LocationData location, bool current)
     {
-        bool discovered = location.discovered;
+        bool discovered = location.IsDiscovered;
         if(card.borderImage != null) card.borderImage.color = discovered ? GetTypeColor(location.locationType) : undiscoveredColor;
         if(card.titleText != null)
         {
@@ -149,8 +149,8 @@ public void OpenTab()
     {
         selectedLocation = location;
         if(host.detailText == null) return;
-        bool discovered = location.discovered;
-        bool current = !string.IsNullOrEmpty(location.sceneName) && location.sceneName == BattleManager.lastTown;
+        bool discovered = location.IsDiscovered;
+        bool current = !string.IsNullOrEmpty(location.sceneName) && location.sceneName == SceneManager.GetActiveScene().name;
         if(!discovered)
         {
             host.detailText.text = 
@@ -176,11 +176,21 @@ public void OpenTab()
             }
         } 
     }
+    static void PlaceAtSpawn(LocationData location, string spawnName)
+    {
+        if(string.IsNullOrEmpty(spawnName)) { Debug.LogWarning($"'{location.locationName}' has no travelSpawnPointName set - player left at the scene's default position"); return; }
+        GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+        GameObject spawnPoint = GameObject.Find(spawnName);
+        if(playerObj == null || spawnPoint == null) { Debug.LogWarning($"Fast travel could not find player or spawn '{spawnName}' in '{location.sceneName}'"); return; }
+        playerObj.transform.position = spawnPoint.transform.position;
+    }
     void TravelToLocation(LocationData location)
     {
         if(location == null || string.IsNullOrEmpty(location.sceneName)) return;
         host.Close();
-        if(SceneFader.instance != null) SceneFader.instance.LoadScene(location.sceneName);
+        if(location.locationType == LocationType.Town) BattleManager.lastTown = location.sceneName;
+        string spawnName = location.travelSpawnPointName;
+        if(SceneFader.instance != null) SceneFader.instance.LoadScene(location.sceneName, () => PlaceAtSpawn(location, spawnName));
         else SceneManager.LoadScene(location.sceneName);
     }
 }

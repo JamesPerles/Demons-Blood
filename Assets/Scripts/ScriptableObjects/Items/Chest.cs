@@ -1,6 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
-public class Chest : MonoBehaviour
+public class Chest : MonoBehaviour, IInteractable
 {
 public string flagKey;
 public int goldReward = 0;
@@ -22,6 +22,7 @@ void Start()
     }
     public void Interact()
     {
+        if(string.IsNullOrEmpty(flagKey)) {Debug.LogWarning($"Chest on '{gameObject.name}' has no flagKey, so it can't be opened."); return;}
         if(IsOpened())
         {
             Debug.Log($"{gameObject.name} is empty");
@@ -30,7 +31,8 @@ void Start()
         if(goldReward > 0 && WalletManager.instance != null) WalletManager.instance.AddGold(goldReward);
         if(reward is Item item) InventoryManager.instance.PickupItem(item);
         else if(reward is Equipment equipment) InventoryManager.instance.PickupItem(Instantiate(equipment));
-        FlagManager.instance.SetFlag(flagKey, true);
+        else if(reward != null) InventoryManager.instance.PickupItem(reward);
+        if(FlagManager.instance != null) FlagManager.instance.SetFlag(flagKey, true);
         RefreshSprite();
     }
     void RefreshSprite()

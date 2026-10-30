@@ -16,6 +16,7 @@ public class SaveManager : MonoBehaviour
     const string QuestsFolder = "Quests";
     const string PlayerStatsFolder = "PartyMembers";
     const string LocationsFolder = "Locations";
+    const string MaterialsFolder = "Materials";
     string SavePath(int slot) => Path.Combine(Application.persistentDataPath, $"save_slot{slot}.json");
     [System.Serializable]
     public class SaveSlotSummary
@@ -29,17 +30,41 @@ public class SaveManager : MonoBehaviour
     }
     void Awake()
     {
-        if(instance == null) {instance = this; DontDestroyOnLoad(gameObject);}
+        if(instance == null) {instance = this; DontDestroyOnLoad(gameObject); StartCoroutine(CaptureDefaults());}
         else Destroy(gameObject);
     }
     public bool SaveExists(int slot = 0) => File.Exists(SavePath(slot));
-    public void SaveGame(int slot = 0)
+    string defaultSnapshotJson;
+    IEnumerator CaptureDefaults()
+    {
+        yield return null;
+        yield return null;
+        if(WalletManager.instance == null || InventoryManager.instance == null || PlayerParty.instance == null || 
+        FlagManager.instance == null || QuestManager.instance == null || BestiaryManager.instance == null)
+        {
+            Debug.LogWarning("SaveManager: could not capture the default game state - a manager was missing at startup. New Game will not reset.");
+            yield break;
+        }
+        defaultSnapshotJson = JsonUtility.ToJson(BuildSaveData());
+    }
+    public void ResetToDefaults()
+    {
+        if(string.IsNullOrEmpty(defaultSnapshotJson)) { Debug.LogWarning("SaveManager: no default snapshot - New Game did not reset anything."); return; }
+        SaveData data = JsonUtility.FromJson<SaveData>(defaultSnapshotJson);
+        data.settings = null;
+        ApplyLoad(data);
+    }
+
+    SaveData BuildSaveData()
     {
         SaveData data = new SaveData();
         data.gold = WalletManager.instance.currentGold;
         data.inventoryItemNames = new List<string>();
         foreach(Item item in InventoryManager.instance.items.OfType<Item>())
         if(item != null) data.inventoryItemNames.Add(item.name);
+        data.inventoryMaterialNames = new List<string>();
+        foreach(Materials material in InventoryManager.instance.items.OfType<Materials>())
+        if(material != null) data.inventoryMaterialNames.Add(material.name);
         data.inventoryEquipment = new List<EquipmentSaveData>();
         foreach(Equipment equipment in InventoryManager.instance.items.OfType<Equipment>())
         data.inventoryEquipment.Add(SaveEquipment(equipment));
@@ -57,10 +82,7 @@ public class SaveManager : MonoBehaviour
         data.flags.Add(new FlagEntry {key = flag.Key, value = flag.Value});
         data.activeQuests = new List<QuestProgressSaveData>();
         foreach (var progress in QuestManager.instance.activeQuests)
-        data.activeQuests.Add(new QuestProgressSaveData
-        {questName = progress.quest.name, currentStage = progress.currentStage, objectiveCounts = 
-        new List<int> (progress.objectiveCounts), chosenObjectivePerStage = 
-        new List<int> (progress.chosenObjectivePerStage), state = progress.state});
+        data.activeQuests.Add(SaveQuestProgress(progress));
         data.completedQuests = new List<string>();
         foreach (var quest in QuestManager.instance.completedQuests)
         data.completedQuests.Add(quest.name);
@@ -70,7 +92,7 @@ public class SaveManager : MonoBehaviour
         data.discoveredEnemies = BestiaryManager.instance.GetDiscoveredIDs();
         data.discoveredLocations = new List<string>();
         foreach(LocationData location in Resources.LoadAll<LocationData>(LocationsFolder))
-        if(location != null && location.discovered) data.discoveredLocations.Add(location.name);
+        if(location != null && location.IsDiscovered) data.discoveredLocations.Add(location.name);
         if(SettingsManager.instance != null)
         {
             data.settings = new SettingsSaveData
@@ -80,10 +102,13 @@ public class SaveManager : MonoBehaviour
                 dialogueTextSpeed =SettingsManager.instance.dialogueTextSpeed,
                 battleTextSpeed = SettingsManager.instance.battleTextSpeed,
                 battleSpeedMultiplier = SettingsManager.instance.battleSpeedMultiplier,
-                textColor = SettingsManager.instance.uiTextColor
+                textColor = SettingsManager.instance.uiTextColor,
+                menuPanelColor = SettingsManager.instance.menuPanelColor,
+                menuBorderColor = SettingsManager.instance.menuBorderColor
             };
         }
         data.sceneName = SceneManager.GetActiveScene().name;
+        data.lastTown = BattleManager.lastTown;
         data.savedAt = System.DateTime.Now.ToString("MMM d, h:mm tt");
         GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
         if(playerObj != null)
@@ -97,16 +122,64 @@ public class SaveManager : MonoBehaviour
         {
             Debug.LogWarning("Could not find object tagged Player/ postion not correctly saved.");
         }
+        return data;
+    }
+    public void SaveGame(int slot = 0)
+    {
+        SaveData data = BuildSaveData();
         string json = JsonUtility.ToJson(data,true);
         File.WriteAllText(SavePath(slot),json);
         Debug.Log($"Game saved to{SavePath(slot)}");
+    }
+    string BaseAssetName(Equipment equipment)
+    {
+        string name = string.IsNullOrEmpty(equipment.baseAssetName) ? equipment.name : equipment.baseAssetName;
+        return name.Replace("(Clone)", "").Trim();
+    }
+    QuestProgressSaveData SaveQuestProgress(QuestProgress progress)
+    {
+        QuestProgressSaveData saved = new QuestProgressSaveData
+        {
+            questName = progress.quest.name, currentStage = progress.currentStage,
+            objectiveCounts = new List<int>(progress.objectiveCounts),
+            chosenObjectivePerStage = new List<int>(progress.chosenObjectivePerStage),
+            state = progress.state,
+            optionalCounts = new List<int>(progress.optionalCounts),
+            optionalClaimed = new List<bool>(progress.optionalClaimed),
+            pendingOptionalGold = progress.pendingOptionalGold,
+            pendingOptionalExp = progress.pendingOptionalExp
+        };
+        foreach(Item item in progress.pendingOptionalItems) if(item != null) saved.pendingOptionalItemNames.Add(item.name);
+        foreach(Equipment equipment in progress.pendingOptionalEquipment) if(equipment != null) saved.pendingOptionalEquipmentNames.Add(equipment.name);
+        return saved;
+    }
+    void LoadOptionalProgress(QuestProgress progress, QuestProgressSaveData saved)
+    {
+        if(saved.optionalCounts != null && saved.optionalCounts.Count == progress.optionalCounts.Count) progress.optionalCounts = new List<int>(saved.optionalCounts);
+        if(saved.optionalClaimed != null && saved.optionalClaimed.Count == progress.optionalClaimed.Count) progress.optionalClaimed = new List<bool>(saved.optionalClaimed);
+        progress.pendingOptionalGold = saved.pendingOptionalGold;
+        progress.pendingOptionalExp = saved.pendingOptionalExp;
+        progress.pendingOptionalItems = new List<Item>();
+        if(saved.pendingOptionalItemNames != null)
+        foreach(string itemName in saved.pendingOptionalItemNames)
+        {
+            Item item = Resources.Load<Item>($"{ItemsFolder}/{itemName}");
+            if(item != null) progress.pendingOptionalItems.Add(item);
+        }
+        progress.pendingOptionalEquipment = new List<Equipment>();
+        if(saved.pendingOptionalEquipmentNames != null)
+        foreach(string equipmentName in saved.pendingOptionalEquipmentNames)
+        {
+            Equipment equipment = Resources.Load<Equipment>($"{EquipmentFolder}/{equipmentName}");
+            if(equipment != null) progress.pendingOptionalEquipment.Add(equipment);
+        }
     }
     EquipmentSaveData SaveEquipment(Equipment equipment)
     {
         if (equipment == null) return null;
         return new EquipmentSaveData
         {
-            baseAssetName = string.IsNullOrEmpty(equipment.baseAssetName) ? equipment.name : equipment.baseAssetName,
+            baseAssetName = BaseAssetName(equipment),
             equipmentName = equipment.equipmentName,
             strength = equipment.strength, enhancementLevel = equipment.enhancementLevel, element = equipment.element
         };
@@ -120,6 +193,8 @@ public class SaveManager : MonoBehaviour
         charac.currentExperience = character.currentExperience;
         charac.currentExpToNextLevel = character.currentExpToNextLevel;
         charac.currentLevel = character.currentLevel;
+        charac.totalExperience = character.totalExperience;
+        charac.baseStats = character.SaveBaseStats();
         charac.personalItemNames = new List<string>();
         charac.personalEquipment = new List<EquipmentSaveData>();
         foreach(Baggable carried in character.personalInventory.items)
@@ -134,7 +209,7 @@ public class SaveManager : MonoBehaviour
                 else if(character.accessorySlot == equipment) equippedSlot = (int) Equipment.EquipmentType.Accessory;
                 charac.personalEquipment.Add(new EquipmentSaveData
                 {
-                    baseAssetName = string.IsNullOrEmpty(equipment.baseAssetName) ? equipment.name : equipment.baseAssetName,
+                    baseAssetName = BaseAssetName(equipment),
                     equipmentName = equipment.equipmentName,
                     strength = equipment.strength,
                     enhancementLevel = equipment.enhancementLevel,
@@ -146,6 +221,7 @@ public class SaveManager : MonoBehaviour
             {
                 charac.personalItemNames.Add(item.name);
             }
+            else if(carried is Materials material) charac.personalMaterialNames.Add(material.name);
         }
         charac.learnedArts = character.learnedArts.Select(art => art.name).ToList();
         charac.learnedSpells = character.learnedSpells.Select(spell => spell.name).ToList();
@@ -171,20 +247,27 @@ public class SaveManager : MonoBehaviour
         SaveData data = JsonUtility.FromJson<SaveData>(json);
         StartCoroutine(LoadingGame(data));
     }
-        IEnumerator LoadingGame(SaveData data)
+        void ApplyLoad(SaveData data)
         {
-             WalletManager.instance.SetGold(data.gold);
+            WalletManager.instance.SetGold(data.gold);
         InventoryManager.instance.items.Clear();
         foreach(string itemName in data.inventoryItemNames)
         {
             Item item = Resources.Load<Item>($"{ItemsFolder}/{itemName}");
-            if(item != null) InventoryManager.instance.PickupItem(item);
+            if(item != null) InventoryManager.instance.PickupItem(item, false);
             else Debug.LogWarning($"Could not find Item '{itemName}' in Resources/{ItemsFolder}");
         }
+        if(data.inventoryMaterialNames != null)
+        foreach(string materialName in data.inventoryMaterialNames)
+            {
+                Materials material = Resources.Load<Materials>($"{MaterialsFolder}/{materialName}");
+                if(material != null) InventoryManager.instance.PickupItem(material, false);
+                else Debug.LogWarning($"Could not find Materials '{materialName}' in Resources/{MaterialsFolder}");
+            }
         foreach(EquipmentSaveData equip in data.inventoryEquipment)
         {
             Equipment loaded = LoadEquipment(equip);
-            if(loaded != null) InventoryManager.instance.PickupItem(loaded);
+            if(loaded != null) InventoryManager.instance.PickupItem(loaded, false);
         }
         List<GameObject> reordered = new List<GameObject>();
         foreach(string id in data.playablePartyOrder)
@@ -213,9 +296,11 @@ public class SaveManager : MonoBehaviour
             if(quest == null) {Debug.LogWarning($"Could not find Quest '{questprog.questName}'"); continue;}
             QuestProgress progress = new QuestProgress(quest);
             progress.currentStage = questprog.currentStage;
+            progress.StageCount();
             progress.objectiveCounts = new List<int>(questprog.objectiveCounts);
             progress.chosenObjectivePerStage = new List<int>(questprog.chosenObjectivePerStage);
             progress.state = questprog.state;
+            LoadOptionalProgress(progress, questprog);
             QuestManager.instance.activeQuests.Add(progress);
         }
         QuestManager.instance.completedQuests.Clear();
@@ -231,10 +316,16 @@ public class SaveManager : MonoBehaviour
             if(quest != null) QuestManager.instance.failedQuests.Add(quest);
         }
         BestiaryManager.instance.LoadDiscovered(data.discoveredEnemies);
+        LocationData.discoveredNames.Clear();
         foreach(LocationData location in Resources.LoadAll<LocationData>(LocationsFolder))
-        if(location != null) location.discovered = 
-        data.discoveredLocations != null && data.discoveredLocations.Contains(location.name);
+        if(location != null && data.discoveredLocations != null && 
+        data.discoveredLocations.Contains(location.name)) LocationData.discoveredNames.Add(location.name);
         if(SettingsManager.instance != null) SettingsManager.instance.LoadSettings(data.settings);
+        BattleManager.lastTown = string.IsNullOrEmpty(data.lastTown) ? null : data.lastTown;
+        }
+        IEnumerator LoadingGame(SaveData data)
+        {
+        ApplyLoad(data);
         Vector3 savedPlayerPos = new Vector3(data.playerPosX, data.playerPosY, data.playerPosZ);
         if(SceneFader.instance != null) SceneFader.instance.LoadScene(data.sceneName, () => LoadedPlayerLocation(savedPlayerPos));
         else yield return StartCoroutine(LoadSceneFallback(data.sceneName, savedPlayerPos));
@@ -276,6 +367,8 @@ public class SaveManager : MonoBehaviour
     }
     void LoadCharacter(ActiveStats character, CharacterSaveData charsave)
     {
+        character.LoadBaseStats(charsave.baseStats);
+        if(charsave.baseStats != null && charsave.baseStats.Count >= 10) character.totalExperience = charsave.totalExperience;
         character.currentHP = charsave.currentHP;
         character.currentMP = charsave.currentMP;
         character.currentExperience = charsave.currentExperience;
@@ -294,6 +387,13 @@ public class SaveManager : MonoBehaviour
             if(item != null) character.personalInventory.AddItem(item);
             else Debug.LogWarning($"Could not find Item '{itemName}' in Resources/{ItemsFolder} for {charsave.character}'s personal inventory");
         }
+        if(charsave.personalMaterialNames != null)
+        foreach(string materialName in charsave.personalMaterialNames)
+            {
+                Materials material = Resources.Load<Materials>($"{MaterialsFolder}/{materialName}");
+                if(material != null) character.personalInventory.AddItem(material);
+                else Debug.LogWarning($"Could not find Materials '{materialName}' in Resources/{MaterialsFolder} for {charsave.character}'s personal inventory");
+            }
         foreach(EquipmentSaveData equipData in charsave.personalEquipment)
         {
             Equipment loaded = LoadEquipment(equipData);

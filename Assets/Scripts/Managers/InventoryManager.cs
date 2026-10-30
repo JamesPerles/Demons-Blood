@@ -20,13 +20,15 @@ public class InventoryManager : MonoBehaviour
             Debug.Log("Destroy extra Inventories");
         }
     }
-    public void PickupItem(Baggable item)
+    public void PickupItem(Baggable item, bool reportToQuests = true)
     {
+        if(item == null) return;
         items.Add(item);
-        if(QuestManager.instance != null) QuestManager.instance.ReportItemObtained(item);
+        if(reportToQuests && QuestManager.instance != null) QuestManager.instance.ReportItemObtained(item);
     }
     public void LoseItem(Baggable item)
     {
+        if(item == null) return;
         bool removed = items.Remove(item);
         if (!removed) Debug.LogWarning($"Tried to remove {item.DisplayName} but is not in inventory");
     }

@@ -80,10 +80,19 @@ public class TabGroup : MonoBehaviour
             bool isActive = i == currentIndex;
             bool isFocused = EventSystem.current != null && EventSystem.current.currentSelectedGameObject != null
             && EventSystem.current.currentSelectedGameObject.transform.IsChildOf(spawnedButtons[i].transform);
-            if(label != null) label.color = isFocused ? focusedColor : (isActive ? activeColor : inactiveColor);
+            if(label != null) label.color = isFocused ? focusedColor : (isActive ? (SettingsManager.instance != null ? SettingsManager.instance.TextSelectedColor : activeColor) : (SettingsManager.instance != null ? SettingsManager.instance.TextMutedColor : inactiveColor));
             if(view != null && view.underline != null) view.underline.SetActive(isActive);
         }
     }
+    void Start()
+    {
+        if (SettingsManager.instance != null) SettingsManager.instance.OnTextColorChanged += OnThemeChanged;
+    }
+    void OnDestroy()
+    {
+        if (SettingsManager.instance != null) SettingsManager.instance.OnTextColorChanged -= OnThemeChanged;
+    }
+    void OnThemeChanged(Color color) { RefreshVisuals(); }
     GameObject lastSeenSelection;
     void Update()
     {

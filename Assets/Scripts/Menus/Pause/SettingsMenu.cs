@@ -20,6 +20,7 @@ public Transform menusGroup;
 public Transform textGroup;
 enum Category {Speed, Sounds, Menus, Text};
 List<GameObject> spawnedCards = new List<GameObject>();
+GameObject lastHighlightedCard;
 List<GameObject> spawnedRows = new List<GameObject>();
 Image panelColorPreviewImage;
 Image borderColorPreviewImage;
@@ -68,6 +69,7 @@ public void OpenSettings()
     }
     public void OnCardHighlighted(GameObject entry)
     {
+        lastHighlightedCard = entry;
         int index = spawnedCards.IndexOf(entry);
         for(int i = 0; i < spawnedCards.Count; i++)
         {
@@ -76,6 +78,15 @@ public void OpenSettings()
             SetCardVisual(card, spawnedCards[i] == entry);
         }
         if(index >= 0) SelectCategory((Category)index);
+    }
+    void RefreshCardVisuals()
+    {
+        foreach(GameObject cardObj in spawnedCards)
+        {
+            if(cardObj == null) continue;
+            EntryCard card = cardObj.GetComponent<EntryCard>();
+            if(card != null) SetCardVisual(card, cardObj == lastHighlightedCard);
+        }
     }
     void SetCardVisual(EntryCard card, bool selected)
     {
@@ -86,7 +97,7 @@ public void OpenSettings()
             bg.a = selected ? 1f : 0f;
             card.backgroundImage.color = bg;
         }
-        if(card.titleText != null) card.titleText.color = selected ? cardTitleSelected : cardTitleDefault;
+        if(card.titleText != null) card.titleText.color = (SettingsManager.instance != null ? (selected ? SettingsManager.instance.TextSelectedColor : SettingsManager.instance.TextDefaultColor) : (selected ? cardTitleSelected : cardTitleDefault));
     }
     void SelectCategory(Category category)
     {
@@ -146,7 +157,6 @@ void ShowMenusGroup()
         SpawnSliderRow(menusGroup, "Border Red", 0f, 1f, border.r, variable => SetBorderChannel(0, variable), null);
         SpawnSliderRow(menusGroup, "Border Green", 0f, 1f, border.g, variable => SetBorderChannel(1, variable), null);
         SpawnSliderRow(menusGroup, "Border Blue", 0f, 1f, border.b, variable => SetBorderChannel(2, variable), null);
-        SpawnSliderRow(menusGroup, "Border Thickness", 1f, 10f, settings.menuBorderThickness, variable => settings.SetMenuBorderThickness(variable), variable =>$"{variable:0}px");
     }
     void ShowTextGroup()
     {
@@ -178,6 +188,7 @@ void ShowMenusGroup()
         Color color = SettingsManager.instance.uiTextColor;
         if(channel == 0) color.r = value; else if(channel == 1) color.g = value; else color.b = value;
         SettingsManager.instance.SetTextColor(color);
+        RefreshCardVisuals();
         if(textColorPreviewImage != null) textColorPreviewImage.color = color;
     }
     void SpawnSliderRow(Transform parent, string label, float min, float max, float initial, System.Action<float> onChanged, System.Func<float, string> formatter)

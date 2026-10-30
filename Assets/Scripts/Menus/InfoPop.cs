@@ -9,10 +9,16 @@ public Image borderImage;
 public Image backgroundImage;
 public Image icon;
 public TextMeshProUGUI titleText;
+public TextMeshProUGUI subText;
 public float fadeDuration = 0.25f;
-public void Setup(string title, Sprite iconSprite)
+public void Setup(string title, string message, Sprite iconSprite)
     {
         if(titleText != null) titleText.text = title;
+        if(subText != null)
+        {
+            subText.text = message;
+            subText.gameObject.SetActive(!string.IsNullOrEmpty(message));
+        }
         if(icon != null)
         {
             icon.sprite = iconSprite;

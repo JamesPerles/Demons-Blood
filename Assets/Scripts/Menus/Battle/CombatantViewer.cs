@@ -17,8 +17,8 @@ public class CombatantViewer : MonoBehaviour
     public TextMeshProUGUI equippedSkillsText;
     public TextMeshProUGUI extraText;
     public Image icon;
-    const string colorMuted = "#8A8580";
-    const string colorBright = "#E8E4E0";
+    string colorMuted => SettingsManager.instance != null ? "#" + ColorUtility.ToHtmlStringRGB(SettingsManager.instance.TextMutedColor) : "#8A8580";
+    string colorBright => SettingsManager.instance != null ? "#" + ColorUtility.ToHtmlStringRGB(SettingsManager.instance.TextSelectedColor) : "#E8E4E0";
     const string colorDone = "#639922";
     const string dot = "\u00B7";
     ActiveStats shownCharacter;

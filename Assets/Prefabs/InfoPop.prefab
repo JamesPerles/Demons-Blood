@@ -110,6 +110,7 @@ MonoBehaviour:
   backgroundImage: {fileID: 8991798043224936920}
   icon: {fileID: 0}
   titleText: {fileID: 1959403354042730818}
+  subText: {fileID: 0}
   fadeDuration: 0.25
 --- !u!225 &5864568231003280025
 CanvasGroup:
@@ -134,6 +135,7 @@ GameObject:
   - component: {fileID: 7022478736971511482}
   - component: {fileID: 144519603754364716}
   - component: {fileID: 1959403354042730818}
+  - component: {fileID: 6402589092698875995}
   m_Layer: 5
   m_Name: Title
   m_TagString: Untagged
@@ -260,6 +262,20 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &6402589092698875995
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4511610063242515496}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 710050057cec1a242be043c18a07a06b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ThemeTarget
+  role: 2
+  insetByBorderThickness: 0
 --- !u!1 &8363916495453287652
 GameObject:
   m_ObjectHideFlags: 0

@@ -2,7 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -128,7 +127,7 @@ public class CommandMenu : SubMenu
         foreach (var member in PlayerParty.instance.playableCharacters)
         {
             ActiveStats stats = member.GetComponent<ActiveStats>();
-            if(stats != null && !active.Contains(stats)) bench.Add(stats);
+            if(stats != null && !active.Contains(stats) && stats.currentHP > 0) bench.Add(stats);
         }
         return bench;
     }
@@ -192,7 +191,7 @@ public class CommandMenu : SubMenu
         {
             Art captured = art;
             MenuOption option = new MenuOption(captured.artName, () => {selectedAction = PlayerActionType.Art; selectedLearnable = captured; FinalizeTurn();});
-            option.enabled = currentActiveStats.currentHP >= captured.Cost;
+            option.enabled = captured.canKillUser || currentActiveStats.currentHP > captured.Cost;
             option.description = $"HP cost: {captured.Cost}";
             if(captured.isAOE)
             {
@@ -234,7 +233,7 @@ public class CommandMenu : SubMenu
         {
             Fusion captured = fusion;
             MenuOption option = new MenuOption(captured.fusionName, () => {selectedAction = PlayerActionType.Fusion; selectedLearnable = captured; FinalizeTurn();});
-            option.enabled = currentActiveStats.currentHP >= captured.HPCost && currentActiveStats.currentMP >= captured.MPCost;
+            option.enabled = (captured.canKillUser || currentActiveStats.currentHP > captured.HPCost) && currentActiveStats.currentMP >= captured.MPCost;
             option.description = $"HP cost: {captured.HPCost} MP cost: {captured.MPCost}";
             if(captured.isAOE)
             {

@@ -1,6 +1,7 @@
 using TMPro;
 using UnityEngine;
 using System.Collections;
+using UnityEngine.EventSystems;
 public class DialogueBox : MonoBehaviour
 {
         public static DialogueBox instance;
@@ -15,6 +16,25 @@ public class DialogueBox : MonoBehaviour
         int currentIndex;
         Coroutine typeRoutine;
         System.Action onComplete;
+        int openedFrame = -1;
+        int closedFrame = -1;
+        public bool closed=> closedFrame == Time.frameCount;
+        bool movementLocked = false;
+        bool movementWasEnabled = true;
+        void LockMovement()
+    {
+        if(movementLocked || EventSystem.current == null) return;
+        movementWasEnabled = EventSystem.current.sendNavigationEvents;
+        EventSystem.current.sendNavigationEvents = false;
+        movementLocked = true;
+    }
+    void UnlockMovement()
+    {
+        if(!movementLocked) return;
+        movementLocked = false;
+        if(EventSystem.current != null) EventSystem.current.sendNavigationEvents = movementWasEnabled;
+    }
+        void OnDisable() { UnlockMovement(); }
         void Awake()
     {
         if(instance == null) instance = this; else Destroy(gameObject);
@@ -26,6 +46,7 @@ public class DialogueBox : MonoBehaviour
     public void Update()
     {
         if (!isOpen) return;
+        if(openedFrame == Time.frameCount) return;
         if(Input.GetKeyDown(advanceKey)) Advance();
     }
     public void StartDialogue(string speakerName, string[] lines, System.Action onComplete = null)
@@ -33,6 +54,8 @@ public class DialogueBox : MonoBehaviour
         currentLines = lines;
         currentIndex = 0;
         isOpen = true;
+        openedFrame = Time.frameCount;
+        LockMovement();
         this.onComplete = onComplete;
         if(panel != null) panel.SetActive(true);
         if(nameText != null) nameText.text = speakerName;
@@ -65,13 +88,15 @@ public class DialogueBox : MonoBehaviour
         for(int i = 0; i < line.Length; i++)
         {
             if(bodyText != null) bodyText.text += line[i];
-            yield return new WaitForSeconds(delay);
+            yield return new WaitForSecondsRealtime(delay);
     }
     isTyping = false;
 }
 void Close()
     {
         isOpen = false;
+        UnlockMovement();
+        closedFrame = Time.frameCount;
         if(panel != null) panel.SetActive(false);
         currentLines = null;
         onComplete?.Invoke();

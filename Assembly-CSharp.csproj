@@ -53,7 +53,6 @@
     <Compile Include="Assets\Scripts\ScriptableObjects\Items\Baggable.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\ShaderPropAnimator.cs" />
     <Compile Include="Assets\Scripts\Player\PlayerParty.cs" />
-    <Compile Include="Assets\Scripts\Menus\Ui\UIText.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Effects\Restore.cs" />
     <Compile Include="Assets\Scripts\Battle Scripts\EnemyAI.cs" />
     <Compile Include="Assets\Scripts\Managers\AudioManager.cs" />
@@ -64,7 +63,6 @@
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\VertexShakeB.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_TextSelector_B.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\BondData.cs" />
-    <Compile Include="Assets\Scripts\Menus\MenuTheme.cs" />
     <Compile Include="Assets\Scripts\Menus\Pause\InventoryMenu.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_DigitValidator.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\ObjectSpin.cs" />
@@ -79,6 +77,7 @@
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\ChatController.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\VertexColorCycler.cs" />
     <Compile Include="Assets\Scripts\Managers\SaveManager.cs" />
+    <Compile Include="Assets\Scripts\Menus\InfoPop.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\EnvMapAnimator.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\TextMeshSpawner.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Stats\StatStage.cs" />
@@ -87,11 +86,11 @@
     <Compile Include="Assets\Scripts\ScriptableObjects\Items\Chest.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\TextConsoleSimulator.cs" />
     <Compile Include="Assets\Scripts\Managers\FlagManager.cs" />
-    <Compile Include="Assets\Scripts\PopManager.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\VertexZoom.cs" />
     <Compile Include="Assets\Scripts\Managers\SettingsManager.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Items\Materials.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Quests\Quest.cs" />
+    <Compile Include="Assets\Scripts\Managers\PopupManager.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\TMPro_InstructionOverlay.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Shops\ShopStats.cs" />
     <Compile Include="Assets\Scripts\Player\Interactor.cs" />
@@ -131,7 +130,6 @@
     <Compile Include="Assets\Scripts\Menus\PartyCombatView.cs" />
     <Compile Include="Assets\Scripts\Menus\Ui\MenuSelect.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_PhoneNumberValidator.cs" />
-    <Compile Include="Assets\Scripts\InfoPop.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\SkewTextExample.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Areas\LocationData.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Learnables\Effect.cs" />
@@ -141,6 +139,7 @@
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\TextMeshProFloatingText.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\RaceDamage.cs" />
     <Compile Include="Assets\Scripts\Menus\TitleScreenMenu.cs" />
+    <Compile Include="Assets\Scripts\Menus\ThemeTarget.cs" />
     <Compile Include="Assets\Scripts\Player\PlayerMovement.cs" />
     <Compile Include="Assets\Scripts\Menus\MenuBase.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_TextInfoDebugTool.cs" />

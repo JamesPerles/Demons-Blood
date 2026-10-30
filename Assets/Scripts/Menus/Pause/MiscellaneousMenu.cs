@@ -169,7 +169,7 @@ public class MiscellaneousMenu : MonoBehaviour, ICardHighlightHandler, ITabHider
         result += $"<size=80%><color={colorMuted}>Lv. {enemy.level}</color></size>\n";
         result += $"<color={colorBody}>{enemy.dexEntry}</color>\n\n";
         result += $"<size=75%><color={colorMuted}>STATS</color></size>\n";
-        result += $"<color={colorBright}>HP {enemy.hp}{dot} MP {enemy.mp} {dot} STR {enemy.strength} {dot} MAG {enemy.magic} {dot} DEF{enemy.defense} {dot} WIS {enemy.wisdom} {dot} TEC {enemy.tech} {dot} AFF {enemy.affinity} {dot} SPD {enemy.speed} {dot} LCK {enemy.luck}</color>\n\n";
+        result += $"<color={colorBright}>HP {enemy.hp} {dot} MP {enemy.mp} {dot} STR {enemy.strength} {dot} MAG {enemy.magic} {dot} DEF {enemy.defense} {dot} WIS {enemy.wisdom} {dot} TEC {enemy.tech} {dot} AFF {enemy.affinity} {dot} SPD {enemy.speed} {dot} LCK {enemy.luck}</color>\n\n";
         if(enemy.magicAffinity != Element.None)
         {
             result += $"<size=75%><color={colorMuted}>AFFINITY</color></size>\n";
@@ -223,7 +223,7 @@ public class MiscellaneousMenu : MonoBehaviour, ICardHighlightHandler, ITabHider
             bg.a = selected ? 1f : 0f;
             card.backgroundImage.color = bg;
         }
-        if(card.titleText != null) card.titleText.color = selected ? cardTitleSelected : cardTitleDefault;
+        if(card.titleText != null) card.titleText.color = (SettingsManager.instance != null ? (selected ? SettingsManager.instance.TextSelectedColor : SettingsManager.instance.TextDefaultColor) : (selected ? cardTitleSelected : cardTitleDefault));
     }
      void QuitGame()
     {

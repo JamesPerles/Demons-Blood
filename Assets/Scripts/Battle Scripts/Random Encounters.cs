@@ -19,6 +19,7 @@ public class RandomEncounter : MonoBehaviour
         {
             instance = this;
             DontDestroyOnLoad(gameObject);
+            SceneManager.sceneLoaded += OnSceneLoaded;
         }
         else
         {
@@ -33,8 +34,11 @@ public class RandomEncounter : MonoBehaviour
     {
         EncounterThreshold();
         lastTile = Vector2Int.RoundToInt(transform.position);
-        SceneManager.sceneLoaded += OnSceneLoaded;
         currentEncounterTable = FindFirstObjectByType<EncounterTable>();
+    }
+    void OnDestroy() 
+    {
+        if(instance == this) SceneManager.sceneLoaded -= OnSceneLoaded;
     }
     void EncounterThreshold()
     {

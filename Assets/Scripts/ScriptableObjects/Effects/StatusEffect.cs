@@ -30,14 +30,15 @@ public class InflictStatusEffect : Effect
         else if (target is EnemyAI enemy) {name = enemy.currentName; immune = enemy.IsImmuneToStatus(statustoInflict);} 
         if(immune)
         {
-            yield return BattleTextBox.instance.ShowMessage($"{name} is immune to {statustoInflict.statusName}.");
+           if(BattleTextBox.instance != null) yield return BattleTextBox.instance.ShowMessage($"{name} is immune to {statustoInflict.statusName}.");
             yield break;
         }
         int roll = Random.Range(0, 100);
         if(roll >= chanceToInflict) yield break;
         if(target is ActiveStats plyr) plyr.ApplyStatus(statustoInflict);
         else if (target is EnemyAI enmy) enmy.ApplyStatus(statustoInflict);
-       yield return BattleTextBox.instance.ShowMessage($"{name} is afflicted with {statustoInflict.statusName}");
+        yield return statustoInflict.OnApply(target);
+       if(BattleTextBox.instance != null) yield return BattleTextBox.instance.ShowMessage($"{name} is afflicted with {statustoInflict.statusName}");
     }
 }
 [CreateAssetMenu(fileName = "Cure Status Eff", menuName = "Battle/Effects/CureStatus")]
@@ -58,6 +59,6 @@ public class CureStatusEffect : Effect
       name = enemy.currentName;
         }
     string message = statusToCure == null ? $"{name}'s status ailments were cured" : $"{name} was cured of {statusToCure.statusName}.";
-    yield return BattleTextBox.instance.ShowMessage(message);
+    if(BattleTextBox.instance != null) yield return BattleTextBox.instance.ShowMessage(message);
 }
 }

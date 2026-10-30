@@ -532,6 +532,15 @@ public void Unequip(Equipment.EquipmentType slotType)
     }
         public void GrantLearnable(Learnable learnable) => Learnable(learnable);
         public void RefreshStats() => RecalculateStats();
+        public List<int> SaveBaseStats() => new List<int> {maxHP, maxMP, currentStrength, currentMagic, currentDefense, currentWisdom, currentTech, currentAffinity, currentSpeed, currentLuck};
+        public void LoadBaseStats(List<int> stats)
+    {
+        if(stats == null || stats.Count < 10) return;
+        maxHP = stats[0]; maxMP = stats[1];
+        currentStrength = stats[2]; currentMagic = stats[3]; currentDefense = stats[4]; currentWisdom = stats[5];
+        currentTech = stats[6]; currentAffinity = stats[7]; currentSpeed = stats[8]; currentLuck = stats[9];
+        RecalculateStats();
+    }
     }
 
 

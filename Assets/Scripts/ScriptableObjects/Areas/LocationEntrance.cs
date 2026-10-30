@@ -20,11 +20,11 @@ void OnTriggerEnter2D(Collider2D other)
 public void Interact()
     {
         if(locationData == null || string.IsNullOrEmpty(locationData.sceneName)) return;
-        locationData.discovered = true;
+        locationData.Discover();
         if(!hasSceneTransition) return;
         if(string.IsNullOrEmpty(locationData.sceneName)) return;
         isLoading = true;
-        BattleManager.lastTown = locationData.sceneName;
+        if(locationData.locationType == LocationType.Town) BattleManager.lastTown = locationData.sceneName;
         string spawnPointName = GetSpawnPointName();
         if(SceneFader.instance != null) SceneFader.instance.LoadScene(locationData.sceneName, () => LoadLocation(spawnPointName));
         else StartCoroutine(LoadLocationFallback(spawnPointName));

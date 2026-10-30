@@ -13,6 +13,8 @@ void Awake()
 void Update()
     {
         if(DialogueBox.instance != null && DialogueBox.instance.isOpen) return;
+        if(DialogueBox.instance != null && DialogueBox.instance.closed) return;
+        if(ShopMenu.instance != null && ShopMenu.instance.isOpen) return;
         if(PauseMenu.instance != null && PauseMenu.instance.isOpen) return;
         if(Input.GetKeyDown(interactKey)) PlayerInteract();
     }

@@ -930,6 +930,7 @@ MonoBehaviour:
   tabButtonParent: {fileID: 178426123}
   activeColor: {r: 1, g: 1, b: 1, a: 1}
   inactiveColor: {r: 0.6, g: 0.55, b: 0.55, a: 1}
+  focusedColor: {r: 0.84705883, g: 0.3529412, b: 0.1882353, a: 1}
 --- !u!1 &190409542
 GameObject:
   m_ObjectHideFlags: 0
@@ -2614,7 +2615,7 @@ MonoBehaviour:
   battleTextSpeed: 40
   battleSpeedMultiplier: 1
   uiTextColor: {r: 1, g: 1, b: 1, a: 1}
-  menuPanelColor: {r: 0.04, g: 0.04, b: 0.04, a: 0.72}
+  menuPanelColor: {r: 0.04, g: 0.04, b: 0.04, a: 1}
   menuBorderColor: {r: 0.42, g: 0.08, b: 0.08, a: 1}
   menuBorderThickness: 5
 --- !u!114 &640909341
@@ -3577,6 +3578,7 @@ GameObject:
   - component: {fileID: 969700060}
   - component: {fileID: 969700062}
   - component: {fileID: 969700061}
+  - component: {fileID: 969700063}
   m_Layer: 5
   m_Name: PauseMenu
   m_TagString: Untagged
@@ -3654,6 +3656,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 969700059}
   m_CullTransparentMesh: 1
+--- !u!114 &969700063
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 969700059}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 710050057cec1a242be043c18a07a06b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ThemeTarget
+  role: 0
+  insetByBorderThickness: 0
 --- !u!1001 &1010011642
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3949,7 +3965,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1085860781
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4922,6 +4938,7 @@ GameObject:
   - component: {fileID: 1313191569}
   - component: {fileID: 1313191571}
   - component: {fileID: 1313191570}
+  - component: {fileID: 1313191572}
   m_Layer: 5
   m_Name: PauseBorder
   m_TagString: Untagged
@@ -4987,6 +5004,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1313191568}
   m_CullTransparentMesh: 1
+--- !u!114 &1313191572
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1313191568}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 710050057cec1a242be043c18a07a06b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ThemeTarget
+  role: 1
+  insetByBorderThickness: 0
 --- !u!1001 &1313873799
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5276,6 +5307,8 @@ MonoBehaviour:
   miscController: {fileID: 1286780851}
   mapController: {fileID: 1286780854}
   rosterSwapKey: 9
+  nextPageKey: 281
+  previousPageKey: 280
 --- !u!225 &1343652783
 CanvasGroup:
   m_ObjectHideFlags: 0
@@ -5544,7 +5577,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1790357772969355348, guid: da8031f6a688c8846be7a9a9a4560f44, type: 3}
       propertyPath: m_margin.z
-      value: 337.38156
+      value: 284.97556
       objectReference: {fileID: 0}
     - target: {fileID: 1790357772969355348, guid: da8031f6a688c8846be7a9a9a4560f44, type: 3}
       propertyPath: m_fontSizeBase
@@ -7688,7 +7721,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::RewardPopupManager
   popupPrefab: {fileID: 1551176806282332324, guid: c1a8c546df4e9e5438ef1f0d4a738070, type: 3}
   popupParent: {fileID: 1736076159}
-  dismissKey: 32
+  dismissKey: 120
 --- !u!1 &1743576706
 GameObject:
   m_ObjectHideFlags: 0
@@ -7856,6 +7889,7 @@ GameObject:
   - component: {fileID: 1751923182}
   - component: {fileID: 1751923181}
   - component: {fileID: 1751923180}
+  - component: {fileID: 1751923183}
   m_Layer: 5
   m_Name: RightPanel
   m_TagString: Untagged
@@ -7947,6 +7981,20 @@ MonoBehaviour:
   m_Spacing: {x: 50, y: 0}
   m_Constraint: 0
   m_ConstraintCount: 2
+--- !u!114 &1751923183
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1751923178}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 710050057cec1a242be043c18a07a06b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ThemeTarget
+  role: 0
+  insetByBorderThickness: 0
 --- !u!1 &1758575381
 GameObject:
   m_ObjectHideFlags: 0
@@ -8207,6 +8255,7 @@ GameObject:
   - component: {fileID: 1830718486}
   - component: {fileID: 1830718485}
   - component: {fileID: 1830718484}
+  - component: {fileID: 1830718489}
   m_Layer: 5
   m_Name: LeftPanel
   m_TagString: Untagged
@@ -8321,6 +8370,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1830718482}
   m_CullTransparentMesh: 1
+--- !u!114 &1830718489
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1830718482}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 710050057cec1a242be043c18a07a06b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ThemeTarget
+  role: 0
+  insetByBorderThickness: 0
 --- !u!1 &1837535049
 GameObject:
   m_ObjectHideFlags: 0
@@ -8795,6 +8858,7 @@ MonoBehaviour:
   tabButtonParent: {fileID: 1958860906}
   activeColor: {r: 1, g: 1, b: 1, a: 1}
   inactiveColor: {r: 0.6, g: 0.55, b: 0.55, a: 1}
+  focusedColor: {r: 0.84705883, g: 0.3529412, b: 0.1882353, a: 1}
 --- !u!114 &1958860908
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -9182,6 +9246,7 @@ GameObject:
   - component: {fileID: 2048693596}
   - component: {fileID: 2048693595}
   - component: {fileID: 2048693594}
+  - component: {fileID: 2048693597}
   m_Layer: 5
   m_Name: Border
   m_TagString: Untagged
@@ -9260,6 +9325,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2048693592}
   m_CullTransparentMesh: 1
+--- !u!114 &2048693597
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2048693592}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 710050057cec1a242be043c18a07a06b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ThemeTarget
+  role: 1
+  insetByBorderThickness: 0
 --- !u!1 &2116263847
 GameObject:
   m_ObjectHideFlags: 0

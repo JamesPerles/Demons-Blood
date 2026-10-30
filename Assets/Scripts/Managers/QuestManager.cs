@@ -33,7 +33,23 @@ void Awake()
     public void StartQuest(Quest quest)
     {
         if(!IsQuestAvailable(quest)) return;
-  activeQuests.Add(new QuestProgress(quest));
+        QuestProgress started = new QuestProgress(quest);
+        activeQuests.Add(started);
+        CheckFlagObjectives(started);
+    }
+    void CheckFlagObjectives(QuestProgress progress)
+    {
+        if(FlagManager.instance == null || progress.state != QuestState.Active) return;
+        QuestStage stage = progress.CurrentStage;
+        if(stage == null) return;
+        int stageAtStart = progress.currentStage;
+        for(int i = 0; i < stage.objectives.Count; i++)
+        {
+            QuestObjective objective = stage.objectives[i];
+            if(objective.type != ObjectiveType.Flag || !FlagManager.instance.GetFlag(objective.flagKey)) continue;
+            ObjectiveSatisfied(progress, i);
+            if(progress.currentStage != stageAtStart || progress.state != QuestState.Active) break;
+        }
     }
     void FlagChanged(string key)
     {
@@ -202,6 +218,7 @@ void Awake()
         else
         {
             progress.StageCount();
+            CheckFlagObjectives(progress);
         }
         }
         void FailQuest(QuestProgress progress)
@@ -236,6 +253,6 @@ void Awake()
         if(item != null && InventoryManager.instance != null) InventoryManager.instance.PickupItem(item);
         if(equipment != null)
         foreach(Equipment equip in equipment)
-        if(equip != null && InventoryManager.instance != null) InventoryManager.instance.PickupItem(equip);
+        if(equip != null && InventoryManager.instance != null) InventoryManager.instance.PickupItem(Instantiate(equip));
     }
 }

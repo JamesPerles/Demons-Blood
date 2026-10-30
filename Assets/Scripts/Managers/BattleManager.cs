@@ -191,7 +191,7 @@ void Start()
             {
                 if(IsDead(combatant)) continue;
                 yield return StartCoroutine(TurnStartEffects(combatant));
-                if(IsDead(combatant)) {yield return StartCoroutine(CheckDeath(combatant)); continue;}
+                if(IsDead(combatant)) {yield return StartCoroutine(CheckDeath(combatant)); if(AllPlayersDead() || AllEnemiesDead()) yield break; continue;}
                 if ( combatant is ActiveStats player)
                 {
                     ActivePlayer(player);
@@ -380,6 +380,11 @@ void Start()
                         yield return StartCoroutine(BattleTextBox.instance.ShowMessage($"{player.currentName} has no swap target selected."));
                         break;
                     }
+                    if(incoming.currentHP <= 0 || players.Contains(incoming))
+                    {
+                        yield return StartCoroutine(BattleTextBox.instance.ShowMessage($"{player.currentName} can't swap with {incoming.currentName}."));
+                        break;
+                    }
                     int swapIndex = players.IndexOf(player);
                     if(swapIndex >= 0)
                     {
@@ -510,6 +515,7 @@ void Start()
     }
          IEnumerator EnemyTurn(EnemyAI enemy)
         {
+            enemy.isDefending = false;
             enemy.ChangeAI();
             enemy.CheckTransform();
             List<ActiveStats> livingPlayers = players.FindAll(player => player.currentHP > 0);
@@ -531,8 +537,7 @@ void Start()
                 yield return StartCoroutine(BattleTextBox.instance.ShowMessage($"{enemy.currentName} defends!"));
                 break;
                 case EnemyAI.EnemyActionType.Item:
-                yield return StartCoroutine
-                (BattleTextBox.instance.ShowMessage($"{enemy.currentName} uses item its neccesary to find out which though claude"));
+                yield return StartCoroutine(EnemyUseItem(enemy));
                 break;
                 case EnemyAI.EnemyActionType.Run:
                 yield return StartCoroutine(BattleTextBox.instance.ShowMessage($"{enemy.currentName} Flees!"));

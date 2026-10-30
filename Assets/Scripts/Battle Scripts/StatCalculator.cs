@@ -68,12 +68,12 @@ public class StatCalculator
         result.finalAffinity = Mathf.RoundToInt(result.finalAffinity * transformMultiplier);
         result.finalSpeed = Mathf.RoundToInt(result.finalSpeed * transformMultiplier);
         result.finalLuck = Mathf.RoundToInt(result.finalLuck * transformMultiplier);
-        result.accuracy += result.finalTech + (result.finalLuck / 3) + (result.finalSpeed / 2);
-        result.precision += result.finalAffinity + (result.finalLuck / 3) + (result.finalSpeed / 2);
-        result.evasion += (result.finalLuck / 2) + (result.finalSpeed / 2) + (result.finalTech / 2) + (result.finalDefense / 5) + (result.finalStrength / 5);
-        result.foresight += (result.finalLuck / 2) + (result.finalSpeed / 2) + (result.finalWisdom / 2) + (result.finalAffinity / 3) + (result.finalMagic / 4);
-        result.critical += (result.finalTech / 3) + (result.finalAffinity / 3) + (result.finalLuck / 2);
-        result.dodge += (result.evasion / 2) + (result.finalLuck / 2);
+        result.accuracy  = Mathf.RoundToInt(result.accuracy * StatStage.Multiplier(GetStatStage(Stat.Accuracy)));
+        result.precision = Mathf.RoundToInt(result.precision * StatStage.Multiplier(GetStatStage(Stat.Precision)));
+        result.evasion = Mathf.RoundToInt(result.evasion * StatStage.Multiplier(GetStatStage(Stat.Evasion)));
+        result.foresight = Mathf.RoundToInt(result.foresight * StatStage.Multiplier(GetStatStage(Stat.Foresight)));
+        result.critical = Mathf.RoundToInt(result.critical * StatStage.Multiplier(GetStatStage(Stat.Critical)));
+        result.dodge = Mathf.RoundToInt(result.dodge * StatStage.Multiplier(GetStatStage(Stat.Dodge)));
         return result;
     }
 }

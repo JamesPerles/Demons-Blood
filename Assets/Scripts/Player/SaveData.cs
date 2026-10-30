@@ -33,6 +33,7 @@ public class CharacterSaveData
     public int currentExpToNextLevel;
     public int currentLevel;
     public List<string> personalItemNames = new List<string>();
+    public List<string> personalMaterialNames = new List<string>();
     public List<EquipmentSaveData> personalEquipment = new List<EquipmentSaveData>();
     public List<string> learnedSpells;
     public List<string> learnedArts;
@@ -44,6 +45,8 @@ public class CharacterSaveData
     public List<Vector2Int> unlockedPaths;
     public List<BondProgressSaveData> bondProgress;
     public Element magicAffinity;
+    public List<int> baseStats = new List<int>();
+    public int totalExperience;
 }
 [System.Serializable]
 public class QuestProgressSaveData
@@ -53,6 +56,12 @@ public class QuestProgressSaveData
     public List<int> objectiveCounts = new List<int>();
     public List<int> chosenObjectivePerStage = new List<int>();
     public QuestState state;
+    public List<int> optionalCounts = new List<int>();
+    public List<bool> optionalClaimed = new List<bool>();
+    public int pendingOptionalGold;
+    public int pendingOptionalExp;
+    public List<string> pendingOptionalItemNames = new List<string>();
+    public List<string> pendingOptionalEquipmentNames = new List<string>();
 }
 [System.Serializable]
 public class SettingsSaveData
@@ -63,12 +72,15 @@ public class SettingsSaveData
     public float battleTextSpeed;
     public float battleSpeedMultiplier;
     public Color textColor;
+    public Color menuPanelColor = new Color(0.04f, 0.04f, 0.04f, 1f);
+    public Color menuBorderColor = new Color(0.42f, 0.08f, 0.08f, 1f);
 }
 [System.Serializable]
 public class SaveData
 {
  public int gold;
  public List<string> inventoryItemNames = new List<string>();
+ public List<string> inventoryMaterialNames = new List<string>();
  public List<EquipmentSaveData> inventoryEquipment = new List<EquipmentSaveData>();
  public List<string> playablePartyOrder = new List<string>();
  public List<CharacterSaveData> characters = new List<CharacterSaveData>();
@@ -82,4 +94,5 @@ public class SaveData
  public string sceneName;
  public float playerPosX, playerPosY, playerPosZ;
  public string savedAt;
+ public string lastTown;
 }

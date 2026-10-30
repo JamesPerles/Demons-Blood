@@ -17,23 +17,18 @@ public class AudioManager : MonoBehaviour
     }
     void Start()
     {
+        if(instance != this) return;
         if(SettingsManager.instance != null)
         {
             musicSource.volume = SettingsManager.instance.musicVolume;
             sfxSource.volume = SettingsManager.instance.sfxVolume;
-        }
-    }
-    void OnEnable()
-    {
-        if(SettingsManager.instance != null)
-        {
             SettingsManager.instance.OnMusicVolumeChanged += MusicVolumeChanged;
             SettingsManager.instance.OnSfxVolumeChanged += SfxVolumeChanged;
         }
     }
-    void OnDisable()
+  void OnDestroy()
     {
-        if(SettingsManager.instance != null)
+        if(instance == this && SettingsManager.instance != null)
         {
             SettingsManager.instance.OnMusicVolumeChanged -= MusicVolumeChanged;
             SettingsManager.instance.OnSfxVolumeChanged -= SfxVolumeChanged;

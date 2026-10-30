@@ -9,7 +9,13 @@ public string locationName;
 public LocationType locationType = LocationType.Town;
 [TextArea] public string description;
 public string sceneName;
-public bool discovered;
+public bool startsDiscovered;
+public string travelSpawnPointName;
+public static HashSet<string> discoveredNames = new HashSet<string>();
+public bool IsDiscovered => startsDiscovered || discoveredNames.Contains(name);
+public void Discover() { discoveredNames.Add(name); }
+[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+static void ResetStatics() {discoveredNames = new HashSet<string>(); }
 public Vector2 worldPosition;
 public string undiscoveredHint = "? ? ?";
 public List<Quest> associatedQuests = new List<Quest>();

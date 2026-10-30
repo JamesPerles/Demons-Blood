@@ -170,8 +170,8 @@ void ShowQuestList(bool mainQuests)
         List<string> parts = new List<string>();
         if(gold > 0) parts.Add($"{gold} gold");
         if(exp > 0) parts.Add($"{exp} exp");
-        if(items != null) foreach(Item item in items) if(item != null) parts.Add(item.name);
-        if(equipment != null) foreach(Equipment equip in equipment) if(equip != null) parts.Add(equip.name);
+        if(items != null) foreach(Item item in items) if(item != null) parts.Add(item.DisplayName);
+        if(equipment != null) foreach(Equipment equip in equipment) if(equip != null) parts.Add(equip.DisplayName);
         return parts.Count > 0 ? string.Join($" {dot} ", parts) : "None";
     }
         public void OnCardHighlighted(GameObject entry)
@@ -194,6 +194,7 @@ void ShowQuestList(bool mainQuests)
             bg.a = selected ? 1f : 0f;
             card.backgroundImage.color = bg;
         }
-        if(card.titleText != null) card.titleText.color = selected ? cardTitleSelected : cardTitleDefault;
+        if(card.titleText != null) card.titleText.color = (SettingsManager.instance != null ? 
+        (selected ?SettingsManager.instance.TextSelectedColor : SettingsManager.instance.TextDefaultColor) : (selected ? cardTitleSelected : cardTitleDefault));
     }
     }

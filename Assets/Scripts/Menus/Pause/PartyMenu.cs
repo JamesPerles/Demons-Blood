@@ -241,7 +241,8 @@ public void OpenTab()
             bg.a = selected ? 1f : 0f;
             card.backgroundImage.color = bg;
         }
-        if(card.titleText != null) card.titleText.color = selected ? cardTitleSelected : cardTitleDefault;
+       if(card.titleText != null) card.titleText.color = (SettingsManager.instance != null ? 
+       (selected ?SettingsManager.instance.TextSelectedColor : SettingsManager.instance.TextDefaultColor) : (selected ? cardTitleSelected : cardTitleDefault));
     }
     string BuildTwoColumnLines(List<string> items, int columnOffsetPx)
     {
@@ -379,6 +380,8 @@ void UpdateStatsExtraPanel()
     string BuildEquipmentStatLine(Equipment equipment)
     {
         List<string> parts = new List<string>();
+        if(equipment.hp != 0) parts.Add($"HP {(equipment.hp > 0 ? "+" : "")}{equipment.hp}");
+        if(equipment.mp != 0) parts.Add($"MP {(equipment.mp > 0 ? "+" : "")}{equipment.mp}");
         if(equipment.strength != 0) parts.Add($"STR {(equipment.strength > 0 ? "+" : "")}{equipment.strength}");
         if(equipment.magic != 0) parts.Add($"MAG {(equipment.magic > 0 ? "+" : "")}{equipment.magic}");
         if(equipment.defense != 0) parts.Add($"DEF {(equipment.defense > 0 ? "+" : "")}{equipment.defense}");
@@ -649,6 +652,7 @@ void SpendPoint()
      }
         void PlayConversation(BondData data, BondConversation conversation, int index)
     {
+        if(DialogueBox.instance == null || DialogueBox.instance.isOpen) return;
         string speakerLabel = $"{selectedCharacter.currentName} & {data.partner.characterName}";
         string[] lines = conversation.dialogue.Split('\n');
         DialogueBox.instance.StartDialogue(speakerLabel, lines, () => MarkViewed(data, index));

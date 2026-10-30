@@ -187,6 +187,8 @@ Baggable selectedItem;
     string BuildEquipmentStatLine(Equipment equipment)
     {
         List<string> parts = new List<string>();
+        if(equipment.hp != 0) parts.Add($"HP {(equipment.hp > 0 ? "+" : "")}{equipment.hp}");
+        if(equipment.mp != 0) parts.Add($"MP {(equipment.mp > 0 ? "+" : "")}{equipment.mp}");
         if(equipment.strength != 0) parts.Add($"STR {(equipment.strength > 0 ? "+" : "")}{equipment.strength}");
         if(equipment.magic != 0) parts.Add($"MAG {(equipment.magic > 0 ? "+" : "")}{equipment.magic}");
         if(equipment.defense != 0) parts.Add($"DEF {(equipment.defense > 0 ? "+" : "")}{equipment.defense}");
@@ -208,7 +210,7 @@ Baggable selectedItem;
         if(useButtonLabel != null) useButtonLabel.text = isEquipment ? "Equip" : "Use";
         if(sendButton != null) sendButton.interactable = true;
         if(discardButton != null) discardButton.interactable = !isKeyItem;
-        if(host.detailText != null && mode == Mode.Category && !isKeyItem)
+        if(host.detailText != null && mode == Mode.Category && !isKeyItem && !host.detailText.text.Contains("Choose party member"))
         host.detailText.text += $"\n<size=70%><color={colorMuted}>Choose party member</color></size>";
     }
     void SetActionButtonsVisible(bool visible)
@@ -280,7 +282,13 @@ Baggable selectedItem;
             }
             else if(selectedItem is Equipment equipment)
             {
-                InventoryManager.instance.AddPersonalInventory(equipment, target);
+                if(equipment.equipmentType == Equipment.EquipmentType.Weapon && target.playerStats != null && 
+                !target.playerStats.allowedWeaponTypes.Contains(equipment.weaponType)) { if(PopupManager.instance != null) 
+                PopupManager.instance.Show($"{target.currentName} cannot use {equipment.weaponType}."); 
+                mode = Mode.Category; RebuildCards(0); return; }
+                if(!InventoryManager.instance.AddPersonalInventory(equipment, target)) 
+                { if(PopupManager.instance != null) PopupManager.instance.Show($"{target.currentName}'s bag is full."); 
+                mode = Mode.Category; RebuildCards(0); return; }
                 target.Equip(equipment);
                  if(PopupManager.instance != null) PopupManager.instance.Show($"Equipped {equipment.equipmentName} on {target.currentName}.");
             }
@@ -314,6 +322,6 @@ Baggable selectedItem;
             bg.a = selected ? 1f : 0f;
             card.backgroundImage.color = bg;
         }
-        if(card.titleText != null) card.titleText.color = selected ? cardTitleSelected : cardTitleDefault;
+        if(card.titleText != null) card.titleText.color = (SettingsManager.instance != null ? (selected ?SettingsManager.instance.TextSelectedColor : SettingsManager.instance.TextDefaultColor) : (selected ? cardTitleSelected : cardTitleDefault));
     }
 }

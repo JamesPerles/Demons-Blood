@@ -6,6 +6,7 @@ public class LocationExit : MonoBehaviour
     public string targetScene;
     public string targetSpawnPoint;
     public Vector3 exitOffsetDirection = Vector2.down;
+    public float exitOffsetDistance = 1f;
     bool isLeaving = false;
     void OnTriggerEnter2D(Collider2D other)
     {
@@ -39,7 +40,7 @@ public class LocationExit : MonoBehaviour
             if(spawnPoint != null) spawnPosition = spawnPoint.transform.position;
             else Debug.LogWarning($"Could not find spawn point '{targetSpawnPoint}' in scene '{targetScene}'.");
             Vector2 direction = exitOffsetDirection.sqrMagnitude > 0.0001f ? exitOffsetDirection.normalized : Vector2.down;
-            Vector3 offset = (Vector3)(direction * exitOffsetDirection);
+            Vector3 offset = (Vector3)(direction * exitOffsetDistance);
             playerObj.transform.position = spawnPosition + offset;
         }
     }

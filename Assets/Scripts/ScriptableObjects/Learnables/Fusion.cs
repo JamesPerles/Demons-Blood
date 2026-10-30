@@ -10,4 +10,5 @@ public string fusionName;
     public int MPCost = 0;
     public List<Effect> effects = new List<Effect>();
     public bool isAOE = false;
+    public bool canKillUser = false;
 }

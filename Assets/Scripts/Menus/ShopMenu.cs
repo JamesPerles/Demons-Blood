@@ -10,6 +10,7 @@ public TextMeshProUGUI goldText;
 ShopStats currentShop;
 public Color statIncreaseColor = new Color(0.30f, 0.69f, 0.31f);
 public Color statDecreaseColor = new Color(0.90f, 0.22f, 0.21f);
+public bool isOpen {get; private set;} = false;
 Baggable pendingPurchase;
 int pendingPrice;
 void Awake()
@@ -23,6 +24,7 @@ void Awake()
     public void Open(ShopStats shop)
     {
         currentShop = shop;
+        isOpen = true;
         SetDisplayActive(true);
         if(shopNameText != null) shopNameText.text = shop.shopName;
         UpdateGoldText();
@@ -31,6 +33,7 @@ void Awake()
     }
     public override void Close()
     {
+        isOpen = false;
         SetDisplayActive(false);
         ClearEntries();
         screenHistory.Clear();
@@ -106,7 +109,7 @@ void Awake()
         if(PopupManager.instance != null) PopupManager.instance.Show($"Sold {owned.DisplayName}!");
         UpdateGoldText();
         screenHistory.Pop();
-        OpenScreen(SellMenu());
+        OpenScreen(SellMenu(), "Sell");
     }
     List<MenuOption> DestinationMenu()
     {
@@ -187,7 +190,7 @@ void Awake()
     void ReturnToBuyMenu()
     {
         while(screenHistory.Count > 1) screenHistory.Pop();
-        OpenScreen(BuyMenu());
+        OpenScreen(BuyMenu(), "Buy");
     }
     string EquipmentDescription(Equipment equipment)
     {

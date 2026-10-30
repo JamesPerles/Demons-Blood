@@ -76,6 +76,7 @@ public class LoadMainGame : MenuBase
             Debug.LogWarning("LoadMainGame: scene not set");
             return;
         }
+        if(SaveManager.instance != null) SaveManager.instance.ResetToDefaults();
         if(SceneFader.instance != null) SceneFader.instance.LoadScene(newGameSceneName);
         else SceneManager.LoadScene(newGameSceneName);
     }
@@ -152,7 +153,7 @@ public class LoadMainGame : MenuBase
                 entryCard.backgroundImage.color = bg;
             }
             if(entryCard.titleText != null) entryCard.titleText.color = 
-            selected ? cardTitleSelected : cardTitleDefault;
+            (SettingsManager.instance != null ? (selected ?SettingsManager.instance.TextSelectedColor : SettingsManager.instance.TextDefaultColor) : (selected ? cardTitleSelected : cardTitleDefault));
         }
     }
 }

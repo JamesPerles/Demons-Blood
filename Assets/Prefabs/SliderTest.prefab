@@ -47,6 +47,7 @@ GameObject:
   - component: {fileID: 566992611425947549}
   - component: {fileID: 5904361691095308916}
   - component: {fileID: 1361303401750993821}
+  - component: {fileID: 4817381389922043196}
   m_Layer: 5
   m_Name: Value
   m_TagString: Untagged
@@ -173,6 +174,20 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &4817381389922043196
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3430221446702382616}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 710050057cec1a242be043c18a07a06b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ThemeTarget
+  role: 2
+  insetByBorderThickness: 0
 --- !u!1 &3717299031090118670
 GameObject:
   m_ObjectHideFlags: 0
@@ -553,6 +568,7 @@ GameObject:
   - component: {fileID: 8565471392351939948}
   - component: {fileID: 7187127206438969684}
   - component: {fileID: 8961252887634531823}
+  - component: {fileID: 6523560051972707402}
   m_Layer: 5
   m_Name: SettingName
   m_TagString: Untagged
@@ -679,3 +695,17 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &6523560051972707402
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7624031546786930107}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 710050057cec1a242be043c18a07a06b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ThemeTarget
+  role: 2
+  insetByBorderThickness: 0

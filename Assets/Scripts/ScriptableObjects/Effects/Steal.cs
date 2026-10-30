@@ -11,7 +11,7 @@ public class Steal : Effect
         List<EnemyStats.StealDrop> stealable = enemyTarget.currentStealTable.FindAll(drop => drop.item != null);
         if(stealable.Count == 0)
     {
-        yield return BattleTextBox.instance.ShowMessage($"{casterStats.currentName} found nothing to steal on the enemy");
+        if(BattleTextBox.instance != null) yield return BattleTextBox.instance.ShowMessage($"{casterStats.currentName} found nothing to steal on the enemy");
         yield break;
     } 
     List<EnemyStats.StealDrop> successful = new List<EnemyStats.StealDrop>();
@@ -19,7 +19,7 @@ public class Steal : Effect
     if(Random.Range(0, 100) < drop.stealChance) successful.Add(drop);
     if (successful.Count == 0)
     {
-        yield return BattleTextBox.instance.ShowMessage($"{casterStats.currentName} failed to steal ");
+        if(BattleTextBox.instance != null) yield return BattleTextBox.instance.ShowMessage($"{casterStats.currentName} failed to steal ");
         yield break;
     }
         EnemyStats.StealDrop stolen = successful[0];
@@ -27,7 +27,7 @@ public class Steal : Effect
         if(drop.stealChance < stolen.stealChance) stolen = drop;
         InventoryManager.instance.PickupItem(stolen.item);
         enemyTarget.currentStealTable.Remove(stolen);
-        yield return BattleTextBox.instance.ShowMessage
+        if(BattleTextBox.instance != null) yield return BattleTextBox.instance.ShowMessage
         ($"{casterStats.currentName} stole {stolen.item.itemName} from {enemyTarget.currentName}!");
     }
 } 

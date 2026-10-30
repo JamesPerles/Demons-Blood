@@ -12,6 +12,6 @@ public override IEnumerator Apply(object caster, object target)
    if(target is EnemyAI enemy){enemy.ChangeStatStage(stat, stageChange); name = enemy.currentName; }
     if(name == null) yield break;
     string verb = stageChange >= 0 ? "increased" : "decreased";
-    yield return BattleTextBox.instance.ShowMessage($"{name}'s {stat} {verb}!");
+    if(BattleTextBox.instance != null) yield return BattleTextBox.instance.ShowMessage($"{name}'s {stat} {verb}!");
     }
 }

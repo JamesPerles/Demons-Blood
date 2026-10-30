@@ -62,11 +62,16 @@ void Awake()
         if(BattleManager.instance != null) return;
         if(Input.GetKeyDown(pauseKey))
         {
+            bool blocked = (DialogueBox.instance != null && DialogueBox.instance.isOpen) || (ShopMenu.instance != null && ShopMenu.instance.isOpen);
+            if(!blocked)
+            {
             if(isOpen) Close();
-            else Open(); 
+            else Open();  
+            } 
             return;
         }
         if(!isOpen) return;
+        if(DialogueBox.instance != null && (DialogueBox.instance.isOpen || DialogueBox.instance.closed)) return;
         if(Input.GetKeyDown(KeyCode.Backspace)) HandleBack();
         if(Input.GetKeyDown(nextPageKey)) HandlePageInput(1);
         if(Input.GetKeyDown(previousPageKey)) HandlePageInput(-1);
