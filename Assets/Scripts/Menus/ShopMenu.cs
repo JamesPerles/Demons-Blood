@@ -85,14 +85,14 @@ void Awake()
      List<MenuOption> SellMenu()
     {
         List<MenuOption> options = new List<MenuOption>();
-        foreach (Item item in InventoryManager.instance.items.OfType<Item>().Where(i => i.itemType == Item.ItemType.Consumable))
+        foreach (Item item in InventoryManager.instance.items.OfType<Item>().Where(item => item.itemType == Item.ItemType.Consumable && item.sellable))
         {
             Item captured = item;
             MenuOption option = new MenuOption($"{captured.itemName} - {captured.sellPrice}g", () => Sell(captured, captured.sellPrice));
             option.description = captured.description;
             options.Add(option);
         }
-        foreach (Equipment equipment in InventoryManager.instance.items.OfType<Equipment>())
+        foreach (Equipment equipment in InventoryManager.instance.items.OfType<Equipment>().Where(equipment => equipment.sellable && !equipment.locked))
         {
             Equipment captured = equipment;
             MenuOption option = new MenuOption($"{captured.equipmentName} - {captured.sellPrice}g", () => Sell(captured,captured.sellPrice));
@@ -103,6 +103,7 @@ void Awake()
     }
     void Sell(Baggable owned, int price)
     {
+        if(!owned.sellable) return;
         if(owned is Item ownedItem && ownedItem.itemType == Item.ItemType.KeyItem) return;
         InventoryManager.instance.LoseItem(owned);
         WalletManager.instance.AddGold(price);

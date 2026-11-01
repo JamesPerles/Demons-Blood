@@ -62,7 +62,13 @@ public class EnemyAI : MonoBehaviour , ICombatant
     public float transformMultiplier = 1f;
     public bool isTransformed {get; protected set;} = false;
     StatCalculator statCalculator = new StatCalculator();
+    public void SetMomentum(object source, float percent)
+    {
+        statCalculator.SetMomentum(source, percent);
+        RecalculateStats();
+    }
     public int GetStatStage(Stat stat) => statCalculator.GetStatStage(stat);
+    public bool HasStatDebuff => statCalculator.HasDebuff();
     public void ChangeStatStage(Stat stat, int amount)
     {
         statCalculator.ChangeStatStage(stat, amount);
@@ -113,7 +119,8 @@ public class EnemyAI : MonoBehaviour , ICombatant
     {
         StatCalculatorResult result = statCalculator.Recalculate(maxHP, maxMP, currentStrength, currentMagic,
         currentDefense, currentWisdom, currentTech, currentAffinity, currentSpeed, currentLuck,
-        new[] {weaponSlot, headSlot, bodySlot, shieldSlot, accessorySlot }, transformMultiplier);
+        new[] {weaponSlot, headSlot, bodySlot, shieldSlot, accessorySlot }, transformMultiplier,
+        flat => BattleHooks.FlatStats(this, flat), stat => BattleHooks.StatMultiplier(this, stat));
         finalHP = result.finalHP; finalMP = result.finalMP;
         finalStrength = result.finalStrength; finalMagic = result.finalMagic; finalDefense = result.finalDefense;
         finalWisdom = result.finalWisdom; finalTech = result.finalTech; finalAffinity = result.finalAffinity;
@@ -211,11 +218,12 @@ public class EnemyAI : MonoBehaviour , ICombatant
     {
         isDefending = true;
     }
-    public void TakeDamage(int damage)
+    public int TakeDamage(int damage, bool ignoreDefend = false)
     {
-        if (isDefending) damage = damage * 20/100;
-        currentHP -= Mathf.Max(1, damage);
-        currentHP = Mathf.Max(0, currentHP);
+        if (isDefending && !ignoreDefend) damage = damage * 20/100;
+        int final = BattleHooks.LimitDamage(this, Mathf.Max(1, damage));
+        currentHP = Mathf.Max(0, currentHP - final);
+        return final;
     }
     public void Heal(int amount)
     {

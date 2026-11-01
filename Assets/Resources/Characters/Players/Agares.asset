@@ -37,11 +37,11 @@ MonoBehaviour:
   speedGrowth: 65
   luckGrowth: 40
   learnset: []
-  magicAffinity: 0
+  magicAffinity: 7
   bonds: []
   immunities: []
-  allowedWeaponTypes: 
-  personalSkill: {fileID: 0}
+  allowedWeaponTypes: 0000000001000000
+  personalSkill: {fileID: 11400000, guid: 7a41abd9c58a786498b3d5bc1a3dc884, type: 2}
   skillTrees: {fileID: 0}
   bio: The son of a powerful knight of Tartarus. He protected his village till the
     day Lucifer came and freed it. Now he is Lucifers sword and will do whatever

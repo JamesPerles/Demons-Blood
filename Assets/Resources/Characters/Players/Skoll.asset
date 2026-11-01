@@ -37,11 +37,11 @@ MonoBehaviour:
   speedGrowth: 80
   luckGrowth: 15
   learnset: []
-  magicAffinity: 0
+  magicAffinity: 3
   bonds: []
   immunities: []
-  allowedWeaponTypes: 
-  personalSkill: {fileID: 0}
+  allowedWeaponTypes: 0700000000000000
+  personalSkill: {fileID: 11400000, guid: 433a13b68f9072b44a339041979037e8, type: 2}
   skillTrees: {fileID: 0}
   bio: 'A girl from a farming village in Styx, she was turned into a ghoul but after
     Lucifer saved her she is indepted to him. She now travels with him in a quest
@@ -60,5 +60,3 @@ MonoBehaviour:
   - Her Father
   - Water
   - Ghouls
-  - 
-  - 

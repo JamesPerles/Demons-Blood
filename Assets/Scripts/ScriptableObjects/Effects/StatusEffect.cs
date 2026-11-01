@@ -34,7 +34,8 @@ public class InflictStatusEffect : Effect
             yield break;
         }
         int roll = Random.Range(0, 100);
-        if(roll >= chanceToInflict) yield break;
+        int finalChance = Mathf.Clamp(chanceToInflict + BattleHooks.StatusChanceBonus(caster as ICombatant, target as ICombatant, statustoInflict), 0, 100);
+        if(roll >= finalChance) yield break;
         if(target is ActiveStats plyr) plyr.ApplyStatus(statustoInflict);
         else if (target is EnemyAI enmy) enmy.ApplyStatus(statustoInflict);
         yield return statustoInflict.OnApply(target);

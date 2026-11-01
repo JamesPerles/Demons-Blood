@@ -37,11 +37,11 @@ MonoBehaviour:
   speedGrowth: 60
   luckGrowth: 35
   learnset: []
-  magicAffinity: 0
+  magicAffinity: 1
   bonds: []
   immunities: []
-  allowedWeaponTypes: 
-  personalSkill: {fileID: 0}
+  allowedWeaponTypes: 0200000003000000
+  personalSkill: {fileID: 11400000, guid: 246da8167d56f2f4484efcff66717755, type: 2}
   skillTrees: {fileID: 0}
   bio: 'A girl from Helios. She escaped from her family with her mother when she
     was 10 but her mother was killed by a ghoul near the styx border but luckily

@@ -129,7 +129,8 @@ Baggable selectedItem;
             Baggable capturedItem = entry.item;
             int capturedCount = entry.count;
             string sub = activeCategory == Category.Equipment ? "" : $"x{entry.count}";
-            specs.Add(new CardGridSpec(entry.item.DisplayName, sub, BuildItemDetail(capturedItem, capturedCount), () =>
+            specs.Add(new CardGridSpec(entry.item.StyledName, sub, 
+            BuildItemDetail(capturedItem, capturedCount), () =>
             {
                     selectedItem = capturedItem;
                     RefreshActionButtons();
@@ -209,7 +210,7 @@ Baggable selectedItem;
         if(useButton != null) useButton.interactable = !isKeyItem;
         if(useButtonLabel != null) useButtonLabel.text = isEquipment ? "Equip" : "Use";
         if(sendButton != null) sendButton.interactable = true;
-        if(discardButton != null) discardButton.interactable = !isKeyItem;
+        if(discardButton != null) discardButton.interactable = !isKeyItem && !(selectedItem is Equipment lockedPick && lockedPick.locked);
         if(host.detailText != null && mode == Mode.Category && !isKeyItem && !host.detailText.text.Contains("Choose party member"))
         host.detailText.text += $"\n<size=70%><color={colorMuted}>Choose party member</color></size>";
     }
@@ -242,6 +243,7 @@ Baggable selectedItem;
     void DiscardSelected()
     {
         if(selectedItem == null) return;
+        if(selectedItem is Equipment lockedEquipment && lockedEquipment.locked) { if(PopupManager.instance != null) PopupManager.instance.Show($"{lockedEquipment.equipmentName} is locked and cannot be discarded."); return; }
         InventoryManager.instance.LoseItem(selectedItem);
         if(PopupManager.instance != null) PopupManager.instance.Show($"Discarded {selectedItem.DisplayName}");
         RebuildCards(0);
@@ -286,6 +288,8 @@ Baggable selectedItem;
                 !target.playerStats.allowedWeaponTypes.Contains(equipment.weaponType)) { if(PopupManager.instance != null) 
                 PopupManager.instance.Show($"{target.currentName} cannot use {equipment.weaponType}."); 
                 mode = Mode.Category; RebuildCards(0); return; }
+                string blocked = target.EquipBlockReason(equipment);
+                if(blocked != null) { if(PopupManager.instance != null) PopupManager.instance.Show(blocked); mode = Mode.Category; RebuildCards(0); return; }
                 if(!InventoryManager.instance.AddPersonalInventory(equipment, target)) 
                 { if(PopupManager.instance != null) PopupManager.instance.Show($"{target.currentName}'s bag is full."); 
                 mode = Mode.Category; RebuildCards(0); return; }

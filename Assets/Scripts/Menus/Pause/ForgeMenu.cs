@@ -234,6 +234,7 @@ public void OpenTab()
         foreach(Equipment equipment in InventoryManager.instance.items.OfType<Equipment>())
         {
             if(equipment.equipmentType != Equipment.EquipmentType.Weapon) continue;
+            if(!equipment.forgeable) continue;
             Equipment captured = equipment;
             bool atMax = captured.enhancementLevel >= maxEnhancementLevel;
             string sub = atMax ? "Max Level" : $"+{captured.enhancementLevel} {dot} {EnhanceCost(captured.enhancementLevel)}g";
@@ -244,7 +245,8 @@ public void OpenTab()
          foreach(GameObject characterObject in PlayerParty.instance.playableCharacters)
     {
         ActiveStats character = characterObject.GetComponent<ActiveStats>();
-        if(character == null || character.weaponSlot == null) continue;
+        if(character == null || character.weaponSlot == null 
+        || !character.weaponSlot.forgeable || character.weaponSlot.locked) continue;
         Equipment equipped = character.weaponSlot;
         ActiveStats capturedOwner = character;
         Equipment capturedEquipped = equipped;
@@ -334,7 +336,7 @@ public void OpenTab()
         foreach(Equipment equipment in InventoryManager.instance.items.OfType<Equipment>())
         {
             if(equipment.equipmentType != Equipment.EquipmentType.Weapon) continue;
-            if(equipment.element != Element.None) continue;
+            if(equipment.element != Element.None || !equipment.forgeable) continue;
             Equipment captured = equipment;
             specs.Add(new CardGridSpec(captured.equipmentName, $"{addElementCost}g", BuildElementDetail(captured), () => SelectElementTarget(captured)));
         }
@@ -401,7 +403,7 @@ public void OpenTab()
         List<CardGridSpec> specs = new List<CardGridSpec>();
         foreach(Equipment equipment in InventoryManager.instance.items.OfType<Equipment>())
         {
-            if(equipment.smeltYield == null || equipment.smeltYield.Count == 0) continue;
+            if(equipment.smeltYield == null || equipment.smeltYield.Count == 0 || !equipment.forgeable) continue;
             Equipment captured = equipment;
             specs.Add(new CardGridSpec(captured.equipmentName, "", BuildSmeltDetail(captured), () => SelectSmeltTarget(captured)));
         }
@@ -452,7 +454,7 @@ public void OpenTab()
         List<Baggable> order = new List<Baggable>();
         foreach(Baggable item in InventoryManager.instance.items)
         {
-            if(item == null) continue;
+            if(item == null || !item.forgeable) continue;
             if(!counts.ContainsKey(item)) { counts[item] = 0; order.Add(item); }
             counts[item]++;
         }

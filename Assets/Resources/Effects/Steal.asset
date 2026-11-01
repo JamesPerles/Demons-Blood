@@ -14,4 +14,3 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Steal
   effectName: 
   description: 
-  stealChance: 50

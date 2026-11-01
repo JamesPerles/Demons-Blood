@@ -37,11 +37,11 @@ MonoBehaviour:
   speedGrowth: 10
   luckGrowth: 5
   learnset: []
-  magicAffinity: 0
+  magicAffinity: 3
   bonds: []
   immunities: []
-  allowedWeaponTypes: 
-  personalSkill: {fileID: 0}
+  allowedWeaponTypes: 0400000005000000
+  personalSkill: {fileID: 11400000, guid: 4ff61f859921b7e488f3711926e66a2d, type: 2}
   skillTrees: {fileID: 0}
   bio: A blacksmith from Styx, he always wear his trusty helmet even into battle.
     Him and Lucifer are long time friends, where Lucifer goes he will follow

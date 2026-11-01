@@ -9,4 +9,6 @@ public class Spell : Learnable
     public int Cost = 0;
     public List<Effect> effects = new List<Effect>();
     public bool isAOE = false;
+    public enum AOETarget { Enemies, Allies }
+    public AOETarget aOETarget = AOETarget.Enemies;
 }

@@ -24,6 +24,6 @@ Element currentMagicAffinity{get; set;}
 List <ActiveStatusEffect> activeStatuses {get;}
 List<Skill> learnedSkills {get;}
 List<Skill> equippedSkills {get;}
-void TakeDamage(int damage);
+int TakeDamage(int damage, bool ignoreDefend = false);
 bool IsImmuneToStatus(StatusEffect status);
 }

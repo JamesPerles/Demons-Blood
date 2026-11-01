@@ -2575,15 +2575,15 @@ MonoBehaviour:
   inventoryItem: {fileID: 4329512853931581497, guid: 4a214cdd7304d1f4a8d2075764013c80, type: 3}
   items:
   - {fileID: 11400000, guid: f0c2f8034a5aaa244b371adab6620f9d, type: 2}
-  - {fileID: 11400000, guid: f0c2f8034a5aaa244b371adab6620f9d, type: 2}
-  - {fileID: 11400000, guid: f0c2f8034a5aaa244b371adab6620f9d, type: 2}
-  - {fileID: 11400000, guid: f0c2f8034a5aaa244b371adab6620f9d, type: 2}
-  - {fileID: 11400000, guid: f0c2f8034a5aaa244b371adab6620f9d, type: 2}
-  - {fileID: 11400000, guid: f0c2f8034a5aaa244b371adab6620f9d, type: 2}
-  - {fileID: 11400000, guid: f0c2f8034a5aaa244b371adab6620f9d, type: 2}
-  - {fileID: 11400000, guid: f0c2f8034a5aaa244b371adab6620f9d, type: 2}
-  - {fileID: 11400000, guid: f0c2f8034a5aaa244b371adab6620f9d, type: 2}
-  - {fileID: 11400000, guid: f0c2f8034a5aaa244b371adab6620f9d, type: 2}
+  - {fileID: 11400000, guid: 73f18e1b03983584285757f14cf7f3f6, type: 2}
+  - {fileID: 11400000, guid: 8e3bf51d8d0114548a3458d9f1b60171, type: 2}
+  - {fileID: 11400000, guid: 0b29c24ff12fdbd47bf71153b178fb5a, type: 2}
+  - {fileID: 11400000, guid: 5872e8beca6d7ee4aa9e362e1f2374a4, type: 2}
+  - {fileID: 11400000, guid: bfad5afbf8c7d7944aa67ccfcc5dca9a, type: 2}
+  - {fileID: 11400000, guid: 2cfd04c767e798c49923d07555a9f8fd, type: 2}
+  - {fileID: 11400000, guid: 6d72a0d3060c18044916377c03386596, type: 2}
+  - {fileID: 11400000, guid: 274a22d123c18174db18056840045277, type: 2}
+  - {fileID: 11400000, guid: 6d8b18913295c0246a161ad1db59b478, type: 2}
   - {fileID: 11400000, guid: f0c2f8034a5aaa244b371adab6620f9d, type: 2}
   - {fileID: 11400000, guid: f0c2f8034a5aaa244b371adab6620f9d, type: 2}
   - {fileID: 11400000, guid: f0c2f8034a5aaa244b371adab6620f9d, type: 2}
@@ -2595,7 +2595,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 169b3c88d6848da4d9653aef5487390b, type: 2}
   - {fileID: 11400000, guid: adfd9020790283f4a93a1b2671a6d571, type: 2}
   - {fileID: 11400000, guid: cc1595e413f778d4bb26989af12ebe20, type: 2}
-  - {fileID: 11400000, guid: f0c2f8034a5aaa244b371adab6620f9d, type: 2}
+  - {fileID: 11400000, guid: bfad5afbf8c7d7944aa67ccfcc5dca9a, type: 2}
   - {fileID: 11400000, guid: 2eb72906ca6a70143b202895f6cabf4b, type: 2}
 --- !u!114 &640909340
 MonoBehaviour:
@@ -2617,7 +2617,6 @@ MonoBehaviour:
   uiTextColor: {r: 1, g: 1, b: 1, a: 1}
   menuPanelColor: {r: 0.04, g: 0.04, b: 0.04, a: 1}
   menuBorderColor: {r: 0.42, g: 0.08, b: 0.08, a: 1}
-  menuBorderThickness: 5
 --- !u!114 &640909341
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3669,7 +3668,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ThemeTarget
   role: 0
-  insetByBorderThickness: 0
 --- !u!1001 &1010011642
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3965,7 +3963,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &1085860781
 RectTransform:
   m_ObjectHideFlags: 0
@@ -5017,7 +5015,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ThemeTarget
   role: 1
-  insetByBorderThickness: 0
 --- !u!1001 &1313873799
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -6603,18 +6600,19 @@ MonoBehaviour:
   totalExperience: 0
   currentLevel: 0
   playerStats: {fileID: 11400000, guid: eada0adb91aa7924d859c583de10ce48, type: 2}
-  weaponSlot: {fileID: 0}
+  weaponSlot: {fileID: 11400000, guid: bfad5afbf8c7d7944aa67ccfcc5dca9a, type: 2}
   headSlot: {fileID: 0}
   bodySlot: {fileID: 0}
   shieldSlot: {fileID: 0}
   accessorySlot: {fileID: 0}
   personalInventory:
     items: []
-  learnedSpells: []
+  learnedSpells:
+  - {fileID: 11400000, guid: 433709a622db3b34cb5d676c86e7cd61, type: 2}
   learnedArts: []
   learnedFusions: []
   skillSlots:
-  - {fileID: 0}
+  - {fileID: 11400000, guid: 246da8167d56f2f4484efcff66717755, type: 2}
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
@@ -7994,7 +7992,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ThemeTarget
   role: 0
-  insetByBorderThickness: 0
 --- !u!1 &1758575381
 GameObject:
   m_ObjectHideFlags: 0
@@ -8383,7 +8380,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ThemeTarget
   role: 0
-  insetByBorderThickness: 0
 --- !u!1 &1837535049
 GameObject:
   m_ObjectHideFlags: 0
@@ -9338,7 +9334,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ThemeTarget
   role: 1
-  insetByBorderThickness: 0
 --- !u!1 &2116263847
 GameObject:
   m_ObjectHideFlags: 0

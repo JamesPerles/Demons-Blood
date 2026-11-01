@@ -12,7 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5f166d25d85f7ff4487dfc23889f6430, type: 3}
   m_Name: Dark
   m_EditorClassIdentifier: Assembly-CSharp::Spell
-  learnableName: Dark
   spellName: Dark
   element: 2
   Damage: 5

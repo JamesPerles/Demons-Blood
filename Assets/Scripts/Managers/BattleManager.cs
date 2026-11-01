@@ -22,6 +22,8 @@ public class BattleManager : MonoBehaviour
     public ActiveStats currentPlayer;
     public float enemySpace = 1.5f;
     public int turnCount = 0;
+    public ICombatant firstActorThisTurn;
+    bool actionAttacked;
     enum DamageType {Physical, Magic, Fusion}
     public enum DeathHandling {GoToTitleScreen, ReviveInTown}
     public DeathHandling deathHandling = DeathHandling.GoToTitleScreen;
@@ -39,6 +41,13 @@ public class BattleManager : MonoBehaviour
     }
     public List<ActiveStats> GetActivePlayers() => players;
     public List<EnemyAI> GetLivingEnemies() => enemies.FindAll(enemy => enemy.currentHP > 0);
+    public List<ICombatant> AllCombatants()
+    {
+        List<ICombatant> all = new List<ICombatant>();
+        foreach(ActiveStats player in players) if(player != null) all.Add(player);
+        foreach(EnemyAI enemy in enemies) if(enemy != null) all.Add(enemy);
+        return all;
+    }
 IEnumerator ScaledWait(float seconds)
     {
         float speed = SettingsManager.instance != null ? SettingsManager.instance.battleSpeedMultiplier : 1f;
@@ -114,6 +123,7 @@ void Start()
             if(battleInProgress) yield break;
             battleInProgress = true;
             reportedDead.Clear();
+            BattleHooks.ClearState();
             Debug.Log("Starting Combat");
             if(encounterType == EncounterType.Ambush)
         {
@@ -130,6 +140,7 @@ void Start()
             {
                 yield return
                 StartCoroutine(BattleTextBox.instance.ShowMessage("Escape Successful"));
+                BattleHooks.EndBattle();
                 StopAllCoroutines();
                 if(SceneFader.instance != null) SceneFader.instance.LoadScene(RandomEncounter.previousSceneName);
                 else SceneManager.LoadScene(RandomEncounter.previousSceneName);
@@ -152,12 +163,15 @@ void Start()
         IEnumerator PlayersTurn(bool skipEnemies = false)
         {
             turnCount++;
+            firstActorThisTurn = null;
             Dictionary<ActiveStats, CommandMenu.PlayerActionType> plannedActions = 
             new Dictionary <ActiveStats, CommandMenu.PlayerActionType>();
             Dictionary<ActiveStats, ICombatant> plannedTargets = new Dictionary<ActiveStats, ICombatant>();
             Dictionary<ActiveStats, Learnable> plannedLearnables = new Dictionary<ActiveStats, Learnable>();
             Dictionary<ActiveStats, Item> plannedItems = new Dictionary<ActiveStats, Item>();
             Dictionary<ActiveStats, ActiveStats> plannedAllyTargets = new Dictionary<ActiveStats, ActiveStats>();
+            Dictionary<ActiveStats, Spell> plannedSecondSpells = new Dictionary<ActiveStats, Spell>();
+            Dictionary<ActiveStats, ICombatant> plannedSecondTargets = new Dictionary<ActiveStats, ICombatant>();
             List<ActiveStats> livingPlayers = players.FindAll(player => player.currentHP > 0); int planIndex = 0;
             while (planIndex < livingPlayers.Count)
             {
@@ -182,6 +196,25 @@ void Start()
                 plannedItems[player] = CommandMenu.instance.selectedItem;
                 CommandMenu.instance.DisableMenu();
                 plannedTargets[player] = CommandMenu.instance.selectedTarget;
+                plannedSecondSpells.Remove(player);
+                plannedSecondTargets.Remove(player);
+                if(chosenAction == CommandMenu.PlayerActionType.Spell && chosenLearnable is Spell firstSpell && BattleHooks.GrantsSecondSpell(player))
+            {
+                CommandMenu.instance.DualCastActivated(player, firstSpell.Cost);
+                yield return new WaitUntil(() => CommandMenu.instance.actionSelected || CommandMenu.instance.undoRequested);
+                if(CommandMenu.instance.undoRequested)
+                {
+                    CommandMenu.instance.undoRequested = false;
+                    CommandMenu.instance.DisableMenu();
+                    continue;
+                }
+                CommandMenu.instance.DisableMenu();
+                if(!CommandMenu.instance.dualCastSkipped && CommandMenu.instance.selectedLearnable is Spell secondPlanned)
+                {
+                    plannedSecondSpells[player] = secondPlanned;
+                    plannedSecondTargets[player] = CommandMenu.instance.selectedTarget;
+                }
+            }
                 planIndex++;
             }
             CommandMenu.instance.HideMenu();
@@ -190,6 +223,7 @@ void Start()
             foreach (ICombatant combatant in resolveOrder)
             {
                 if(IsDead(combatant)) continue;
+                if(firstActorThisTurn == null) firstActorThisTurn = combatant;
                 yield return StartCoroutine(TurnStartEffects(combatant));
                 if(IsDead(combatant)) {yield return StartCoroutine(CheckDeath(combatant)); if(AllPlayersDead() || AllEnemiesDead()) yield break; continue;}
                 if ( combatant is ActiveStats player)
@@ -198,9 +232,17 @@ void Start()
                     plannedTargets.TryGetValue(player, out ICombatant target);
                     plannedLearnables.TryGetValue(player, out Learnable learnable);
                     plannedItems.TryGetValue(player, out Item item);
+                    actionAttacked = false;
                     yield return StartCoroutine(PlayerAction(player, plannedActions[player], target, learnable, item));
+                if(plannedSecondSpells.TryGetValue(player, out Spell secondSpell) && player.currentHP > 0 && !AllEnemiesDead() && !battleEscaped && player.currentMP >= secondSpell.Cost)
+                {
+                    plannedSecondTargets.TryGetValue(player, out ICombatant secondTarget);
+                    yield return StartCoroutine(CastSpell(player, secondSpell, secondTarget));
+                    yield return StartCoroutine(ScaledWait(0.5f));
                 }
-                else if (combatant is EnemyAI enemy) yield return StartCoroutine(EnemyTurn(enemy));
+                }
+                else if (combatant is EnemyAI enemy) { actionAttacked = false;yield return StartCoroutine(EnemyTurn(enemy)); }
+                yield return StartCoroutine(BattleHooks.OnActionEnd(combatant, actionAttacked));
                 if (AllPlayersDead() || AllEnemiesDead() || battleEscaped) yield break;
             }
         } 
@@ -261,20 +303,31 @@ void Start()
         yield return StartCoroutine(SkillEffects(combatant));
         yield return StartCoroutine(StatusEffectsTimer(combatant));
     }
-    int AccuracyCheck(ICombatant attacker, ICombatant defender, DamageType type)
+    int AccuracyCheck(ICombatant attacker, ICombatant defender, DamageType type, HitContext hit)
     {
         int atk, def;
+        int defenderEvasion = Mathf.RoundToInt(defender.Evasion * BattleHooks.EvasionMultiplier(hit));
         switch(type)
         {
             case DamageType.Magic: atk = attacker.Precision; def = defender.Foresight; break;
-            case DamageType.Fusion: atk = (attacker.Accuracy + attacker.Precision) / 2; def = (defender.Evasion + defender.Foresight) / 2; break;
-            default: atk = attacker.Accuracy; def = defender.Evasion; break;
+            case DamageType.Fusion: atk = (attacker.Accuracy + attacker.Precision) / 2; def = (defenderEvasion + defender.Foresight) / 2; break;
+            default: atk = attacker.Accuracy; def = defenderEvasion; break;
         }
         return Mathf.Clamp(80 + atk - def, 0, 100);
     }
-    int CritCheck(ICombatant attacker, ICombatant defender)
+    int CritCheck(ICombatant attacker, ICombatant defender, HitContext hit, out int critStat)
     {
-        return Mathf.Clamp(attacker.Critical - defender.Dodge, 0, 100);
+        critStat = attacker.Critical + BattleHooks.CritBonus(hit);
+        return Mathf.Clamp(critStat - defender.Dodge, 0, 100);
+    }
+    HitKind KindOf(DamageType type)
+    {
+        switch(type)
+        {
+            case DamageType.Magic: return HitKind.Magic;
+            case DamageType.Fusion: return HitKind.Fusion;
+            default: return HitKind.Physical;
+        }
     }
     Element WeaponElement(Equipment weapon) => weapon != null ? weapon.element : Element.None;
     float GetRaceMultiplier(List<Effect> effects, ICombatant defender)
@@ -289,25 +342,25 @@ void Start()
         return 1f;
     }
     int ComputeDamage(ICombatant attacker, ICombatant defender, DamageType type, int abilityDamage, 
-    Element weaponElement, List<Effect> weaponEffects, Element abilityElement, List<Effect> abilityEffects)
+    Element weaponElement, List<Effect> weaponEffects, Element abilityElement, List<Effect> abilityEffects, int strengthBonus = 0, HitContext hit = null)
     {
         int raw; 
         switch(type)
         {
             case DamageType.Magic: raw = attacker.finalMagic - defender.finalWisdom; break;
-            case DamageType.Fusion: raw = (attacker.finalStrength + attacker.finalMagic) / 2 - (defender.finalDefense + defender.finalWisdom) / 2; break;
-            default: raw = attacker.finalStrength - defender.finalDefense; break;
+            case DamageType.Fusion: raw = (attacker.finalStrength + strengthBonus + attacker.finalMagic) / 2 - (defender.finalDefense + defender.finalWisdom) / 2; break;
+            default: raw = attacker.finalStrength + strengthBonus - defender.finalDefense; break;
         }
         float weaponMultiplier = 1f;
         if(type != DamageType.Magic)
         {
             if(weaponElement != Element.None && elementChart != null)
-            weaponMultiplier *= elementChart.GetMultiplier(weaponElement, defender.currentMagicAffinity);
+            weaponMultiplier *= BattleHooks.ElementMultiplier(hit, weaponElement, elementChart.GetMultiplier(weaponElement, defender.currentMagicAffinity));
             weaponMultiplier *= GetRaceMultiplier(weaponEffects, defender);
         }
         float abilityMultiplier = 1f;
         if(abilityElement != Element.None && elementChart != null)
-        abilityMultiplier *= elementChart.GetMultiplier(abilityElement, defender.currentMagicAffinity);
+        abilityMultiplier *= BattleHooks.ElementMultiplier(hit, abilityElement, elementChart.GetMultiplier(abilityElement, defender.currentMagicAffinity));
         abilityMultiplier *= GetRaceMultiplier(abilityEffects, defender);
         int weaponPortion = Mathf.RoundToInt(raw * weaponMultiplier);
         int abilityPortion = Mathf.RoundToInt(abilityDamage * abilityMultiplier);
@@ -323,32 +376,94 @@ void Start()
         foreach(ICombatant defender in defenders)
         yield return StartCoroutine(ResolveHit(attacker, defender, type, abilityDamage, actionName, weapon, abilityEffects, abilityElement));
     }
+    [Range(0f, 0.5f)] public float damageVariance = 0.1f;
+    int ApplyVariance(int damage)
+    {
+        if(damageVariance <= 0f) return damage;
+        return Mathf.Max(1, Mathf.RoundToInt(damage * Random.Range(1f - damageVariance, 1f + damageVariance)));
+    }
+    public bool counterInProgress;
+    public IEnumerator CounterAttack(ICombatant counterer, ICombatant target)
+    {
+        if(counterInProgress || counterer == null || target == null) yield break;
+        counterInProgress = true;
+        bool savedAttacked = actionAttacked;
+        Equipment weapon = counterer is ActiveStats player ? player.BattleWeapon : (counterer as EnemyAI)?.weaponSlot;
+        yield return StartCoroutine(BattleTextBox.instance.ShowMessage($"{counterer.currentName} counterattacks!"));
+        yield return StartCoroutine(ResolveAttack(counterer, target, DamageType.Physical, 0, "counterattacks", weapon, null, Element.None));
+        actionAttacked = savedAttacked;
+        counterInProgress = false;
+    }
+    bool lastHitLanded;
     IEnumerator ResolveHit(ICombatant attacker, ICombatant defender, DamageType type, int abilityDamage, string actionName, Equipment weapon, List<Effect> abilityEffects, Element abilityElement)
     {
-     int hitRate = AccuracyCheck(attacker, defender, type);
+        actionAttacked = true;
+        HitContext hit = new HitContext {attacker = attacker, defender = defender, kind = KindOf(type), abilityElement = abilityElement, weapon = weapon};
+        int hits = 1 + BattleHooks.ExtraHits(hit);
+        float scale = BattleHooks.HitDamageScale(hit);
+        bool anyLanded = false;
+        for(int i = 0; i < hits; i++)
+        {
+            if(i > 0 && defender.currentHP <= 0) break;
+            yield return StartCoroutine(ResolveSingleHit(hit, type, abilityDamage, actionName, abilityEffects, scale));
+            BattleHooks.HitResolved(hit, lastHitLanded);
+            yield return StartCoroutine(BattleHooks.AfterHit(hit, lastHitLanded));
+            if(lastHitLanded) anyLanded = true;
+        }
+        if(!anyLanded) yield break;
+        List<Effect> allEffects = BuildPhysicalEffects(weapon, abilityEffects);
+        if(allEffects != null) foreach(Effect effect in allEffects) if (effect != null) yield return StartCoroutine(effect.Apply(attacker, defender));
+    }
+    IEnumerator ResolveSingleHit(HitContext hit, DamageType type, int abilityDamage, string actionName, List<Effect> abilityEffects, float damageScale)
+    {
+    ICombatant attacker = hit.attacker; ICombatant defender = hit.defender; Equipment weapon = hit.weapon; Element abilityElement = hit.abilityElement;
+    lastHitLanded = false;
+     hit.damageDealt = 0; hit.blocked = false;
+     int hitRate = AccuracyCheck(attacker, defender, type, hit);
      int hitRoll = Random.Range(0, 100);
      if(hitRoll < hitRate)
         {
             Element weaponElement = WeaponElement(weapon);
             List<Effect> weaponEffects = weapon != null ? weapon.effects : null;
-            int damage = ComputeDamage(attacker, defender, type, abilityDamage, weaponElement, weaponEffects, abilityElement, abilityEffects);
-            int critRate = CritCheck(attacker, defender);
+            lastHitLanded = true;
+            int strengthBonus = BattleHooks.StrengthBonus(hit);
+            int damage = ComputeDamage(attacker, defender, type, abilityDamage, weaponElement, weaponEffects, abilityElement, abilityEffects, strengthBonus, hit);
+            damage += BattleHooks.TrueDamage(hit);
+            if(damageScale != 1f) damage = Mathf.Max(1, Mathf.RoundToInt(damage * damageScale));
+            float skillMultiplier = BattleHooks.OutgoingMultiplier(hit) * BattleHooks.IncomingMultiplier(hit);
+            if(!Mathf.Approximately(skillMultiplier, 1f)) damage = Mathf.Max(1, Mathf.RoundToInt(damage * skillMultiplier));
+            damage = ApplyVariance(damage);
+            int critRate = CritCheck(attacker, defender, hit, out int critStat);
             bool isCrit = Random.Range(0, 100) < critRate;
             if(isCrit) damage *= 3;
-            defender.TakeDamage(damage);
+            BlockResult block = BattleHooks.TryBlock(hit);
+            if(block != BlockResult.None)
+            {
+                lastHitLanded = false; hit.blocked = true;
+                yield return StartCoroutine(BattleTextBox.instance.ShowMessage($"{defender.currentName} blocks {attacker.currentName}'s {actionName}."));
+                if(block == BlockResult.Deflected)
+                {
+                    int reflected = attacker.TakeDamage(damage);
+                    UpdateUI();
+                    yield return StartCoroutine(BattleTextBox.instance.ShowMessage($"The attack is deflected back. {attacker.currentName} takes {reflected} damage."));
+                    yield return StartCoroutine(CheckDeath(attacker));
+                }
+                yield break;
+            }
+            int dealt = defender.TakeDamage(damage, BattleHooks.IgnoresDefend(hit));
+            hit.damageDealt = dealt;
             if(defender is EnemyAI hitEnemy)
             {
                 HitFlicker flicker = hitEnemy.GetComponent<HitFlicker>();
                 if(flicker != null) flicker.Flicker();
             }
-            if(attacker is ActiveStats gainingAttacker) gainingAttacker.GaugeDamageDealt(damage);
-            if(defender is ActiveStats gainingDefender) gainingDefender.GaugeDamageTaken(damage);
+            if(attacker is ActiveStats gainingAttacker) gainingAttacker.GaugeDamageDealt(dealt);
+            if(defender is ActiveStats gainingDefender) gainingDefender.GaugeDamageTaken(dealt);
             UpdateUI();
             if(isCrit) yield return StartCoroutine(BattleTextBox.instance.ShowMessage("Critical Hit"));
-            yield return StartCoroutine(BattleTextBox.instance.ShowMessage($"{attacker.currentName} uses {actionName}. {defender.currentName} takes {damage} damage."));
+            yield return StartCoroutine(BattleTextBox.instance.ShowMessage($"{attacker.currentName} uses {actionName}. {defender.currentName} takes {dealt} damage."));
             yield return StartCoroutine(CheckDeath(defender));
-            List<Effect> allEffects = BuildPhysicalEffects(weapon, abilityEffects);
-            if(allEffects != null) foreach(Effect effect in allEffects) if (effect != null) yield return StartCoroutine(effect.Apply(attacker, defender));
+            if(isCrit) yield return StartCoroutine(BattleHooks.OnCrit(hit, critStat));
         }   
         else
         {
@@ -362,7 +477,7 @@ void Start()
             {
                 case CommandMenu.PlayerActionType.Attack:
                if (target == null || target.currentHP <= 0) target = GetRandomEnemy();
-               if (target != null) yield return StartCoroutine(ResolveAttack(player, target, DamageType.Physical, 0, "attacks", player.weaponSlot, null, Element.None));
+               if (target != null) yield return StartCoroutine(ResolveAttack(player, target, DamageType.Physical, 0, "attacks", player.BattleWeapon, null, Element.None));
                break;
                     case CommandMenu.PlayerActionType.Defend:
                     player.Defend();
@@ -435,12 +550,12 @@ void Start()
                 if (art.isAOE)
                     {
                        List<ICombatant> foes = enemies.FindAll(enemy => enemy.currentHP > 0).Cast<ICombatant>().ToList();
-                       yield return StartCoroutine(ResolveAOE(player, foes, DamageType.Physical, art.Damage, art.artName, player.weaponSlot, art.effects, WeaponElement(player.weaponSlot)));
+                       yield return StartCoroutine(ResolveAOE(player, foes, DamageType.Physical, art.Damage, art.artName, player.BattleWeapon, art.effects, WeaponElement(player.BattleWeapon)));
                     }
                     else
                     {
                         if(target == null || target.currentHP <= 0) target = GetRandomEnemy();
-                        if(target != null) yield return StartCoroutine(ResolveAttack(player, target, DamageType.Physical, art.Damage, art.artName, player.weaponSlot, art.effects, WeaponElement(player.weaponSlot)));
+                        if(target != null) yield return StartCoroutine(ResolveAttack(player, target, DamageType.Physical, art.Damage, art.artName, player.BattleWeapon, art.effects, WeaponElement(player.BattleWeapon)));
                     }
                     break;
                     }
@@ -452,18 +567,7 @@ void Start()
                         yield return StartCoroutine(BattleTextBox.instance.ShowMessage($"{player.currentName} has no spell selected"));
                         break; 
                     }
-                    player.currentMagicAffinity = spell.element;
-                player.currentMP = Mathf.Max(0, player.currentMP - spell.Cost);
-                if (spell.isAOE)
-                    {
-                       List<ICombatant> foes = enemies.FindAll(enemy => enemy.currentHP > 0).Cast<ICombatant>().ToList();
-                       yield return  StartCoroutine(ResolveAOE(player, foes, DamageType.Magic, spell.Damage, spell.spellName, null, spell.effects, spell.element));
-                    }
-                    else
-                    {
-                        if(target == null || target.currentHP <= 0) target = GetRandomEnemy();
-                        if(target != null) yield return StartCoroutine(ResolveAttack(player, target, DamageType.Magic, spell.Damage, spell.spellName, null, spell.effects, spell.element));
-                    }
+                    yield return StartCoroutine(CastSpell(player, spell, target));
                     break;
               } 
                     case CommandMenu.PlayerActionType.Fusion:
@@ -480,12 +584,12 @@ void Start()
                 if (fusion.isAOE)
                     {
                        List<ICombatant> foes = enemies.FindAll(enemy => enemy.currentHP > 0).Cast<ICombatant>().ToList();
-                       yield return  StartCoroutine(ResolveAOE(player, foes, DamageType.Fusion, fusion.Damage, fusion.fusionName, player.weaponSlot, fusion.effects, fusion.element));
+                       yield return StartCoroutine(ResolveAOE(player, foes, DamageType.Fusion, fusion.Damage, fusion.fusionName, player.BattleWeapon, fusion.effects, fusion.element));
                     }
                     else
                     {
                         if(target == null || target.currentHP <= 0) target = GetRandomEnemy();
-                        if(target != null) yield return StartCoroutine(ResolveAttack(player, target, DamageType.Fusion, fusion.Damage, fusion.fusionName, player.weaponSlot, fusion.effects, fusion.element));
+                        if(target != null) yield return StartCoroutine(ResolveAttack(player, target, DamageType.Fusion, fusion.Damage, fusion.fusionName, player.BattleWeapon, fusion.effects, fusion.element));
                     }
                     break;
                     }
@@ -494,6 +598,42 @@ void Start()
             UpdateUI();
             yield return StartCoroutine(ScaledWait(0.5f));
         } 
+        IEnumerator CastSpell(ActiveStats player, Spell spell, ICombatant target)
+    {
+        player.currentMagicAffinity = spell.element;
+        player.currentMP = Mathf.Max(0, player.currentMP - spell.Cost);
+        if(spell.isAOE)
+        {
+            if(spell.aOETarget == Spell.AOETarget.Allies)
+            {
+                List<ICombatant> friends = players.FindAll(member => member.currentHP > 0).Cast<ICombatant>().ToList();
+            yield return StartCoroutine(BattleTextBox.instance.ShowMessage($"{player.currentName} uses {spell.spellName} on all allies"));
+            foreach(ICombatant friend in friends) yield return StartCoroutine(ApplySupportEffects(player, friend, spell.effects)); 
+            }
+            else
+        {
+            List<ICombatant> foes = enemies.FindAll(enemy => enemy.currentHP > 0).Cast<ICombatant>().ToList();
+            yield return StartCoroutine(ResolveAOE(player, foes, DamageType.Magic, spell.Damage, spell.spellName, null, spell.effects, spell.element));
+        }
+        }
+        else if(target is ActiveStats ally)
+        {
+            if(ally.currentHP <= 0) yield break;
+            yield return StartCoroutine(BattleTextBox.instance.ShowMessage($"{player.currentName} uses {spell.spellName} on {ally.currentName}"));
+            yield return StartCoroutine(ApplySupportEffects(player,ally, spell.effects));
+        }
+        else
+        {
+            if(target == null || target.currentHP <= 0) target = GetRandomEnemy();
+            if(target != null) yield return StartCoroutine(ResolveAttack
+            (player, target, DamageType.Magic, spell.Damage, spell.spellName, null, spell.effects, spell.element));
+        }
+    }
+    IEnumerator ApplySupportEffects(ICombatant caster, ICombatant target, List<Effect> effects)
+    {
+        if(effects != null) foreach(Effect effect in effects) if(effect != null) yield return StartCoroutine(effect.Apply(caster, target));
+        UpdateUI();
+    }
         IEnumerator EnemyUseItem(EnemyAI enemy)
     {
         List<Item> consumables = enemy.personalInventory.items.OfType<Item>()
@@ -600,6 +740,7 @@ void Start()
         bool AllEnemiesDead() => enemies.TrueForAll(enemy => enemy.currentHP <= 0);
         IEnumerator EndBattle()
         {
+            BattleHooks.EndBattle();
             if (AllPlayersDead())
             {
                 yield return

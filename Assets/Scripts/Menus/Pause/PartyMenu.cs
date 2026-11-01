@@ -325,7 +325,7 @@ void UpdateStatsExtraPanel()
     CardGridSpec BuildEquipmentSlotSpec(Equipment.EquipmentType slotType, string label)
     {
         Equipment equipped = selectedCharacter.GetEquipped(slotType);
-        string title = equipped != null ? equipped.equipmentName : "Empty";
+        string title = equipped != null ? equipped.StyledName : "Empty";
         return new CardGridSpec(title, label, BuildEquipmentDetail(slotType, equipped), () => ShowEquipmentDetail(slotType));
     }
     void ShowEquipmentDetail(Equipment.EquipmentType slotType)
@@ -345,7 +345,9 @@ void UpdateStatsExtraPanel()
         {
             changeEquipmentButton.gameObject.SetActive(true);
             changeEquipmentButton.interactable = true;
-            if(changeEquipmentButtonLabel != null) changeEquipmentButtonLabel.text = equipped != null ? "Change" : "Equip";
+            if(changeEquipmentButtonLabel != null) changeEquipmentButtonLabel.text = equipped != null ? 
+            (equipped.locked ? "Locked" : "Change") : "Equip";
+            changeEquipmentButton.interactable = !(equipped != null && equipped.locked);
             changeEquipmentButton.onClick.RemoveAllListeners();
             changeEquipmentButton.onClick.AddListener(() => ShowEquipmentPicker(slotType));
         }
@@ -372,6 +374,7 @@ void UpdateStatsExtraPanel()
             return $"<size=140%><color=#F2F2F2>{slotType}</color></size>\n<size=80%><color={colorMuted}>empty</color></size>\n\n<color={colorBody}>Nothing equipped in this slot.</color>";
         }
         string subtitle = slotType == Equipment.EquipmentType.Weapon ? $"{slotType} {dot} {equipped.weaponType}" : slotType.ToString();
+        if(equipped.locked) subtitle += $" {dot} locked";
         string result = $"<size=140%><color=#F2F2F2>{equipped.equipmentName}</color></size>\n";
         result += $"<size=80%><color={colorMuted}>{subtitle}</color></size>\n\n";
         result += $"<color={colorBright}>{BuildEquipmentStatLine(equipped)}</color>";
@@ -421,6 +424,8 @@ void UpdateStatsExtraPanel()
             string sub = slotType == Equipment.EquipmentType.Weapon ? captured.weaponType.ToString() : "";
             specs.Add(new CardGridSpec(captured.equipmentName, sub, BuildEquipmentDetail(slotType, captured), () =>
         {
+            string blocked = selectedCharacter.EquipBlockReason(captured);
+            if(blocked != null) { if(PopupManager.instance != null) PopupManager.instance.Show(blocked); return; }
             selectedCharacter.Equip(captured);
             AfterEquipmentChange(slotType);
         }));
@@ -697,7 +702,7 @@ void SpendPoint()
             Baggable captured = item;
             bool isEquipped = captured is Equipment equipment && IsEquippedAnywhere(equipment);
             string sub = isEquipped ? "Equipped" : "";
-            specs.Add(new CardGridSpec(captured.DisplayName, sub, "", () => OpenPersonalItemActions(captured)));
+            specs.Add(new CardGridSpec(captured.StyledName, sub, "", () => OpenPersonalItemActions(captured)));
         }
         if(specs.Count == 0) specs.Add(new CardGridSpec("No items.", "", "", () => { }, false));
         equipmentPager.SetSpecs(specs);
@@ -730,6 +735,12 @@ void SpendPoint()
         }
         if(changeEquipmentButton != null) changeEquipmentButton.gameObject.SetActive(false);
         List<CardGridSpec> specs = new List<CardGridSpec>();
+        if(item is Equipment lockedEquipment && lockedEquipment.locked)
+        {
+            specs.Add(new CardGridSpec("Locked", "cannot be removed", "", () => { }, false));
+            abilityPager.SetSpecs(specs);
+            return;
+        }
         if(item is Equipment equipment && IsEquippedAnywhere(equipment))
         {
             specs.Add(new CardGridSpec("Currently Equipped", "unequip from Stats tab first", "", () => { }, false));

@@ -45,6 +45,8 @@ public class InventoryManager : MonoBehaviour
     {
         if(item == null || source == null) return false;
         if(!source.personalInventory.Contains(item)) return false;
+        if(item is Equipment lockedEquipment && lockedEquipment.locked && source.GetEquipped
+        (lockedEquipment.equipmentType) == lockedEquipment) return false;
         if(item is Equipment equipment) source.UnequipRemovedEquipment(equipment);
         source.personalInventory.RemoveItem(item);
         items.Add(item);

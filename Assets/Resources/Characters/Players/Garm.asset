@@ -26,22 +26,22 @@ MonoBehaviour:
   affinity: 2
   speed: 3
   luck: 6
-  hpGrowth: 40
-  mpGrowth: 30
+  hpGrowth: 45
+  mpGrowth: 35
   strengthGrowth: 50
   magicGrowth: 35
   defenseGrowth: 35
-  wisdomGrowth: 20
-  techGrowth: 50
-  affinityGrowth: 50
-  speedGrowth: 70
-  luckGrowth: 40
+  wisdomGrowth: 30
+  techGrowth: 75
+  affinityGrowth: 60
+  speedGrowth: 75
+  luckGrowth: 50
   learnset: []
-  magicAffinity: 0
+  magicAffinity: 4
   bonds: []
   immunities: []
-  allowedWeaponTypes: 
-  personalSkill: {fileID: 0}
+  allowedWeaponTypes: 0900000006000000
+  personalSkill: {fileID: 11400000, guid: 2dec70dd15247f94b8fb9ee3c270c2e4, type: 2}
   skillTrees: {fileID: 0}
   bio: A man from a village in Styx. After Lucifer freed him he has been eternally
     grateful and now follows him despite his inexperience in battle.

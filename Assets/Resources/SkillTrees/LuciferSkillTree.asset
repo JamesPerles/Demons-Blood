@@ -13,28 +13,28 @@ MonoBehaviour:
   m_Name: LuciferSkillTree
   m_EditorClassIdentifier: Assembly-CSharp::SkillTreeSet
   trees:
-  - treeName: Swords
+  - treeName: Sword
     paths:
-    - pathName: Restore
+    - pathName: Sword1
       pointsRequired: 70
       learnable: {fileID: 11400000, guid: 09378456b7eea5b449206caa58870aaa, type: 2}
-  - treeName: Dual Swords
+  - treeName: Shield
     paths:
-    - pathName: gt
+    - pathName: Shield1
       pointsRequired: 59
       learnable: {fileID: 11400000, guid: 6e6fb91e803e9ac41a36bb990fdde099, type: 2}
   - treeName: Darkness
     paths:
-    - pathName: kk
+    - pathName: Dark1
       pointsRequired: 26
       learnable: {fileID: 11400000, guid: d3f41bc77bb29cb4695c1a02df277e39, type: 2}
   - treeName: Chivalry
     paths:
-    - pathName: 
+    - pathName: Chivalry1
       pointsRequired: 88
       learnable: {fileID: 11400000, guid: 09378456b7eea5b449206caa58870aaa, type: 2}
   - treeName: Dark Prince
     paths:
-    - pathName: 
+    - pathName: Chivary1
       pointsRequired: 50
       learnable: {fileID: 11400000, guid: 6e6fb91e803e9ac41a36bb990fdde099, type: 2}

@@ -17,6 +17,8 @@ public class CommandMenu : SubMenu
     ActiveStats currentActiveStats;
     public ActiveStats selectedSwapTarget;
     public ICombatant selectedTarget;
+    public bool dualCastSkipped = false;
+    int mpReserved = 0;
     public Transform targetGrid;
     public Transform allyTargetGrid;
     public Transform enemyTargetGrid;
@@ -75,10 +77,29 @@ public class CommandMenu : SubMenu
   public void NextCharacter(ActiveStats character)
     {
         currentActiveStats = character;
+        mpReserved = 0;
+        dualCastSkipped = false;
         if(isTargeting) EndTargeting();
         selectedTarget = null;
         EnableMenu();
         ReturnToMain();
+        actionSelected = false;
+        undoRequested = false;
+    }
+    public void DualCastActivated(ActiveStats character, int firstSpellCost)
+    {
+        currentActiveStats = character;
+        mpReserved = firstSpellCost;
+        dualCastSkipped = false;
+        if(isTargeting) EndTargeting();
+        selectedTarget = null;
+        selectedLearnable = null;
+        EnableMenu();
+        screenHistory.Clear();
+        List<MenuOption> options = SpellMenu();
+        options.Add(new MenuOption("Skip", () => { dualCastSkipped = true; FinalizeTurn();}) {description = "Do not cast a second spell"});
+        MenuScreen screen = new MenuScreen(options, fontSize, 3, cellSize, spacing, "");
+        FillMenu(screen);
         actionSelected = false;
         undoRequested = false;
     }
@@ -212,7 +233,7 @@ public class CommandMenu : SubMenu
         {
             Spell captured = spell;
             MenuOption option = new MenuOption (captured.spellName, () =>  {selectedAction = PlayerActionType.Spell; selectedLearnable = captured; FinalizeTurn();});
-            option.enabled = currentActiveStats.currentMP >= captured.Cost;
+            option.enabled = currentActiveStats.currentMP - mpReserved >= captured.Cost;
             option.description = $"MP cost: {captured.Cost}";
             if(captured.isAOE)
             {

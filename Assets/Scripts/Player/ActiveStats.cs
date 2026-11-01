@@ -71,9 +71,27 @@ public class ActiveStats : MonoBehaviour, ICombatant
     public bool transformReady => !transformedThisBattle && !isTransformed && transformGauge >= transformGaugeMax;
     StatCalculator statCalculator = new StatCalculator();
     public int GetStatStage(Stat stat) => statCalculator.GetStatStage(stat);
+    public bool HasStatDebuff => statCalculator.HasDebuff();
     public void ChangeStatStage(Stat stat, int amount)
     {
         statCalculator.ChangeStatStage(stat, amount);
+        RecalculateStats();
+    }
+    public bool HasShieldTree
+    {
+        get
+        {
+            if(playerStats == null || playerStats.skillTrees == null) return false;
+            foreach(SkillTree tree in playerStats.skillTrees.trees) if(tree != null && tree.treeName != null
+            && tree.treeName.Trim().Equals("Shield", System.StringComparison.OrdinalIgnoreCase)) return true;
+            return false;
+        }
+    }
+    public Equipment ShieldWeapon => (weaponSlot == null && shieldSlot != null && HasShieldTree) ? shieldSlot : null;
+    public Equipment BattleWeapon => weaponSlot != null ? weaponSlot : ShieldWeapon;
+    public void SetMomentum(object source, float percent)
+    {
+        statCalculator.SetMomentum(source, percent);
         RecalculateStats();
     }
     public void ResetStatStages()
@@ -177,6 +195,11 @@ public class ActiveStats : MonoBehaviour, ICombatant
         if (accessorySlot != null && accessorySlot.equipmentType != Equipment.EquipmentType.Accessory) accessorySlot = null;
         RecalculateStats();
     }
+    void ApplyBondAndHookBonuses(StatCalculatorResult result)
+    {
+        ApplyBondBonuses(result);
+        BattleHooks.FlatStats(this, result);
+    }
     void ApplyBondBonuses(StatCalculatorResult result)
     {
         if(currentBondPartners == null) return;
@@ -219,7 +242,7 @@ public class ActiveStats : MonoBehaviour, ICombatant
     {
         StatCalculatorResult result = statCalculator.Recalculate(maxHP, maxMP, currentStrength, currentMagic,
         currentDefense, currentWisdom, currentTech, currentAffinity, currentSpeed, currentLuck,
-        new[] {weaponSlot, headSlot, bodySlot, shieldSlot, accessorySlot }, transformMultiplier, ApplyBondBonuses);
+        new[] {weaponSlot, headSlot, bodySlot, shieldSlot, accessorySlot }, transformMultiplier, ApplyBondAndHookBonuses, stat => BattleHooks.StatMultiplier(this, stat));
         finalHP = result.finalHP; finalMP = result.finalMP;
         finalStrength = result.finalStrength; finalMagic = result.finalMagic; finalDefense = result.finalDefense;
         finalWisdom = result.finalWisdom; finalTech = result.finalTech; finalAffinity = result.finalAffinity;
@@ -245,12 +268,43 @@ public class ActiveStats : MonoBehaviour, ICombatant
         if (Random.Range(0, 100) < playerStats.luckGrowth) { currentLuck += 1; statsGained.Add("Luck"); }
         return statsGained;
     }
-     public Equipment Equip(Equipment newEquipment)
+    public string EquipBlockReason(Equipment item)
+    {
+        if(item == null) return null;
+        Equipment occupant = GetEquipped(item.equipmentType);
+        if(occupant != null && occupant != item && occupant.locked) return $"{occupant.equipmentName} is locked and cannot be removed.";
+        if(DualWieldAllowShield) return null;
+        if(item.equipmentType == Equipment.EquipmentType.Shield)
+        {
+            DualWield dual = DualWield.Find(weaponSlot);
+            if(dual != null && dual.blocksShield) return $"{currentName}'s dual-wield weapon is too large to use with a shield.";
+        }
+        else if(item.equipmentType == Equipment.EquipmentType.Weapon && shieldSlot != null)
+        {
+            DualWield dual = DualWield.Find(item);
+            if(dual != null && dual.blocksShield) return $"Unequip {currentName}'s shield first. {item.equipmentName} is too large to use with one.";
+        }
+        return null;
+    }
+    public bool DualWieldAllowShield
+    {
+        get
+        {
+            foreach(Skill skill in equippedSkills)
+            {
+                if(skill == null || skill.effects == null) continue;
+                foreach(Effect effect in skill.effects) if(effect is ShieldAndDual) return true;
+            }
+            return false;
+        }
+    }
+public Equipment Equip(Equipment newEquipment)
 {
    if(newEquipment == null) return null;
    if(!personalInventory.Contains(newEquipment)) return null;
    if(newEquipment.equipmentType == Equipment.EquipmentType.Weapon && 
    !playerStats.allowedWeaponTypes.Contains(newEquipment.weaponType)) return null;
+   if(EquipBlockReason(newEquipment) != null) return null;
    Equipment previous = null;
     switch (newEquipment.equipmentType)
 {
@@ -262,8 +316,10 @@ public class ActiveStats : MonoBehaviour, ICombatant
 }
 RecalculateStats(); return previous;
 }
-public void Unequip(Equipment.EquipmentType slotType)
+public void Unequip(Equipment.EquipmentType slotType, bool force = false)
     {
+        Equipment current = GetEquipped(slotType);
+        if(current != null && current.locked && !force) return;
         switch(slotType)
         {
             case Equipment.EquipmentType.Weapon: weaponSlot = null; break;
@@ -422,15 +478,16 @@ public void Unequip(Equipment.EquipmentType slotType)
     {
         isDefending = true;
     }
-    public void TakeDamage(int damage)
+    public int TakeDamage(int damage, bool ignoreDefend = false)
     {
-        if (isDefending) 
+        if (isDefending && !ignoreDefend) 
         {
             damage = damage * 20/100; isDefending = false;
         }
-        currentHP -= Mathf.Max(1, damage);
-        currentHP = Mathf.Max(0, currentHP);
+        int final = BattleHooks.LimitDamage(this, Mathf.Max(1, damage));
+        currentHP = Mathf.Max(0, currentHP - final);
         UpdateUI();
+        return final;
     }
     public void Heal(int amount)
     {

@@ -40,8 +40,8 @@ MonoBehaviour:
   targetHPThreshold: 30
   minGoldReward: 10
   maxGoldReward: 35
-  minExpReward: 1000
-  maxExpReward: 1005
+  minExpReward: 1
+  maxExpReward: 1
   transformHPThreshold: 0
   bossTransformMultiplier: 1.3
   magicAffinity: 2

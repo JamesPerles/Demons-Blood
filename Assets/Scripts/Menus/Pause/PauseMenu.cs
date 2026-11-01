@@ -259,7 +259,7 @@ public void ShowRosterPanel(bool showStatsExtra = false)
         if(horizontal == 0 && vertical == 0) return;
         GameObject raw = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
         GameObject previousEntry = EntryForSelection(lastSelected);
-        if(horizontal != 0 && previousEntry != null && TryEdgePage(previousEntry, horizontal)) return;
+        if(freshPress && horizontal != 0 && previousEntry != null && TryEdgePage(previousEntry, horizontal)) return;
         if(EnforceZoneRules(raw, horizontal, vertical, freshPress)) return;
         if(!freshPress) return;
         if(raw == null || raw != lastSelected) return;
