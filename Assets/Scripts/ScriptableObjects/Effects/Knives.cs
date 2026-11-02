@@ -16,17 +16,7 @@ public override IEnumerator AfterHit(ICombatant owner, HitContext hit, bool land
     if(possibleStatuses.Count > 0)
     {
       StatusEffect status = possibleStatuses[Random.Range(0, possibleStatuses.Count)];
-      if(status != null && !target.IsImmuneToStatus(status))
-      {
-        int chance = Mathf.Clamp(statusChance + BattleHooks.StatusChanceBonus(owner, target, status), 0, 100);
-        if(Roll(chance))
-        {
-          ApplyStatusTo(target, status);
-          yield return status.OnApply(target);
-          if(BattleTextBox.instance != null) yield return BattleTextBox.instance.ShowMessage
-          ($"{target.currentName} is afflicted with {status.statusName}");
-        }
-      }
+      if(status != null) yield return InflictStatusEffect.TryInflict(owner, target, status, statusChance, null, false);
     }
     if(possibleDebuffs.Count > 0 && Roll(debuffChance))
     {

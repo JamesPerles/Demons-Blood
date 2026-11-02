@@ -30,10 +30,11 @@ public abstract class WeaponEffect : BattleHookEffect
     if(who is ActiveStats player) player.ChangeStatStage(stat, amount);
     else if(who is EnemyAI enemy) enemy.ChangeStatStage(stat, amount);
   }
-  protected static void ApplyStatusTo(ICombatant who, StatusEffect status)
+  protected static bool ApplyStatusTo(ICombatant who, StatusEffect status, ICombatant source = null)
   {
-    if(who is ActiveStats player) player.ApplyStatus(status);
-    else if (who is EnemyAI enemy) enemy.ApplyStatus(status);
+    if(who is ActiveStats player) return player.ApplyStatus(status, source);
+    if (who is EnemyAI enemy) return enemy.ApplyStatus(status, source);
+    return false;
   }
   protected static int RestoreMP(ICombatant who, int amount)
   {

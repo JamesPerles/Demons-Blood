@@ -41,6 +41,7 @@ public class EnemyAI : MonoBehaviour , ICombatant
     public bool isDefending {get; set;}
     public Element currentMagicAffinity {get; set;}
     public List<StatusEffect> statusImmunities = new List<StatusEffect>();
+    public bool immuneToInstantKill;
     public int Accuracy {get; set;}
     public int Precision {get; set;}
     public int Evasion {get; set;}
@@ -117,9 +118,10 @@ public class EnemyAI : MonoBehaviour , ICombatant
     }
     void RecalculateStats()
     {
+        bool gearLocked = BattleHooks.GetStatsDisabled(this);
         StatCalculatorResult result = statCalculator.Recalculate(maxHP, maxMP, currentStrength, currentMagic,
         currentDefense, currentWisdom, currentTech, currentAffinity, currentSpeed, currentLuck,
-        new[] {weaponSlot, headSlot, bodySlot, shieldSlot, accessorySlot }, transformMultiplier,
+        new[] {gearLocked ? null : weaponSlot, gearLocked ? null : headSlot, gearLocked ? null : bodySlot, gearLocked ? null : shieldSlot, accessorySlot }, transformMultiplier,
         flat => BattleHooks.FlatStats(this, flat), stat => BattleHooks.StatMultiplier(this, stat));
         finalHP = result.finalHP; finalMP = result.finalMP;
         finalStrength = result.finalStrength; finalMagic = result.finalMagic; finalDefense = result.finalDefense;
@@ -247,15 +249,24 @@ public class EnemyAI : MonoBehaviour , ICombatant
         if(status == null) return;
         ActiveStatusEffect existing = activeStatuses.Find(active => active.statusEffect == status);
         if(existing != null) existing.remainingTurns = status.duration;
-        else activeStatuses.Add(new ActiveStatusEffect {statusEffect = status, remainingTurns = status.duration});
+        if(activeStatuses.Count > 0)
+        {
+            if(!status.overrideOtherStatuses) return false;
+            activeStatuses.Clear();
+        }
+        activeStatuses.Add(new ActiveStatusEffect {statusEffect = status, remainingTurns = status.duration, appliedTurn = BattleHooks.TurnNumber, source = source});
+        RecalculateStats();
+        return true;
     }
     public void RemoveStatus(StatusEffect status)
     {
         if(status == null) return;
         activeStatuses.RemoveAll(active => active.statusEffect == status);
+        RecalculateStats();
     }
     public void ClearStatus()
     {
         activeStatuses.Clear();
     }
+    public void RefreshStats() => RecalculateStats();
 }

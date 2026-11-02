@@ -77,17 +77,8 @@ public class ActiveStats : MonoBehaviour, ICombatant
         statCalculator.ChangeStatStage(stat, amount);
         RecalculateStats();
     }
-    public bool HasShieldTree
-    {
-        get
-        {
-            if(playerStats == null || playerStats.skillTrees == null) return false;
-            foreach(SkillTree tree in playerStats.skillTrees.trees) if(tree != null && tree.treeName != null
-            && tree.treeName.Trim().Equals("Shield", System.StringComparison.OrdinalIgnoreCase)) return true;
-            return false;
-        }
-    }
-    public Equipment ShieldWeapon => (weaponSlot == null && shieldSlot != null && HasShieldTree) ? shieldSlot : null;
+    public bool CanUseShieldAsWeapon => playerStats != null && playerStats.allowedWeaponTypes != null && playerStats.allowedWeaponTypes.Contains(Equipment.WeaponType.Shield);
+    public Equipment ShieldWeapon => (weaponSlot == null && shieldSlot != null && CanUseShieldAsWeapon) ? shieldSlot : null;
     public Equipment BattleWeapon => weaponSlot != null ? weaponSlot : ShieldWeapon;
     public void SetMomentum(object source, float percent)
     {
@@ -240,9 +231,10 @@ public class ActiveStats : MonoBehaviour, ICombatant
     }
     void RecalculateStats()
     {
+        bool gearLocked = BattleHooks.GearStatsDisabled(this);
         StatCalculatorResult result = statCalculator.Recalculate(maxHP, maxMP, currentStrength, currentMagic,
         currentDefense, currentWisdom, currentTech, currentAffinity, currentSpeed, currentLuck,
-        new[] {weaponSlot, headSlot, bodySlot, shieldSlot, accessorySlot }, transformMultiplier, ApplyBondAndHookBonuses, stat => BattleHooks.StatMultiplier(this, stat));
+        new[] {gearLocked ? null : weaponSlot, gearLocked ? null : headSlot, gearLocked ? null : bodySlot, gearLocked ? null : shieldSlot, accessorySlot }, transformMultiplier, ApplyBondAndHookBonuses, stat => BattleHooks.StatMultiplier(this, stat));
         finalHP = result.finalHP; finalMP = result.finalMP;
         finalStrength = result.finalStrength; finalMagic = result.finalMagic; finalDefense = result.finalDefense;
         finalWisdom = result.finalWisdom; finalTech = result.finalTech; finalAffinity = result.finalAffinity;
@@ -499,21 +491,30 @@ public void Unequip(Equipment.EquipmentType slotType, bool force = false)
         currentMP = Mathf.Min(currentMP + amount, finalMP);
         UpdateUI();
     }
-    public void ApplyStatus(StatusEffect status)
+    public bool ApplyStatus(StatusEffect status, ICombatant source = null)
     {
-        if(status == null) return;
+        if(status == null) return false;
         ActiveStatusEffect existing = activeStatuses.Find(active => active.statusEffect == status);
-       if(existing != null) existing.remainingTurns = status.duration;
-        else activeStatuses.Add(new ActiveStatusEffect {statusEffect = status, remainingTurns = status.duration});
+       if(existing != null) return true;
+        if(activeStatuses.Count > 0)
+        {
+            if(!status.overridesOtherStatuses) return false;
+            activeStatuses.Clear();
+        }
+        activeStatuses.Add(new ActiveStatusEffect {statusEffect = status, remainingTurns = status.duration, appliedTurn = BattleHooks.TurnNumber, source = source});
+        RecalculateStats();
+        return true;
     }
     public void RemoveStatus(StatusEffect status)
     {
         if(status == null) return;
         activeStatuses.RemoveAll(active => active.statusEffect == status);
+        RecalculateStats();
     }
     public void ClearStatus()
     {
         activeStatuses.Clear();
+        RecalculateStats();
     }
     public void GaugeDamageDealt(int damage)
     {
