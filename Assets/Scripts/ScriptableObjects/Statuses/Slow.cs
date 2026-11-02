@@ -21,9 +21,9 @@ public class Slow : StatusEffect
     }
     bool IsUsingLightning(ICombatant owner, HitContext hit) => hit != null && hit.defender == owner && hit.AttackElement == Element.Lightning;
     public override float IncomingDamageMultiplier(ICombatant owner, HitContext hit) => IsUsingLightning(owner, hit) ? lightningDamageMultiplier : 1f;
-    public override bool IgnoresDefend(ICombatant owner, HitContext hit) => IsLightningAtMe(owner, hit);
-    public override bool IgnoresDefenseStats(ICombatant owner, HitContext hit) => IsLightningAtMe(owner, hit);
-    public override bool AttracksLightning(ICombatant owner) => true;
+    public override bool IgnoresDefend(ICombatant owner, HitContext hit) => IsUsingLightning(owner, hit);
+    public override bool IgnoresDefenseStats(ICombatant owner, HitContext hit) => IsUsingLightning(owner, hit);
+    public override bool AttractsLightning(ICombatant owner) => true;
     public override IEnumerator OnDamaged(ICombatant owner, HitContext hit, int dealt)
     {
         yield return CureByElement(owner, hit, dealt, Element.Fire, Element.Wind);

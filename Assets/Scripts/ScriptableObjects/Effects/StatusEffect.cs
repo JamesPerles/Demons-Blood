@@ -5,9 +5,8 @@ public class StatusResult { public bool applied; }
 public abstract class StatusEffect : BattleHookEffect
 {
     public string statusName;
-    public int duration = 3;
-    public bool cured = false;
-    public bool overrideStatuses = false;
+    public bool untilCured { get => true; set { } }
+    public bool overridesOtherStatuses = false;
     public const float minCureChance = 25;
     public const float maxCureChance = 50f;
     public virtual IEnumerator OnApply(object target) {yield break;}
@@ -50,7 +49,7 @@ public class ActiveStatusEffect
     public int remainingTurns;
     public int turnsActive;
     public int counter;
-    public int appliedTUrn;
+    public int appliedTurn;
     [System.NonSerialized] public ICombatant source;
 }
 [CreateAssetMenu(fileName = "New Status Effect", menuName = "Battle/Effects/Inflict Status")]
@@ -60,23 +59,27 @@ public class InflictStatusEffect : Effect
     [Range(0, 100)] public int chanceToInflict = 100;
     public override IEnumerator Apply(object caster, object target)
     {
-        if (statustoInflict == null) yield break;
-        string name = null;
-        bool immune = false;
-        if(target is ActiveStats player) {name = player.currentName; immune = player.IsImmuneToStatus(statustoInflict);}
-        else if (target is EnemyAI enemy) {name = enemy.currentName; immune = enemy.IsImmuneToStatus(statustoInflict);} 
-        if(immune)
+        yield return TryInflict(caster, target, statustoInflict, chanceToInflict, new StatusResult(), true);
+    }
+    public static IEnumerator TryInflict(object caster, object target, StatusEffect status, int baseChance, StatusResult result, bool announceFailure)
+    {
+        ICombatant victim = target as ICombatant;
+        if(status == null || victim == null) yield break;
+        if(victim.IsImmuneToStatus(status))
         {
-           if(BattleTextBox.instance != null) yield return BattleTextBox.instance.ShowMessage($"{name} is immune to {statustoInflict.statusName}.");
+            if(announceFailure && BattleTextBox.instance != null) yield return BattleTextBox.instance.ShowMessage($"{victim.currentName} is immune to {status.statusName}.");
             yield break;
         }
-        int roll = Random.Range(0, 100);
-        int finalChance = Mathf.Clamp(chanceToInflict + BattleHooks.StatusChanceBonus(caster as ICombatant, target as ICombatant, statustoInflict), 0, 100);
-        if(roll >= finalChance) yield break;
-        if(target is ActiveStats plyr) plyr.ApplyStatus(statustoInflict);
-        else if (target is EnemyAI enmy) enmy.ApplyStatus(statustoInflict);
-        yield return statustoInflict.OnApply(target);
-       if(BattleTextBox.instance != null) yield return BattleTextBox.instance.ShowMessage($"{name} is afflicted with {statustoInflict.statusName}");
+        int finalChance = Mathf.Clamp(baseChance + BattleHooks.StatusChanceBonus(caster as ICombatant, victim, status), 0, 100);
+        if(Random.Range(0, 100) >= finalChance) yield break;
+        if(!BattleHooks.TryApplyStatus(victim, status, caster as ICombatant))
+        {
+           if(announceFailure && BattleTextBox.instance != null) yield return BattleTextBox.instance.ShowMessage($"{victim.currentName} can't be afflicted with {status.statusName} right now.");
+            yield break;
+        }
+        if(result != null) result.applied = true;
+        yield return status.OnApply(target);
+       if(BattleTextBox.instance != null) yield return BattleTextBox.instance.ShowMessage($"{victim.currentName} is afflicted with {status.statusName}");
     }
 }
 [CreateAssetMenu(fileName = "Cure Status Eff", menuName = "Battle/Effects/CureStatus")]

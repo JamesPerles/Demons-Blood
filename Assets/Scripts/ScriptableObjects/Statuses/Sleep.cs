@@ -32,10 +32,9 @@ public class Sleep : StatusEffect
         control.consumed = true;
         yield return Say($"{owner.currentName} is fast asleep.");
     }
-    public override IEnumerator OnDamage(ICombatant owner, HitContext hit, int dealt)
+    public override IEnumerator OnDamaged(ICombatant owner, HitContext hit, int dealt)
     {
         if(dealt <= 0) yield break;
-        BattleHooks.RemoveStatus(owner, this);
         BattleHooks.RemoveStatus(owner, this);
         yield return Say($"{owner.currentName} wakes up!");
     }

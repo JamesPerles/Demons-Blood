@@ -51,6 +51,8 @@
   <ItemGroup>
     <Compile Include="Assets\Scripts\ScriptableObjects\Effects\Ranged.cs" />
     <Compile Include="Assets\Scripts\Player\IInteractable.cs" />
+    <Compile Include="Assets\Scripts\ScriptableObjects\Statuses\Confuse.cs" />
+    <Compile Include="Assets\Scripts\ScriptableObjects\Statuses\Blind.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Items\Baggable.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\ShaderPropAnimator.cs" />
     <Compile Include="Assets\Scripts\Player\PlayerParty.cs" />
@@ -61,8 +63,10 @@
     <Compile Include="Assets\Scripts\ScriptableObjects\Effects\WeaponEffect.cs" />
     <Compile Include="Assets\Scripts\Managers\AudioManager.cs" />
     <Compile Include="Assets\Scripts\Battle Scripts\StatCalculator.cs" />
+    <Compile Include="Assets\Scripts\ScriptableObjects\Statuses\Burn.cs" />
     <Compile Include="Assets\Scripts\Menus\Battle\CommandMenu.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Learnables\Skill.cs" />
+    <Compile Include="Assets\Scripts\ScriptableObjects\Statuses\Berserk.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Effects\Lance.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Effects\Steal.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\VertexShakeB.cs" />
@@ -83,6 +87,7 @@
     <Compile Include="Assets\Scripts\Player\SaveData.cs" />
     <Compile Include="Assets\Scripts\Managers\BattleManager.cs" />
     <Compile Include="Assets\Scripts\Managers\InventoryManager.cs" />
+    <Compile Include="Assets\Scripts\ScriptableObjects\Statuses\Poison.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\ChatController.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Effects\ForgeMaster.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\VertexColorCycler.cs" />
@@ -103,8 +108,9 @@
     <Compile Include="Assets\Scripts\ScriptableObjects\Effects\DualWield.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Items\Materials.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Quests\Quest.cs" />
-    <Compile Include="Assets\Scripts\Managers\PopupManager.cs" />
+    <Compile Include="Assets\Scripts\ScriptableObjects\Statuses\Sleep.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\TMPro_InstructionOverlay.cs" />
+    <Compile Include="Assets\Scripts\Managers\PopupManager.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Shops\ShopStats.cs" />
     <Compile Include="Assets\Scripts\Player\Interactor.cs" />
     <Compile Include="Assets\Scripts\Menus\Ui\ICardHighlightHandler.cs" />
@@ -123,6 +129,7 @@
     <Compile Include="Assets\Scripts\ScriptableObjects\Effects\BattleHooksEffect.cs" />
     <Compile Include="Assets\Scripts\Menus\Battle\CombatantViewer.cs" />
     <Compile Include="Assets\Scripts\Managers\QuestManager.cs" />
+    <Compile Include="Assets\Scripts\ScriptableObjects\Statuses\Charm.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Shops\ShopNPC.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\Benchmark01_UGUI.cs" />
     <Compile Include="Assets\Scripts\Battle Scripts\Random Encounters.cs" />
@@ -130,11 +137,17 @@
     <Compile Include="Assets\Scripts\ScriptableObjects\Effects\DualCast.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Effects\Knives.cs" />
     <Compile Include="Assets\Scripts\Menus\ShopMenu.cs" />
+    <Compile Include="Assets\Scripts\ScriptableObjects\Statuses\Frozen.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Areas\LocationExit.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Learnables\SkillTree.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Effects\StatChangeEffect.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Effects\Shield.cs" />
+    <Compile Include="Assets\Scripts\ScriptableObjects\Statuses\Slow.cs" />
+    <Compile Include="Assets\Scripts\ScriptableObjects\Statuses\Paralysis.cs" />
+    <Compile Include="Assets\Scripts\ScriptableObjects\Statuses\DOT.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Items\Equipment.cs" />
+    <Compile Include="Assets\Scripts\ScriptableObjects\Statuses\Bleed.cs" />
+    <Compile Include="Assets\Scripts\ScriptableObjects\Statuses\WeakenDOT.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Learnables\Learnable.cs" />
     <Compile Include="Assets\Scripts\Menus\Ui\SettingRowView.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Forge\CraftRecipe.cs" />
@@ -166,6 +179,7 @@
     <Compile Include="Assets\Scripts\ScriptableObjects\Element.cs" />
     <Compile Include="Assets\Scripts\Managers\BestiaryManager.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Stats\EnemyStats.cs" />
+    <Compile Include="Assets\Scripts\ScriptableObjects\Statuses\Deaf.cs" />
     <Compile Include="Assets\Scripts\Managers\BattleHooks.cs" />
     <Compile Include="Assets\Scripts\Battle Scripts\ICombatant.cs" />
     <Compile Include="Assets\Scripts\SceneFader.cs" />
@@ -176,6 +190,7 @@
     <Compile Include="Assets\Scripts\Managers\WalletManager.cs" />
     <Compile Include="Assets\Scripts\Menus\Ui\ITabVisualOwner.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Effects\Sword.cs" />
+    <Compile Include="Assets\Scripts\ScriptableObjects\Statuses\Silence.cs" />
     <Compile Include="Assets\Scripts\Menus\Ui\GridCardPager.cs" />
     <Compile Include="Assets\Scripts\Menus\Pause\MapMenu.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_ExampleScript_01.cs" />
@@ -183,6 +198,7 @@
     <Compile Include="Assets\Scripts\Menus\Ui\TabButtonView.cs" />
     <Compile Include="Assets\Scripts\Battle Scripts\BossAI.cs" />
     <Compile Include="Assets\UI\TextMesh Pro\Examples &amp; Extras\Scripts\TMP_TextEventHandler.cs" />
+    <Compile Include="Assets\Scripts\ScriptableObjects\Statuses\Cleared.cs" />
     <Compile Include="Assets\Scripts\ScriptableObjects\Effects\StatusEffect.cs" />
     <Compile Include="Assets\Scripts\Menus\Pause\PauseMenu.cs" />
     <Compile Include="Assets\Scripts\Menus\Pause\MiscellaneousMenu.cs" />

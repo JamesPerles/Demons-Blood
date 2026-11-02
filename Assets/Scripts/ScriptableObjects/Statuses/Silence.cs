@@ -11,7 +11,7 @@ public class Silence : StatusEffect
         return hit != null && hit.defender == owner && hit.AttackElement == Element.Wind ? windDamageMultiplier : 1f;
     }
     public override bool BlocksSpells(ICombatant owner) => true;
-    public override IEnumerator OnDamage(ICombatant owner, HitContext hit, int dealt)
+    public override IEnumerator OnDamaged(ICombatant owner, HitContext hit, int dealt)
     {
         yield return CureByElement(owner, hit, dealt, Element.Wind);
     }

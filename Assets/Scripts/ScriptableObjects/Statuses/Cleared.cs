@@ -1,5 +1,5 @@
 using UnityEngine;
 public class Cleared : StatusEffect
 {
-   public ClearedStatus() { statusName = "Clear"; overridesOtherStatuses = true; }
+   public Cleared() { statusName = "Clear"; overridesOtherStatuses = true; }
 }

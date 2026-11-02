@@ -118,7 +118,7 @@ public class EnemyAI : MonoBehaviour , ICombatant
     }
     void RecalculateStats()
     {
-        bool gearLocked = BattleHooks.GetStatsDisabled(this);
+        bool gearLocked = BattleHooks.GearStatsDisabled(this);
         StatCalculatorResult result = statCalculator.Recalculate(maxHP, maxMP, currentStrength, currentMagic,
         currentDefense, currentWisdom, currentTech, currentAffinity, currentSpeed, currentLuck,
         new[] {gearLocked ? null : weaponSlot, gearLocked ? null : headSlot, gearLocked ? null : bodySlot, gearLocked ? null : shieldSlot, accessorySlot }, transformMultiplier,
@@ -244,17 +244,17 @@ public class EnemyAI : MonoBehaviour , ICombatant
             RecalculateStats();
         }
     }
-    public void ApplyStatus(StatusEffect status)
+    public bool ApplyStatus(StatusEffect status, ICombatant source = null)
     {
-        if(status == null) return;
+        if(status == null) return false;
         ActiveStatusEffect existing = activeStatuses.Find(active => active.statusEffect == status);
-        if(existing != null) existing.remainingTurns = status.duration;
+        if(existing != null) return true;
         if(activeStatuses.Count > 0)
         {
-            if(!status.overrideOtherStatuses) return false;
+            if(!status.overridesOtherStatuses) return false;
             activeStatuses.Clear();
         }
-        activeStatuses.Add(new ActiveStatusEffect {statusEffect = status, remainingTurns = status.duration, appliedTurn = BattleHooks.TurnNumber, source = source});
+        activeStatuses.Add(new ActiveStatusEffect {statusEffect = status, appliedTurn = BattleHooks.TurnNumber, source = source});
         RecalculateStats();
         return true;
     }
@@ -267,6 +267,7 @@ public class EnemyAI : MonoBehaviour , ICombatant
     public void ClearStatus()
     {
         activeStatuses.Clear();
+        RecalculateStats();
     }
     public void RefreshStats() => RecalculateStats();
 }

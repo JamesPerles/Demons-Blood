@@ -501,7 +501,7 @@ public void Unequip(Equipment.EquipmentType slotType, bool force = false)
             if(!status.overridesOtherStatuses) return false;
             activeStatuses.Clear();
         }
-        activeStatuses.Add(new ActiveStatusEffect {statusEffect = status, remainingTurns = status.duration, appliedTurn = BattleHooks.TurnNumber, source = source});
+        activeStatuses.Add(new ActiveStatusEffect {statusEffect = status, appliedTurn = BattleHooks.TurnNumber, source = source});
         RecalculateStats();
         return true;
     }

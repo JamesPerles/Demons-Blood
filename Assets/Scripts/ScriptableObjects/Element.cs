@@ -4,7 +4,7 @@ using UnityEngine;
 public enum Element
 {
 None, Light, Dark, Fire, Ice, Lightning, 
-Wind, Water, Earth, Nature, Poison, Sand
+Wind, Water, Earth, Nature, Poison, Sound, Arcane
 }
 [System.Serializable]
 public class ElementMatchup

@@ -25,4 +25,20 @@ public class BattleHookEffect : Effect
    public virtual IEnumerator OnCrit(ICombatant owner, HitContext hit, int critStat) { yield break; }
    public virtual IEnumerator OnHeal(ICombatant owner, ICombatant healer, ICombatant target, int hpBefore, int healed) { yield break; }
    public virtual IEnumerator OnActionEnd(ICombatant owner, ICombatant actor, bool attacked) { yield break; }
+   public virtual float BaseHitMultiplier(ICombatant owner, HitContext hit) => 1f;
+   public virtual bool IgnoresDefenseStats(ICombatant owner, HitContext hit) => false;
+   public virtual float CritDamageMultiplier(ICombatant owner, HitContext hit) => 1f;
+   public virtual float BlockChanceMultiplier(ICombatant owner, HitContext hit) => 1f;
+   public virtual float ExtraMissChance(ICombatant owner, HitContext hit) => 0f;
+   public virtual float InstantKillChance(ICombatant owner, HitContext hit) => 0f;
+   public virtual string BlockAttackReason(ICombatant owner, HitKind kind, Equipment weapon) => null;
+   public virtual bool DisablesReactions(ICombatant owner) => false;
+   public virtual bool GearStatsDisabled(ICombatant owner) => false;
+   public virtual bool BlocksSpells(ICombatant owner) => false;
+   public virtual float SpellFailChance(ICombatant owner) => 0f;
+   public virtual float SpellMisfireChance(ICombatant owner) => 0f;
+   public virtual bool PreventsPlanning(ICombatant owner) => false;
+   public virtual bool AttractsLightning(ICombatant owner) => false;
+   public virtual IEnumerator ControlTurn(ICombatant owner, TurnControl control) { yield break; }
+   public virtual IEnumerator OnDamaged(ICombatant owner, HitContext hit, int dealt) { yield break; }
 } 

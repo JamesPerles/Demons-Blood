@@ -12,9 +12,11 @@ public class HitContext
     public Equipment weapon;
     public int damageDealt;
     public bool blocked;
+    public bool redirected;
     public Element WeaponElement => weapon != null ? weapon.element : Element.None;
     public Element AttackElement => abilityElement != Element.None ? abilityElement : WeaponElement;
 }
+public class TurnControl {public bool consumed; }
 public static class BattleHooks
 {
     struct HookEntry { public ICombatant owner; public BattleHookEffect hook; }
@@ -48,6 +50,20 @@ public static class BattleHooks
         BattleManager.instance.AllCombatants()) owners.Add(combatant);
         foreach(ICombatant owner in owners)
         foreach(BattleHookEffect hook in Of(owner)) hook.OnBattleEnd(owner);
+        if(BattleManager.instance != null)
+        {
+            int turns = BattleManager.instance.turnCount;
+            foreach(ICombatant combatant in BattleManager.instance.AllCombatants())
+            {
+                if(combatant.activeStatuses == null) continue;
+                foreach(ActiveStatusEffect active in combatant.activeStatuses)
+                {
+                    active.appliedTurn -= turns;
+                    active.source = null;
+                }
+            }
+            BattleManager.instance.turnCount = 0;
+        }
         state.Clear();
     }
     public static int TurnNumber => BattleManager.instance != null ? BattleManager.instance.turnCount : 0;
@@ -74,6 +90,9 @@ public static class BattleHooks
         player.weaponSlot, player.headSlot, player.bodySlot, player.shieldSlot, player.accessorySlot);
         else if(combatant is EnemyAI enemy) AddFromEquipment
         (hooks, enemy.weaponSlot, enemy.headSlot, enemy.bodySlot, enemy.shieldSlot, enemy.accessorySlot);
+        if(combatant.activeStatuses != null)
+        foreach(ActiveStatusEffect active in combatant.activeStatuses)
+        if(active != null && active.statusEffect != null) hooks.Add(active.statusEffect);
         List<Skill> skills = combatant.equippedSkills;
         if(skills != null)
         foreach(Skill skill in skills)
@@ -164,7 +183,7 @@ public static class BattleHooks
     }
 public static int StrengthBonus(HitContext hit)
     {
-        int bonus = hit.weapon != null ? hit.weapon.WeaponStrengthBonus : 0;
+        int bonus = hit.weapon != null && !GearStatsDisabled(hit.attacker) ? hit.weapon.WeaponStrengthBonus : 0;
         foreach(HookEntry entry in Everyone()) bonus += entry.hook.StrengthBonus(entry.owner, hit);
         return bonus;
     }
@@ -200,14 +219,19 @@ public static int StrengthBonus(HitContext hit)
     {
         foreach(HookEntry entry in Everyone())
         {
+            if(ReactionsLocked(entry.owner)) continue;
             BlockResult result = entry.hook.TryBlock(entry.owner, hit);
-            if(result != BlockResult.None) return result;
+            if(result == BlockResult.None) continue;
+            float keep = BlockChanceMultiplier(hit);
+            if(keep < 1f && Random.value >= keep) continue;
+            return result;
         }
         return BlockResult.None;
     }
      public static IEnumerator AfterHit(HitContext hit, bool landed)
     {
-        foreach(HookEntry entry in Everyone()) yield return entry.hook.AfterHit(entry.owner, hit, landed);
+        if(ReactionsLocked(entry.owner)) continue;
+        yield return entry.hook.AfterHit(entry.owner, hit, landed);
     }
     public static IEnumerator OnActionEnd(ICombatant actor, bool attacked)
     {

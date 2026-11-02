@@ -22,6 +22,7 @@ public class Charm : StatusEffect
         string sex = (text ?? "").Trim().ToLowerInvariant();
         if(sex.StartsWith("f")) return "f";
         if(sex.StartsWith("m")) return "m";
+        return "";
     }
     public static bool AttractedTo(ActiveStats viewer, ActiveStats other)
     {
@@ -30,7 +31,7 @@ public class Charm : StatusEffect
         string mine = SexOf(viewer.currentSex);
         string theirs = SexOf(other.currentSex);
         if(mine == "" || theirs == "") return false;
-        if(sexuality.Contains("gay")) return mine = theirs;
+        if(sexuality.Contains("gay")) return mine == theirs;
         if(sexuality.Contains("straight")) return mine != theirs;
         return false;
     }

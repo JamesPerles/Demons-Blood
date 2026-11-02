@@ -22,7 +22,7 @@ public class Frozen : StatusEffect
         ActiveStatusEffect active = Instance(owner);
         int hits = active != null ? active.counter : 0;
         float multiplier = 1f + Mathf.Min(maxDamageBonus, damageBonusPerHit * hits);
-        if(hit.AttackElement == Element.Fire) multilpier *= fireDamageMultiplier;
+        if(hit.AttackElement == Element.Fire) multiplier *= fireDamageMultiplier;
         return multiplier;
     }
     public override IEnumerator OnDamaged(ICombatant owner, HitContext hit, int dealt)

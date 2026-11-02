@@ -4,7 +4,7 @@ public class Berserk : StatusEffect
 {
   [Range(0, 100)] public int attackAllyChance = 90;
   public float curseDamageBonus = 0.1f;
-  public float curseHPLossPercentage;
+  public float curseHPLossPercentage = 0.25f;
   public Berserk() { statusName = "Berserk"; }
   public override float IncomingDamageMultiplier(ICombatant owner, HitContext hit)
     {
@@ -15,9 +15,9 @@ public class Berserk : StatusEffect
         ICombatant owner = target as ICombatant;
         if(owner == null || owner.currentHP <= 1) yield break;
         int loss = Mathf.Min(Mathf.RoundToInt(owner.finalHP * curseHPLossPercentage), owner.currentHP - 1);
-        if(lose <= 0) yield break;
+        if(loss <= 0) yield break;
         owner.currentHP -= loss;
-        if(battleManager.instance != null) BattleManager.instance.UpdateUI();
+        if(BattleManager.instance != null) BattleManager.instance.UpdateUI();
         yield return Say($"The curse drains {loss} HP from {owner.currentName}.");
     }
     public override bool PreventsPlanning(ICombatant owner) => true;

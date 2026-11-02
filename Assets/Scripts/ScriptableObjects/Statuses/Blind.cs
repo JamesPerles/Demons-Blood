@@ -8,6 +8,7 @@ public class Blind : StatusEffect
    public float dodgeMultiplier = 0.5f;
    public float critMultiplier = 0f;
    public float baseHitMultiplier = 0.5f;
+   public Blind() { statusName = "Blind"; }
    public override float StatMultiplier(ICombatant owner, Stat stat)
     {
         switch(stat)
