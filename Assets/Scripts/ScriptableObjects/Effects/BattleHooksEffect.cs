@@ -41,4 +41,6 @@ public class BattleHookEffect : Effect
    public virtual bool AttractsLightning(ICombatant owner) => false;
    public virtual IEnumerator ControlTurn(ICombatant owner, TurnControl control) { yield break; }
    public virtual IEnumerator OnDamaged(ICombatant owner, HitContext hit, int dealt) { yield break; }
+   public virtual bool SwitchesOffEffects(ICombatant owner) => false;
+   public virtual bool BlocksStatChanges(ICombatant owner) => false;
 } 

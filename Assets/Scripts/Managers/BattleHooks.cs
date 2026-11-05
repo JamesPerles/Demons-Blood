@@ -86,13 +86,17 @@ public static class BattleHooks
     {
         List<BattleHookEffect> hooks = new List<BattleHookEffect>();
         if(combatant == null) return hooks;
+        List<BattleHookEffect> statusHooks = new List<BattleHookEffect>();
+        if(combatant.activeStatuses != null)
+        foreach(ActiveStatusEffect active in combatant.activeStatuses)
+        if(active != null && active.statusEffect != null) statusHooks.Add(active.statusEffect);
+        foreach(BattleHookEffect hook in statusHooks)
+        if(hook.SwitchesOffEffects(combatant)) return statusHooks;
         if(combatant is ActiveStats player) AddFromEquipment(hooks, 
         player.weaponSlot, player.headSlot, player.bodySlot, player.shieldSlot, player.accessorySlot);
         else if(combatant is EnemyAI enemy) AddFromEquipment
         (hooks, enemy.weaponSlot, enemy.headSlot, enemy.bodySlot, enemy.shieldSlot, enemy.accessorySlot);
-        if(combatant.activeStatuses != null)
-        foreach(ActiveStatusEffect active in combatant.activeStatuses)
-        if(active != null && active.statusEffect != null) hooks.Add(active.statusEffect);
+        hooks.AddRange(statusHooks);
         List<Skill> skills = combatant.equippedSkills;
         if(skills != null)
         foreach(Skill skill in skills)
@@ -109,6 +113,20 @@ public static class BattleHooks
             if(equipment == null || equipment.effects == null) continue;
             foreach(Effect effect in equipment.effects) if(effect is BattleHookEffect hook) hooks.Add(hook);
         }
+    }
+    public static bool EffectsSwitchedOff(ICombatant owner)
+    {
+        if(owner == null || owner.activeStatuses == null) return false;
+        foreach(ActiveStatusEffect active in owner.activeStatuses)
+        if(active != null && active.statusEffect != null && active.statusEffect.SwitchesOffEffects(owner)) return true;
+        return false;
+    }
+    public static bool BlocksStatChanges(ICombatant owner)
+    {
+        if(owner == null || owner.activeStatuses == null) return false;
+        foreach(ActiveStatusEffect active in owner.activeStatuses)
+        if(active != null && active.statusEffect != null && active.statusEffect.BlocksStatChanges(owner)) return true;
+        return false;
     }
     static List<HookEntry> Everyone()
     {
@@ -230,11 +248,126 @@ public static int StrengthBonus(HitContext hit)
     }
      public static IEnumerator AfterHit(HitContext hit, bool landed)
     {
+        foreach(HookEntry entry in Everyone())
+        {
         if(ReactionsLocked(entry.owner)) continue;
         yield return entry.hook.AfterHit(entry.owner, hit, landed);
+        }
     }
     public static IEnumerator OnActionEnd(ICombatant actor, bool attacked)
     {
         foreach(HookEntry entry in Everyone()) yield return entry.hook.OnActionEnd(entry.owner, actor, attacked);
+    }
+    public static readonly object DistractedKey = new object();
+    public static bool TryApplyStatus(ICombatant who, StatusEffect status, ICombatant source = null)
+    {
+        if(who is ActiveStats player) return player.ApplyStatus(status, source);
+        if(who is EnemyAI enemy) return enemy.ApplyStatus(status, source);
+        return false;
+    }
+    public static void RemoveStatus(ICombatant who, StatusEffect status)
+    {
+        if(who is ActiveStats player) player.RemoveStatus(status);
+        else if(who is EnemyAI enemy) enemy.RemoveStatus(status);
+    }
+    public static void RefreshStats(ICombatant who)
+    {
+        if(who is ActiveStats player) player.RefreshStats();
+        else if(who is EnemyAI enemy) enemy.RefreshStats();
+    }
+    public static bool IsInstantKillImmune(ICombatant who) => who is EnemyAI enemy && enemy.immuneToInstantKill;
+    public static bool GearStatsDisabled(ICombatant owner)
+    {
+        foreach(BattleHookEffect hook in Of(owner)) if(hook.GearStatsDisabled(owner)) return true;
+        return false;
+    }
+    public static float BaseHitMultiplier(HitContext hit)
+    {
+        float multiplier = 1f;
+        foreach(BattleHookEffect hook in Of(hit.attacker)) multiplier *= hook.BaseHitMultiplier(hit.attacker, hit);
+        return multiplier;
+    }
+    public static bool IgnoresDefenseStats(HitContext hit)
+    {
+        foreach(HookEntry entry in Everyone()) if(entry.hook.IgnoresDefenseStats(entry.owner, hit)) return true;
+        return false;
+    }
+    public static float CritDamageMultiplier(HitContext hit)
+    {
+        float multiplier = 1f;
+        foreach(HookEntry entry in Everyone()) multiplier *= entry.hook.CritDamageMultiplier(entry.owner, hit);
+        return multiplier;
+    }
+    public static float BlockChanceMultiplier(HitContext hit)
+    {
+        float multiplier = 1f;
+        foreach(HookEntry entry in Everyone()) multiplier *= entry.hook.BlockChanceMultiplier(entry.owner, hit);
+        return multiplier;
+    }
+    public static float ExtraMissChance(HitContext hit)
+    {
+        float survive = 1f;
+        foreach(HookEntry entry in Everyone()) survive *= 1f - Mathf.Clamp01(entry.hook.ExtraMissChance(entry.owner, hit) / 100f);
+        return (1f - survive) * 100f;
+    }
+    public static float InstantKillChance(HitContext hit)
+    {
+        float survive = 1f;
+        foreach(HookEntry entry in Everyone()) survive *= 1f - Mathf.Clamp01(entry.hook.InstantKillChance(entry.owner, hit) / 100f);
+        return (1f - survive) * 100f;
+    }
+    static bool ReactionsLocked(ICombatant owner)
+    {
+        foreach(BattleHookEffect hook in Of(owner)) if(hook.DisablesReactions(owner)) return true;
+        return false;
+    }
+    public static string AttackBlockReason(ICombatant attacker, HitKind kind, Equipment weapon)
+    {
+        foreach(BattleHookEffect hook in Of(attacker))
+        {
+            string reason = hook.BlockAttackReason(attacker, kind, weapon);
+            if(reason != null) return reason;
+        }
+        if(TurnNumber > 0 && GetInt(attacker, DistractedKey) == TurnNumber) return $"{attacker.currentName} is too distracted to attack.";
+        return null;
+    }
+    public static bool BlocksSpells(ICombatant caster)
+    {
+        foreach(BattleHookEffect hook in Of(caster)) if(hook.BlocksSpells(caster)) return true;
+        return false;
+    }
+    public static float SpellFailChance(ICombatant caster)
+    {
+        float survive = 1f;
+        foreach(BattleHookEffect hook in Of(caster)) survive *= 1f - Mathf.Clamp01(hook.SpellFailChance(caster) / 100f);
+        return (1f - survive) * 100f;
+    }
+    public static float SpellMisfireChance(ICombatant caster)
+    {
+        float survive = 1f;
+        foreach(BattleHookEffect hook in Of(caster)) survive *= 1f - Mathf.Clamp01(hook.SpellMisfireChance(caster) / 100f);
+        return (1f - survive) * 100f;
+    }
+    public static bool PreventsPlanning(ICombatant who)
+    {
+        foreach(BattleHookEffect hook in Of(who)) if(hook.PreventsPlanning(who)) return true;
+        return false;
+    }
+    public static bool IsLightningRod(ICombatant who)
+    {
+        foreach(BattleHookEffect hook in Of(who)) if(hook.AttractsLightning(who)) return true;
+        return false;
+    }
+    public static IEnumerator ControlTurn(ICombatant who, TurnControl control)
+    {
+        foreach(BattleHookEffect hook in Of(who))
+        {
+            yield return hook.ControlTurn(who, control);
+            if(control.consumed) yield break;
+        }
+    }
+    public static IEnumerator OnDamaged(HitContext hit, int dealt)
+    {
+        foreach(BattleHookEffect hook in Of(hit.defender)) yield return hook.OnDamaged(hit.defender, hit, dealt);
     }
     }

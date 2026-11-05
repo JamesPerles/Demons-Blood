@@ -65,6 +65,7 @@ public class EnemyAI : MonoBehaviour , ICombatant
     StatCalculator statCalculator = new StatCalculator();
     public void SetMomentum(object source, float percent)
     {
+        if(!Mathf.Approximately(percent, 0f) && BattleHooks.BlocksStatChanges(this)) return;
         statCalculator.SetMomentum(source, percent);
         RecalculateStats();
     }
@@ -72,7 +73,13 @@ public class EnemyAI : MonoBehaviour , ICombatant
     public bool HasStatDebuff => statCalculator.HasDebuff();
     public void ChangeStatStage(Stat stat, int amount)
     {
+        if(amount != 0 && BattleHooks.BlocksStatChanges(this)) return;
         statCalculator.ChangeStatStage(stat, amount);
+        RecalculateStats();
+    }
+    public void ResetStatStages()
+    {
+        statCalculator.ResetStatStages();
         RecalculateStats();
     }
     void Awake()

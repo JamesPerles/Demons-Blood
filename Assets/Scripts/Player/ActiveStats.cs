@@ -74,6 +74,7 @@ public class ActiveStats : MonoBehaviour, ICombatant
     public bool HasStatDebuff => statCalculator.HasDebuff();
     public void ChangeStatStage(Stat stat, int amount)
     {
+        if(amount != 0 && BattleHooks.BlocksStatChanges(this)) return;
         statCalculator.ChangeStatStage(stat, amount);
         RecalculateStats();
     }
@@ -82,6 +83,7 @@ public class ActiveStats : MonoBehaviour, ICombatant
     public Equipment BattleWeapon => weaponSlot != null ? weaponSlot : ShieldWeapon;
     public void SetMomentum(object source, float percent)
     {
+        if(!Mathf.Approximately(percent, 0f) && BattleHooks.BlocksStatChanges(this)) return;
         statCalculator.SetMomentum(source, percent);
         RecalculateStats();
     }

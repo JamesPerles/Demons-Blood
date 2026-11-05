@@ -25,6 +25,8 @@ public class BattleManager : MonoBehaviour
     public ICombatant firstActorThisTurn;
     bool actionAttacked;
     enum DamageType {Physical, Magic, Fusion}
+    public enum AutoMode {Sensible, AttackAllies, AttackEnemies, Chaos}
+    bool pendingRedirect;
     public enum DeathHandling {GoToTitleScreen, ReviveInTown}
     public DeathHandling deathHandling = DeathHandling.GoToTitleScreen;
     public string deathSceneName = "DeathScene";
@@ -180,6 +182,7 @@ void Start()
                 ActivePlayer(player);
                 Debug.Log("Choosing Action");
                 player.isDefending = false;
+                if(BattleHooks.PreventsPlanning(player)) { planIndex++; continue; }
                 CommandMenu.instance.NextCharacter(player);
                 yield return new WaitUntil(() => CommandMenu.instance.actionSelected || CommandMenu.instance.undoRequested);
                 if(CommandMenu.instance.undoRequested)
@@ -187,6 +190,7 @@ void Start()
                     CommandMenu.instance.undoRequested = false;
                     CommandMenu.instance.DisableMenu();
                     if(planIndex > 0) planIndex--;
+                    while(planIndex > 0 && BattleHooks.PreventsPlanning(livingPlayers[planIndex])) planIndex--;
                     continue;
                 }
                 CommandMenu.PlayerActionType chosenAction = CommandMenu.instance.GetSelectedAction();
@@ -226,22 +230,28 @@ void Start()
                 if(firstActorThisTurn == null) firstActorThisTurn = combatant;
                 yield return StartCoroutine(TurnStartEffects(combatant));
                 if(IsDead(combatant)) {yield return StartCoroutine(CheckDeath(combatant)); if(AllPlayersDead() || AllEnemiesDead()) yield break; continue;}
-                if ( combatant is ActiveStats player)
+                actionAttacked = false;
+                TurnControl control = new TurnControl();
+                yield return StartCoroutine(BattleHooks.ControlTurn(combatant, control));
+                if(IsDead(combatant)) {yield return StartCoroutine(CheckDeath(combatant)); if(AllPlayersDead() || AllEnemiesDead()) yield break; continue;}
+                if ( !control.consumed && combatant is ActiveStats player)
                 {
                     ActivePlayer(player);
                     plannedTargets.TryGetValue(player, out ICombatant target);
                     plannedLearnables.TryGetValue(player, out Learnable learnable);
                     plannedItems.TryGetValue(player, out Item item);
                     actionAttacked = false;
-                    yield return StartCoroutine(PlayerAction(player, plannedActions[player], target, learnable, item));
-                if(plannedSecondSpells.TryGetValue(player, out Spell secondSpell) && player.currentHP > 0 && !AllEnemiesDead() && !battleEscaped && player.currentMP >= secondSpell.Cost)
+                    if(plannedActions.TryGetValue(player, out CommandMenu.PlayerActionType plannedAction))
+                    yield return StartCoroutine(PlayerAction(player, plannedAction, target, learnable, item));
+                    else yield return StartCoroutine(BattleTextBox.instance.ShowMessage($"{player.currentName} can't act this turn."));
+                    if(plannedSecondSpells.TryGetValue(player, out Spell secondSpell) && player.currentHP > 0 && !AllEnemiesDead() && !battleEscaped && player.currentMP >= secondSpell.Cost)
                 {
                     plannedSecondTargets.TryGetValue(player, out ICombatant secondTarget);
                     yield return StartCoroutine(CastSpell(player, secondSpell, secondTarget));
                     yield return StartCoroutine(ScaledWait(0.5f));
                 }
                 }
-                else if (combatant is EnemyAI enemy) { actionAttacked = false;yield return StartCoroutine(EnemyTurn(enemy)); }
+                else if (!control.consumed && combatant is EnemyAI enemy) { actionAttacked = false; yield return StartCoroutine(EnemyTurn(enemy)); }
                 yield return StartCoroutine(BattleHooks.OnActionEnd(combatant, actionAttacked));
                 if (AllPlayersDead() || AllEnemiesDead() || battleEscaped) yield break;
             }
@@ -265,6 +275,7 @@ void Start()
     }
     IEnumerator SkillEffects(ICombatant combatant)
     {
+        if(BattleHooks.EffectsSwitchedOff(combatant)) yield break;
         foreach(Skill skill in combatant.equippedSkills)
         {
             if(skill.effects != null)
@@ -286,14 +297,19 @@ void Start()
         List<ActiveStatusEffect> snapshot = new List<ActiveStatusEffect>(statuses);
         foreach(ActiveStatusEffect active in snapshot)
         {
-            if(active.statusEffect == null) continue;
+            if(active.statusEffect == null || !statuses.Contains(active)) continue;
             yield return StartCoroutine(active.statusEffect.OnTimer(combatant));
             yield return StartCoroutine(CheckDeath(combatant));
+            if(combatant.currentHP <= 0) yield break;
+            if(!statuses.Contains(active)) continue;
+            active.turnsActive++;
+            BattleHooks.RefreshStats(combatant);
+            if(active.statusEffect.untilCured) continue;
             active.remainingTurns--;
             if(active.remainingTurns <= 0)
             {
                 yield return StartCoroutine(active.statusEffect.OnExpire(combatant));
-                statuses.Remove(active);
+                BattleHooks.RemoveStatus(combatant, active.statusEffect);
             }
         }
     }
@@ -313,7 +329,7 @@ void Start()
             case DamageType.Fusion: atk = (attacker.Accuracy + attacker.Precision) / 2; def = (defenderEvasion + defender.Foresight) / 2; break;
             default: atk = attacker.Accuracy; def = defenderEvasion; break;
         }
-        return Mathf.Clamp(80 + atk - def, 0, 100);
+        return Mathf.Clamp(Mathf.RoundToInt(80 * BattleHooks.BaseHitMultiplier(hit)) + atk - def, 0, 100);
     }
     int CritCheck(ICombatant attacker, ICombatant defender, HitContext hit, out int critStat)
     {
@@ -345,11 +361,14 @@ void Start()
     Element weaponElement, List<Effect> weaponEffects, Element abilityElement, List<Effect> abilityEffects, int strengthBonus = 0, HitContext hit = null)
     {
         int raw; 
+        bool ignoreDefense = hit != null && BattleHooks.IgnoresDefenseStats(hit);
+        int defenderDefense = ignoreDefense ? 0 : defender.finalDefense;
+        int defenderWisdom = ignoreDefense ? 0 : defender.finalWisdom;
         switch(type)
         {
-            case DamageType.Magic: raw = attacker.finalMagic - defender.finalWisdom; break;
-            case DamageType.Fusion: raw = (attacker.finalStrength + strengthBonus + attacker.finalMagic) / 2 - (defender.finalDefense + defender.finalWisdom) / 2; break;
-            default: raw = attacker.finalStrength + strengthBonus - defender.finalDefense; break;
+            case DamageType.Magic: raw = attacker.finalMagic - defenderWisdom; break;
+            case DamageType.Fusion: raw = (attacker.finalStrength + strengthBonus + attacker.finalMagic) / 2 - (defenderDefense + defenderWisdom) / 2; break;
+            default: raw = attacker.finalStrength + strengthBonus - defenderDefense; break;
         }
         float weaponMultiplier = 1f;
         if(type != DamageType.Magic)
@@ -368,13 +387,61 @@ void Start()
     }
     IEnumerator ResolveAttack(ICombatant attacker, ICombatant defender, DamageType type, int abilityDamage, string actionName, Equipment weapon, List<Effect> abilityEffects, Element abilityElement)
     {
+        string blockReason = BattleHooks.AttackBlockReason(attacker, KindOf(type), weapon);
+        if(blockReason != null)
+        {
+            yield return StartCoroutine(BattleTextBox.instance.ShowMessage(blockReason));
+            yield break;
+        }
+        Element attackElement = abilityElement != Element.None ? abilityElement : WeaponElement(weapon);
+        if(attackElement == Element.Lightning)
+        {
+            ICombatant rod = BattleHooks.IsLightningRod(attacker) ? attacker : PickLightningRod();
+            if(rod != null && rod != defender)
+            {
+                string text = rod == attacker ? $"{attacker.currentName}'s lightning backfires!" : $"The lightning is drawn to {rod.currentName}!";
+                yield return StartCoroutine(BattleTextBox.instance.ShowMessage(text));
+                defender = rod;
+                pendingRedirect = true;
+            }
+        }
         yield return StartCoroutine(ResolveHit(attacker, defender, type, abilityDamage, actionName, weapon, abilityEffects, abilityElement));
     }
-    IEnumerator ResolveAOE(ICombatant attacker, List<ICombatant> defenders, DamageType type, int abilityDamage, string actionName, Equipment weapon, List<Effect> abilityEffects, Element abilityElement)
+    ICombatant PickLightningRod()
     {
-        yield return StartCoroutine(BattleTextBox.instance.ShowMessage($"{attacker.currentName} uses {actionName} on all enemies"));
-        foreach(ICombatant defender in defenders)
-        yield return StartCoroutine(ResolveHit(attacker, defender, type, abilityDamage, actionName, weapon, abilityEffects, abilityElement));
+        List<ICombatant> rods = AllCombatants().FindAll(combatant => combatant.currentHP > 0 && BattleHooks.IsLightningRod(combatant));
+        return rods.Count > 0 ? rods[Random.Range(0, rods.Count)] : null;
+    }
+    IEnumerator ResolveAOE(ICombatant attacker, List<ICombatant> defenders, DamageType type, int abilityDamage, string actionName, Equipment weapon, List<Effect> abilityEffects, Element abilityElement, string targetLabel = "all enemies")
+    {
+        string blockReason = BattleHooks.AttackBlockReason(attacker, KindOf(type), weapon);
+        if(blockReason != null)
+        {
+            yield return StartCoroutine(BattleTextBox.instance.ShowMessage(blockReason));
+            yield break;
+        }
+        List<ICombatant> targets = defenders;
+        bool redirected = false;
+        Element attackElement = abilityElement != Element.None ? abilityElement : WeaponElement(weapon);
+        if(attackElement == Element.Lightning)
+        {
+            List<ICombatant> rods = BattleHooks.IsLightningRod(attacker) ? new List<ICombatant> {attacker} : 
+            AllCombatants().FindAll(combatant => combatant.currentHP > 0 && BattleHooks.IsLightningRod(combatant));
+            if(rods.Count > 0)
+            {
+                targets = new List<ICombatant>();
+                for(int i = 0; i < defenders.Count; i++) targets.Add(rods[i % rods.Count]);
+                redirected = true;
+                yield return StartCoroutine(BattleTextBox.instance.ShowMessage("The lightning is drawn to them"));
+            }
+        }
+        yield return StartCoroutine(BattleTextBox.instance.ShowMessage($"{attacker.currentName} uses {actionName} on {targetLabel}"));
+        foreach(ICombatant defender in targets)
+        {
+            if(defender.currentHP <= 0) continue;
+            pendingRedirect = redirected;
+             yield return StartCoroutine(ResolveHit(attacker, defender, type, abilityDamage, actionName, weapon, abilityEffects, abilityElement));
+        }
     }
     [Range(0f, 0.5f)] public float damageVariance = 0.1f;
     int ApplyVariance(int damage)
@@ -398,7 +465,8 @@ void Start()
     IEnumerator ResolveHit(ICombatant attacker, ICombatant defender, DamageType type, int abilityDamage, string actionName, Equipment weapon, List<Effect> abilityEffects, Element abilityElement)
     {
         actionAttacked = true;
-        HitContext hit = new HitContext {attacker = attacker, defender = defender, kind = KindOf(type), abilityElement = abilityElement, weapon = weapon};
+        HitContext hit = new HitContext {attacker = attacker, defender = defender, kind = KindOf(type), abilityElement = abilityElement, weapon = weapon, redirected = pendingRedirect};
+        pendingRedirect = false;
         int hits = 1 + BattleHooks.ExtraHits(hit);
         float scale = BattleHooks.HitDamageScale(hit);
         bool anyLanded = false;
@@ -411,7 +479,7 @@ void Start()
             if(lastHitLanded) anyLanded = true;
         }
         if(!anyLanded) yield break;
-        List<Effect> allEffects = BuildPhysicalEffects(weapon, abilityEffects);
+        List<Effect> allEffects = BuildPhysicalEffects(BattleHooks.EffectsSwitchedOff(attacker) ? null : weapon, abilityEffects);
         if(allEffects != null) foreach(Effect effect in allEffects) if (effect != null) yield return StartCoroutine(effect.Apply(attacker, defender));
     }
     IEnumerator ResolveSingleHit(HitContext hit, DamageType type, int abilityDamage, string actionName, List<Effect> abilityEffects, float damageScale)
@@ -421,10 +489,11 @@ void Start()
      hit.damageDealt = 0; hit.blocked = false;
      int hitRate = AccuracyCheck(attacker, defender, type, hit);
      int hitRoll = Random.Range(0, 100);
-     if(hitRoll < hitRate)
+     bool distractedMiss = hitRoll < hitRate && Random.Range(0f, 100f) < BattleHooks.ExtraMissChance(hit);
+     if(hitRoll < hitRate && !distractedMiss)
         {
             Element weaponElement = WeaponElement(weapon);
-            List<Effect> weaponEffects = weapon != null ? weapon.effects : null;
+            List<Effect> weaponEffects = weapon != null  && !BattleHooks.EffectsSwitchedOff(attacker) ? weapon.effects : null;
             lastHitLanded = true;
             int strengthBonus = BattleHooks.StrengthBonus(hit);
             int damage = ComputeDamage(attacker, defender, type, abilityDamage, weaponElement, weaponEffects, abilityElement, abilityEffects, strengthBonus, hit);
@@ -435,7 +504,7 @@ void Start()
             damage = ApplyVariance(damage);
             int critRate = CritCheck(attacker, defender, hit, out int critStat);
             bool isCrit = Random.Range(0, 100) < critRate;
-            if(isCrit) damage *= 3;
+            if(isCrit) damage = Mathf.RoundToInt(damage * 3f * BattleHooks.CritDamageMultiplier(hit));
             BlockResult block = BattleHooks.TryBlock(hit);
             if(block != BlockResult.None)
             {
@@ -450,7 +519,12 @@ void Start()
                 }
                 yield break;
             }
-            int dealt = defender.TakeDamage(damage, BattleHooks.IgnoresDefend(hit));
+            bool instantKill = false;
+            float killChance = BattleHooks.InstantKillChance(hit);
+            if(killChance > 0f && !BattleHooks.IsInstantKillImmune(defender) && Random.Range(0f, 100f) < killChance) instantKill = true;
+            int dealt;
+            if(instantKill) { dealt = defender.currentHP; defender.currentHP = 0; }
+            else dealt = defender.TakeDamage(damage, BattleHooks.IgnoresDefend(hit));
             hit.damageDealt = dealt;
             if(defender is EnemyAI hitEnemy)
             {
@@ -462,12 +536,14 @@ void Start()
             UpdateUI();
             if(isCrit) yield return StartCoroutine(BattleTextBox.instance.ShowMessage("Critical Hit"));
             yield return StartCoroutine(BattleTextBox.instance.ShowMessage($"{attacker.currentName} uses {actionName}. {defender.currentName} takes {dealt} damage."));
+            if(instantKill) yield return StartCoroutine(BattleTextBox.instance.ShowMessage($"{defender.currentName} never heard it coming!"));
             yield return StartCoroutine(CheckDeath(defender));
+            if(defender.currentHP > 0 && dealt > 0) yield return StartCoroutine(BattleHooks.OnDamaged(hit, dealt));
             if(isCrit) yield return StartCoroutine(BattleHooks.OnCrit(hit, critStat));
         }   
         else
         {
-            yield return StartCoroutine(BattleTextBox.instance.ShowMessage($"{attacker.currentName}'s {actionName} missed. "));
+            yield return StartCoroutine(BattleTextBox.instance.ShowMessage(distractedMiss ? $"{attacker.currentName} is thrown off by the noise {actionName} missed. " : $"{attacker.currentName}'s {actionName} missed."));
         }
     }
             IEnumerator PlayerAction(ActiveStats player, CommandMenu.PlayerActionType action, 
@@ -503,6 +579,8 @@ void Start()
                     int swapIndex = players.IndexOf(player);
                     if(swapIndex >= 0)
                     {
+                        foreach(ActiveStatusEffect swapStatus in player.activeStatuses) { swapStatus.appliedTurn -= turnCount; swapStatus.source = null; }
+                        foreach(ActiveStatusEffect joinStatus in incoming.activeStatuses) joinStatus.appliedTurn += turnCount;
                         players[swapIndex] = incoming;
                         incoming.ResetTransformStat();
                         incoming.ResetStatStages();
@@ -600,39 +678,243 @@ void Start()
         } 
         IEnumerator CastSpell(ActiveStats player, Spell spell, ICombatant target)
     {
+        if(BattleHooks.BlocksSpells(player))
+        {
+            yield return StartCoroutine(BattleTextBox.instance.ShowMessage($"{player.currentName} can't breathe, {spell.spellName} fails."));
+            yield break;   
+        }
         player.currentMagicAffinity = spell.element;
         player.currentMP = Mathf.Max(0, player.currentMP - spell.Cost);
+        if(Random.Range(0f, 100f) < BattleHooks.SpellFailChance(player))
+        {
+            yield return StartCoroutine(BattleTextBox.instance.ShowMessage($"{player.currentName} can't hear, making it hard to properly cast spells, thus {spell.spellName} failed"));
+            yield break;
+        }
+        bool misfired = Random.Range(0f, 100f) < BattleHooks.SpellMisfireChance(player);
+        if(misfired) yield return StartCoroutine(BattleTextBox.instance.ShowMessage($"{player.currentName} is too loud, {spell.spellName} is too strong and explodes, injuring {player.currentName}"));
+        bool asSupport = spell.isAOE ? spell.aOETarget == Spell.AOETarget.Allies : target is ActiveStats;
+        bool toAllies = asSupport != misfired;
+        List<ICombatant> group = toAllies ? players.FindAll(member => member.currentHP > 0).Cast<ICombatant>().ToList() : enemies.FindAll(foe => foe.currentHP > 0).Cast<ICombatant>().ToList();
         if(spell.isAOE)
         {
-            if(spell.aOETarget == Spell.AOETarget.Allies)
+            if(asSupport)
             {
-                List<ICombatant> friends = players.FindAll(member => member.currentHP > 0).Cast<ICombatant>().ToList();
-            yield return StartCoroutine(BattleTextBox.instance.ShowMessage($"{player.currentName} uses {spell.spellName} on all allies"));
-            foreach(ICombatant friend in friends) yield return StartCoroutine(ApplySupportEffects(player, friend, spell.effects)); 
+            yield return StartCoroutine(BattleTextBox.instance.ShowMessage($"{player.currentName} uses {spell.spellName} on {(toAllies ? "all allies" : "all enemies")}"));
+            foreach(ICombatant member in group) yield return StartCoroutine(ApplySupportEffects(player, member, spell.effects)); 
             }
-            else
+        else yield return StartCoroutine(ResolveAOE(player, group, DamageType.Magic, spell.Damage, spell.spellName, null, spell.effects, spell.element, toAllies ? "all allies" : "all enemies"));
+        yield break;
+        }
+        ICombatant chosen = target;
+        if(misfired) chosen = group.Count > 0 ? group[Random.Range(0, group.Count)] : null;
+        else if(asSupport) { if(target.currentHP <= 0) yield break; }
+        else if(chosen == null || chosen.currentHP <= 0) chosen = GetRandomEnemy();
+        if(chosen == null) yield break;
+        if(asSupport)
         {
-            List<ICombatant> foes = enemies.FindAll(enemy => enemy.currentHP > 0).Cast<ICombatant>().ToList();
-            yield return StartCoroutine(ResolveAOE(player, foes, DamageType.Magic, spell.Damage, spell.spellName, null, spell.effects, spell.element));
+            yield return StartCoroutine(BattleTextBox.instance.ShowMessage($"{player.currentName} uses {spell.spellName} on {chosen.currentName}"));
+            yield return StartCoroutine(ApplySupportEffects(player, chosen, spell.effects));
         }
+       else yield return StartCoroutine(ResolveAttack(player, chosen, DamageType.Magic, spell.Damage, spell.spellName, null, spell.effects, spell.element));
         }
-        else if(target is ActiveStats ally)
-        {
-            if(ally.currentHP <= 0) yield break;
-            yield return StartCoroutine(BattleTextBox.instance.ShowMessage($"{player.currentName} uses {spell.spellName} on {ally.currentName}"));
-            yield return StartCoroutine(ApplySupportEffects(player,ally, spell.effects));
-        }
-        else
-        {
-            if(target == null || target.currentHP <= 0) target = GetRandomEnemy();
-            if(target != null) yield return StartCoroutine(ResolveAttack
-            (player, target, DamageType.Magic, spell.Damage, spell.spellName, null, spell.effects, spell.element));
-        }
-    }
     IEnumerator ApplySupportEffects(ICombatant caster, ICombatant target, List<Effect> effects)
     {
         if(effects != null) foreach(Effect effect in effects) if(effect != null) yield return StartCoroutine(effect.Apply(caster, target));
         UpdateUI();
+    }
+    class AutoMove { public Learnable learnable; public bool basic; public bool defend; public bool heal; public bool aoe; }
+    List<ICombatant> LivingSide(bool playerSide)
+    {
+        if(playerSide) return players.FindAll(member => member != null && member.currentHP > 0).Cast<ICombatant>().ToList();
+        return enemies.FindAll(foe => foe != null && foe.currentHP > 0).Cast<ICombatant>().ToList();
+    }
+    public List<ICombatant> AlliesOf(ICombatant who) => LivingSide(who is ActiveStats);
+    public List<ICombatant> FoesOf(ICombatant who) => LivingSide(!(who is ActiveStats));
+    int MPOf(ICombatant who)
+    {
+        if(who is ActiveStats player) return player.currentMP;
+        if(who is EnemyAI enemy) return enemy.currentMP;
+        return 0;
+    }
+    void SpendMP(ICombatant who, int amount)
+    {
+        if(who is ActiveStats player) player.currentMP = Mathf.Max(0, player.currentMP - amount);
+        else if(who is EnemyAI enemy) enemy.currentMP = Mathf.Max(0, enemy.currentMP - amount);
+    }
+    Equipment WeaponOfCombatant(ICombatant who)
+    {
+        if(who is ActiveStats player) return player.BattleWeapon;
+        if(who is EnemyAI enemy) return enemy.weaponSlot;
+        return null;
+    }
+    bool AutoCanAfford(ICombatant actor, Learnable learnable)
+    {
+        int mp = MPOf(actor);
+        if(learnable is Art art) return art.canKillUser || actor.currentHP > art.Cost;
+        if(learnable is Spell spell) return mp >= spell.Cost;
+        if(learnable is Fusion fusion) return (fusion.canKillUser || actor.currentHP > fusion.HPCost) && mp >= fusion.MPCost;
+        return false;
+        }
+        bool IsSupportSpell(Spell spell)
+    {
+        if(spell.isAOE) return spell.aOETarget == Spell.AOETarget.Allies;
+        if(spell.Damage > 0 || spell.effects == null) return false;
+        foreach(Effect effect in spell.effects) if(effect is Restore || effect is CureStatusEffect) return true;
+        return false;
+    }
+    List<AutoMove> BuildAutoMoves(ICombatant actor)
+    {
+        List<AutoMove> moves = new List<AutoMove>();
+        moves.Add(new AutoMove{basic = true});
+        moves.Add(new AutoMove {defend = true});
+        List<Learnable> pool = new List<Learnable>();
+        if(actor is ActiveStats player)
+        {
+            foreach(Art art in player.learnedArts) pool.Add(art);
+            foreach(Spell spell in player.learnedSpells) pool.Add(spell);
+            foreach(Fusion fusion in player.learnedFusions) pool.Add(fusion);
+        }
+        else if(actor is EnemyAI enemy)
+        {
+            foreach(EnemyStats.EnemySpecialAttack special in enemy.currentSpecialAttacks) if(special != null && special.learnable != null) pool.Add(special.learnable);
+        }
+        foreach(Learnable learnable in pool)
+        {
+            if(learnable == null || !AutoCanAfford(actor, learnable)) continue;
+            AutoMove move = new AutoMove {learnable = learnable};
+            if(learnable is Spell spell)
+            {
+                if(BattleHooks.BlocksSpells(actor)) continue;
+                move.heal = IsSupportSpell(spell);
+                move.aoe = spell.isAOE;
+            }
+            else if(learnable is Art art) move.aoe = art.isAOE;
+            else if(learnable is Fusion fusion) move.aoe = fusion.isAOE;
+            moves.Add(move);
+        }
+        return moves;
+    }
+    public IEnumerator AutoAct(ICombatant actor, AutoMode mode, bool includeSelf = false, bool preferAOE = false)
+    {
+        if(actor == null || actor.currentHP <= 0) yield break;
+        List<ICombatant> allies = AlliesOf(actor);
+        List<ICombatant> foes = FoesOf(actor);
+        List<ICombatant> hurt = allies.FindAll(member => member.finalHP > 0 && member.currentHP * 2 < member.finalHP);
+        hurt.Sort((first, second) => first.currentHP.CompareTo(second.currentHP));
+        List<AutoMove> allMoves = BuildAutoMoves(actor);
+        bool aoeAvailable = allMoves.Exists(move => move.aoe && !move.heal);
+        bool noFoes = foes.Count == 0 && mode != AutoMode.AttackAllies && mode != AutoMode.Chaos;
+        List<AutoMove> options = new List<AutoMove>();
+        List<int> weights = new List<int>();
+        foreach(AutoMove move in allMoves)
+        {
+            int weight = move.basic ? 3 : 2;
+            if(move.defend)
+            {
+                if(mode !=  AutoMode.Sensible && mode != AutoMode.Chaos) continue;
+                weight = mode == AutoMode.Sensible && actor.currentHP * 100 < actor.finalHP * 35 ? 4 : 1;
+            }
+            else if(move.heal)
+            {
+                if(mode == AutoMode.Sensible) { if(hurt.Count == 0) continue; weight = 4; }
+                else if(mode != AutoMode.Chaos) continue;
+            }
+            else if(noFoes) continue;
+            else if(mode == AutoMode.AttackAllies && preferAOE && aoeAvailable && !move.aoe) continue;
+            options.Add(move);
+            weights.Add(weight);
+        }
+        int total = 0;
+        foreach(int weight in weights) total += weight;
+        if(total <= 0) yield break;
+        int roll = Random.Range(0, total);
+        AutoMove chosen = options[options.Count - 1];
+        for(int i = 0; i < options.Count; i++)
+        {
+            if(roll < weights[i]) { chosen = options[i]; break; }
+            roll -= weights[i];
+        }
+        ICombatant target = null;
+        List<ICombatant> group = foes;
+        string label = "all enemies";
+        if(chosen.heal && mode == AutoMode.Sensible)
+        {
+            target = hurt[0];
+            group = allies;
+            label = "all allies";
+        }
+        else if(mode == AutoMode.AttackAllies)
+        {
+            List<ICombatant> pool = new List<ICombatant>(allies);
+            if(!includeSelf) pool.Remove(actor);
+            bool useAllies = pool.Count > 0;
+            group = useAllies ? allies : foes;
+            label = useAllies ? "all allies" : "all enemies";
+            List<ICombatant> singles = useAllies ? pool : foes;
+            if(singles.Count > 0) target = singles[Random.Range(0, singles.Count)];
+        }
+        else if(mode == AutoMode.Chaos)
+        {
+            List<ICombatant> everyone = new List<ICombatant>(allies);
+            everyone.AddRange(foes);
+            if(everyone.Count > 0) target = everyone[Random.Range(0, everyone.Count)];
+            bool toAllies =  Random.Range(0, 2) == 0;
+            group = toAllies ? allies : foes;
+            label = toAllies ? "all allies" : "all enemies";
+        }
+        else if(foes.Count > 0) target = foes[Random.Range(0, foes.Count)];
+        if(chosen.defend)
+        {
+            actor.isDefending = true;
+            yield return StartCoroutine(BattleTextBox.instance.ShowMessage($"{actor.currentName} defends!"));
+        }
+    else if(chosen.basic)
+        {
+           if(target != null) yield return StartCoroutine(ResolveAttack(actor, target, DamageType.Physical, 0, "attacks", WeaponOfCombatant(actor), null, Element.None)); 
+        }
+        else yield return StartCoroutine(PerformLearnable(actor, chosen.learnable, target, group, label));
+        UpdateUI();
+        yield return StartCoroutine(ScaledWait(0.5f));
+    }
+    IEnumerator PerformLearnable(ICombatant actor, Learnable learnable, ICombatant target, List<ICombatant> group, string label)
+    {
+        Equipment weapon = WeaponOfCombatant(actor);
+        if(learnable is Art art)
+        {
+            actor.currentHP = Mathf.Max(0, actor.currentHP - art.Cost);
+            if(actor.currentHP <= 0) { yield return StartCoroutine(CheckDeath(actor)); yield break; }
+            if(art.isAOE) yield return StartCoroutine(ResolveAOE(actor, group, DamageType.Physical, art.Damage, art.artName, weapon, art.effects, WeaponElement(weapon), label));
+            else if(target != null) yield return StartCoroutine(ResolveAttack(actor, target, DamageType.Physical, art.Damage, art.artName, weapon, art.effects, WeaponElement(weapon)));
+        }
+        else if(learnable is Fusion fusion)
+        {
+            actor.currentMagicAffinity = fusion.element;
+            actor.currentHP = Mathf.Max(0, actor.currentHP - fusion.HPCost);
+            SpendMP(actor, fusion.MPCost);
+            if(actor.currentHP <= 0) { yield return StartCoroutine(CheckDeath(actor)); yield break; }
+            if(fusion.isAOE) yield return StartCoroutine(ResolveAOE(actor, group, DamageType.Fusion, fusion.Damage, fusion.fusionName, weapon, fusion.effects, fusion.element, label));
+            else if(target != null) yield return StartCoroutine(ResolveAttack(actor, target, DamageType.Fusion, fusion.Damage, fusion.fusionName, weapon, fusion.effects, fusion.element));
+        }
+        else if(learnable is Spell spell)
+        {
+            actor.currentMagicAffinity = spell.element;
+            SpendMP(actor, spell.Cost);
+            if(IsSupportSpell(spell))
+            {
+                if(spell.isAOE)
+                {
+                    yield return StartCoroutine(BattleTextBox.instance.ShowMessage($"{actor.currentName} uses {spell.spellName} on {label}"));
+                    foreach(ICombatant member in group) yield return StartCoroutine(ApplySupportEffects(actor, member, spell.effects));
+                }
+                else if(target != null)
+                {
+                  yield return StartCoroutine(BattleTextBox.instance.ShowMessage($"{actor.currentName} uses {spell.spellName} on {target.currentName}"));
+                  yield return StartCoroutine(ApplySupportEffects(actor, target, spell.effects));
+                }
+            }
+        else if(spell.isAOE) yield return StartCoroutine(ResolveAOE(actor, group, DamageType.Magic, spell.Damage, spell.spellName, null, spell.effects, spell.element, label));
+        else if(target != null) yield return StartCoroutine(ResolveAttack(actor, target, DamageType.Magic, spell.Damage, spell.spellName, null, spell.effects, spell.element));
+}
     }
         IEnumerator EnemyUseItem(EnemyAI enemy)
     {
@@ -688,18 +970,39 @@ void Start()
     IEnumerator EnemySpecial(EnemyAI enemy, ActiveStats target, EnemyStats.EnemySpecialAttack special)
     {
         Learnable learnable = special.learnable;
+        if(learnable is Spell && BattleHooks.BlocksSpells(enemy))
+        {
+            yield return StartCoroutine(BattleTextBox.instance.ShowMessage($"{enemy.currentName} can't breathe, spell's cannot be used"));
+            yield break;
+        }
         enemy.PayCost(learnable);
+        bool misfired = false;
+         if(learnable is Spell spell)
+        {
+            if(Random.Range(0f, 100f) < BattleHooks.SpellFailChance(enemy))
+            {
+                yield return StartCoroutine(BattleTextBox.instance.ShowMessage($"{enemy.currentName} can't hear. The spell fails"));
+                yield break;
+            }
+           misfired = Random.Range(0f, 100f) < BattleHooks.SpellMisfireChance(enemy);
+           if(misfired) yield return StartCoroutine(BattleTextBox.instance.ShowMessage($"{enemy.currentName} is too loud. The spell explodes damaging the {enemy.currentName}"));
+        }
         List<ICombatant> livingPlayers = players.FindAll(player => player.currentHP > 0).Cast<ICombatant>().ToList();
         if(learnable is Art art)
         {
             if(art.isAOE) yield return StartCoroutine(ResolveAOE(enemy, livingPlayers, DamageType.Physical, art.Damage, art.artName, enemy.weaponSlot, art.effects, WeaponElement(enemy.weaponSlot)));
             else yield return StartCoroutine(ResolveAttack(enemy, target, DamageType.Physical, art.Damage, art.artName, enemy.weaponSlot, art.effects, WeaponElement(enemy.weaponSlot)));
         }
-       else if(learnable is Spell spell)
+        if(learnable is Spell castSpell)
         {
-            enemy.currentMagicAffinity = spell.element;
-            if(spell.isAOE) yield return StartCoroutine(ResolveAOE(enemy, livingPlayers, DamageType.Magic, spell.Damage, spell.spellName, null, spell.effects, spell.element));
-            else yield return StartCoroutine(ResolveAttack(enemy, target, DamageType.Magic, spell.Damage, spell.spellName, null, spell.effects, spell.element));
+            enemy.currentMagicAffinity = castSpell.element;
+            List<ICombatant> spellGroup = misfired ? enemies.FindAll(foe => foe.currentHP > 0).Cast<ICombatant>().ToList() : livingPlayers;
+            if(castSpell.isAOE) yield return StartCoroutine(ResolveAOE(enemy, spellGroup, DamageType.Magic, castSpell.Damage, castSpell.spellName, null, castSpell.effects, castSpell.element, misfired ? "its own allies" : "all enemies"));
+            else
+            {
+                ICombatant spellTarget = misfired && spellGroup.Count > 0 ? spellGroup[Random.Range(0, spellGroup.Count)] : target;
+                yield return StartCoroutine(ResolveAttack(enemy, spellTarget, DamageType.Magic, castSpell.Damage, castSpell.spellName, null, castSpell.effects, castSpell.element));
+            }
         }
         if(learnable is Fusion fusion)
         {
